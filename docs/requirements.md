@@ -86,3 +86,5 @@
 - データベース: MySQL
 - API: PHP(Laravel)
 - フロントエンド: React
+
+
