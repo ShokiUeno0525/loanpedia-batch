@@ -1,0 +1,20 @@
+# python-batch/Dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# システムパッケージをインストール
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python依存関係をインストール
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Lambda関数として実行
+CMD ["python", "-c", "from lambda_function import lambda_handler; import json; print('Lambda function ready')"]
