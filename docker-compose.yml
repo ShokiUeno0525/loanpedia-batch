@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   lambda:
     build: .
@@ -17,6 +16,7 @@ services:
     volumes:
       - .:/app
       - /app/__pycache__
+    command: tail -f /dev/null
 
   mysql:
     image: mysql:8.0
@@ -24,9 +24,11 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: app_db
       MYSQL_USER: app_user
-      DB_PASSWORD: app_password
+      MYSQL_PASSWORD: app_password
     ports:
       - "3307:3306" # ポート番号を変更してバッティング回避
+    volumes:
+      - mysql_data:/var/lib/mysql
 
   localstack:
     image: localstack/localstack:3.0

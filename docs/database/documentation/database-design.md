@@ -14,6 +14,7 @@ CREATE TABLE financial_institutions (
     institution_name_kana VARCHAR(100) COMMENT '金融機関名カナ',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('active', 'inactive') DEFAULT 'active',
     INDEX idx_status (status),
     FULLTEXT idx_search (institution_name, institution_name_kana)
 ) COMMENT '金融機関マスターテーブル';
@@ -37,6 +38,7 @@ CREATE TABLE data_sources (
     next_scrape_at TIMESTAMP COMMENT '次回取得予定日時',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('active', 'inactive', 'error') DEFAULT 'active',
 
     FOREIGN KEY (institution_id) REFERENCES financial_institutions(id),
     INDEX idx_institution (institution_id),
@@ -134,13 +136,34 @@ CREATE TABLE loan_products (
     features JSON COMMENT '商品特徴',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    data_updated_at TIMESTAMP COMMENT 'データ更新日時',
 
     FOREIGN KEY (processed_data_id) REFERENCES processed_loan_data(id),
     FOREIGN KEY (institution_id) REFERENCES financial_institutions(id),
+    UNIQUE KEY uk_institution_product (institution_id, product_name, loan_type),
     INDEX idx_institution_category (institution_id, loan_category),
     INDEX idx_loan_type (loan_type),
     INDEX idx_interest_rate (interest_rate_min, interest_rate_max),
     INDEX idx_loan_amount (loan_amount_min, loan_amount_max),
     FULLTEXT idx_product_search (product_name, summary)
 ) COMMENT '統合ローン商品テーブル';
+```
+
+### 5. ローン商品変更履歴テーブル
+
+#### 5.1 ローン商品変更履歴
+
+```sql
+CREATE TABLE loan_product_history (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    loan_product_id BIGINT NOT NULL,
+    changed_fields JSON NOT NULL,
+    old_values JSON,
+    new_values JSON,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_product_id) REFERENCES loan_products(id),
+    INDEX idx_product_date (loan_product_id, changed_at),
+    INDEX idx_changed_date (changed_at)
+)COMMENT 'ローン商品変更履歴テーブル';
 ```
