@@ -9,7 +9,7 @@
 
 BOT_NAME = "loanpedia_scraper"
 
-SPIDER_MODULES = ["src.spiders", "src.spiders.Aomori-michinoku"]
+SPIDER_MODULES = ["src.spiders"]
 NEWSPIDER_MODULE = "src.spiders"
 
 ADDONS = {}
@@ -58,9 +58,19 @@ DOWNLOAD_DELAY = 1
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "loanpedia_scraper.pipelines.LoanpediaScraperPipeline": 300,
-#}
+ITEM_PIPELINES = {
+    "src.pipelines.MySQLPipeline": 300,
+}
+
+# Database settings
+DATABASE = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'rootpassword',
+    'database': 'app_db',
+    'port': 3307,
+    'charset': 'utf8mb4'
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

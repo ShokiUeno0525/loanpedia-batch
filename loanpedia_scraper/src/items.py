@@ -82,6 +82,42 @@ class LoanItem(scrapy.Item):
     )
     guarantor_required = scrapy.Field(output_processor=TakeFirst())
     
+    # 手数料・保証料情報
+    guarantor_fee = scrapy.Field(
+        input_processor=MapCompose(extract_number),
+        output_processor=TakeFirst()
+    )
+    handling_fee = scrapy.Field(
+        input_processor=MapCompose(extract_number),
+        output_processor=TakeFirst()
+    )
+    application_conditions = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    
+    # アコーディオン内の詳細情報
+    prepayment_fee = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    application_method = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    required_documents = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    guarantor_info = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    collateral_info = scrapy.Field(
+        input_processor=MapCompose(clean_text),
+        output_processor=TakeFirst()
+    )
+    
     # その他
     features = scrapy.Field(
         input_processor=MapCompose(clean_text),
