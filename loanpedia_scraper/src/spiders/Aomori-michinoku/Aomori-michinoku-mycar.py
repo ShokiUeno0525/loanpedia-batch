@@ -34,7 +34,7 @@ class AomorimichinokuBankSpider(scrapy.Spider):
         min_rate, max_rate = self.extract_interest_rates(response)
         loan_amount_min, loan_amount_max = self.extract_loan_amounts(response)
         loan_term_min, loan_term_max = self.extract_loan_terms(response)
-        guarantor_fee, handling_fee = self.extract_fees(response)
+        guarantor_fee = self.extract_guarantor_fee(response)
         application_conditions = self.extract_application_conditions(response)
         repayment_method = self.extract_repayment_method(response)
         
@@ -54,7 +54,6 @@ class AomorimichinokuBankSpider(scrapy.Spider):
         item['min_loan_period_months'] = loan_term_min
         item['max_loan_period_months'] = loan_term_max
         item['guarantor_fee'] = guarantor_fee
-        item['handling_fee'] = handling_fee
         item['application_conditions'] = application_conditions
         item['repayment_method'] = repayment_method
         
@@ -250,44 +249,106 @@ class AomorimichinokuBankSpider(scrapy.Spider):
         return None, None
     
     def extract_loan_terms(self, response):
-        """融資期間を抽出"""
+        """融資期間を抽出（アコーディオン内の詳細情報を優先）"""
         import re
         
+        # 1. アコーディオン内の「商品概要」から融資期間を抽出
+        accordion_items = response.css('.c-accordion__item')
+        for item in accordion_items:
+            header = item.css('.c-accordion__item-inner--parent')
+            header_text = ''.join(header.css('*::text').getall()).strip()
+            
+            if '商品概要' in header_text:
+                # アコーディオン内のテキスト全体を取得
+                content_texts = item.css('.c-text::text, .c-table td::text, .c-table th::text').getall()
+                all_text = ' '.join(content_texts)
+                
+                # 「6ヵ月以上15年以内」パターン
+                range_match = re.search(r'(\d+)\s*[ヵヶ]\s*月以上.*?(\d+)\s*年以内', all_text)
+                if range_match:
+                    min_term = int(range_match.group(1))
+                    max_term = int(range_match.group(2)) * 12
+                    self.logger.info(f"✅ 商品概要アコーディオンから融資期間: {min_term}ヶ月 - {max_term}ヶ月")
+                    return min_term, max_term
+                
+                # 「お借入期間」セクションを探す
+                for i, text in enumerate(content_texts):
+                    if 'お借入期間' in text or '借入期間' in text:
+                        # 次のテキストから期間情報を抽出
+                        if i + 1 < len(content_texts):
+                            period_text = content_texts[i + 1]
+                            # 「6ヵ月以上15年以内」パターン
+                            range_match = re.search(r'(\d+)\s*[ヵヶ]\s*月以上.*?(\d+)\s*年以内', period_text)
+                            if range_match:
+                                min_term = int(range_match.group(1))
+                                max_term = int(range_match.group(2)) * 12
+                                self.logger.info(f"✅ お借入期間から融資期間: {min_term}ヶ月 - {max_term}ヶ月")
+                                return min_term, max_term
+        
+        # 2. テーブル内の融資期間を検索
+        tables = response.css('table')
+        for table in tables:
+            rows = table.css('tr')
+            for row in rows:
+                cells = row.css('td::text, th::text').getall()
+                for i, cell in enumerate(cells):
+                    if '融資期間' in cell or '借入期間' in cell:
+                        if i + 1 < len(cells):
+                            period_text = cells[i + 1]
+                            # 「6ヵ月以上15年以内」パターン
+                            range_match = re.search(r'(\d+)\s*[ヵヶ]\s*月以上.*?(\d+)\s*年以内', period_text)
+                            if range_match:
+                                min_term = int(range_match.group(1))
+                                max_term = int(range_match.group(2)) * 12
+                                self.logger.info(f"✅ テーブルから融資期間: {min_term}ヶ月 - {max_term}ヶ月")
+                                return min_term, max_term
+        
+        # 3. 従来のパターンマッチング（バックアップ）
         text = response.text
         patterns = [
-            r'(\d+)\s*年\s*～\s*(\d+)\s*年',      # 1年～7年
-            r'最長\s*(\d+)\s*年',                # 最長7年
-            r'(\d+)\s*ヶ月\s*～\s*(\d+)\s*ヶ月',  # 12ヶ月～84ヶ月
+            r'(\d+)\s*[ヵヶ]\s*月以上.*?(\d+)\s*年以内',  # 6ヵ月以上15年以内
+            r'(\d+)\s*年\s*[～〜]\s*(\d+)\s*年',         # 1年～15年
+            r'最長\s*(\d+)\s*年',                      # 最長15年
+            r'(\d+)\s*ヶ月\s*[～〜]\s*(\d+)\s*ヶ月',     # 6ヶ月～180ヶ月
         ]
         
-        for pattern in patterns:
+        for i, pattern in enumerate(patterns):
             matches = re.findall(pattern, text)
             if matches:
-                if '年' in pattern:
-                    if len(matches[0]) == 2:  # 範囲
-                        min_term = int(matches[0][0]) * 12
-                        max_term = int(matches[0][1]) * 12
-                        self.logger.info(f"融資期間範囲: {min_term}ヶ月 - {max_term}ヶ月")
+                match = matches[0]
+                if i == 0:  # 6ヵ月以上15年以内
+                    min_term = int(match[0])
+                    max_term = int(match[1]) * 12
+                    self.logger.info(f"✅ パターン{i+1}から融資期間: {min_term}ヶ月 - {max_term}ヶ月")
+                    return min_term, max_term
+                elif '年' in pattern:
+                    if isinstance(match, tuple) and len(match) == 2:  # 範囲
+                        min_term = int(match[0]) * 12
+                        max_term = int(match[1]) * 12
+                        self.logger.info(f"✅ パターン{i+1}から融資期間: {min_term}ヶ月 - {max_term}ヶ月")
                         return min_term, max_term
                     else:  # 最長のみ
-                        max_term = int(matches[0]) * 12
-                        self.logger.info(f"最長融資期間: {max_term}ヶ月")
+                        if isinstance(match, tuple):
+                            max_term = int(match[0]) * 12
+                        else:
+                            max_term = int(match) * 12
+                        self.logger.info(f"✅ パターン{i+1}から最長融資期間: {max_term}ヶ月")
                         return None, max_term
                 else:  # ヶ月
-                    min_term = int(matches[0][0])
-                    max_term = int(matches[0][1])
-                    self.logger.info(f"融資期間範囲: {min_term}ヶ月 - {max_term}ヶ月")
+                    min_term = int(match[0])
+                    max_term = int(match[1])
+                    self.logger.info(f"✅ パターン{i+1}から融資期間: {min_term}ヶ月 - {max_term}ヶ月")
                     return min_term, max_term
         
+        self.logger.warning("⚠️ 融資期間情報を抽出できませんでした")
         return None, None
     
-    def extract_fees(self, response):
-        """保証料・手数料情報を抽出"""
+    def extract_guarantor_fee(self, response):
+        """保証料情報を抽出"""
         import re
         
         text = response.text
         guarantor_fee = None
-        handling_fee = None
         
         # 保証料パターン
         guarantor_patterns = [
@@ -308,27 +369,7 @@ class AomorimichinokuBankSpider(scrapy.Spider):
                     self.logger.info(f"✅ 保証料: {guarantor_fee}%")
                 break
         
-        # 手数料パターン  
-        handling_patterns = [
-            r'手数料.*?(\d+(?:,\d{3})*)\s*円',
-            r'事務手数料.*?(\d+(?:,\d{3})*)\s*円',  
-            r'手数料.*?無料',
-            r'手数料.*?不要',
-        ]
-        
-        for pattern in handling_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                if '無料' in match.group(0) or '不要' in match.group(0):
-                    handling_fee = 0
-                    self.logger.info(f"✅ 手数料: 無料")
-                else:
-                    fee_str = match.group(1).replace(',', '')
-                    handling_fee = int(fee_str)
-                    self.logger.info(f"✅ 手数料: {handling_fee}円")
-                break
-        
-        return guarantor_fee, handling_fee
+        return guarantor_fee
     
     def extract_application_conditions(self, response):
         """申込条件・資格要件を抽出"""

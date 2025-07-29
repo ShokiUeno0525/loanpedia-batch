@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class MySQLPipeline:
+    """生データ保存専用パイプライン"""
     def __init__(self, mysql_settings):
         self.mysql_settings = mysql_settings
         self.connection = None
@@ -44,7 +45,7 @@ class MySQLPipeline:
         logger.info("Database connection closed")
     
     def process_item(self, item, spider):
-        """アイテムを処理してデータベースに保存"""
+        """生データのみをデータベースに保存（AI処理は別バッチで実行）"""
         try:
             adapter = ItemAdapter(item)
             
@@ -54,15 +55,11 @@ class MySQLPipeline:
                 adapter.get('institution_name', '')
             )
             
-            # 生データを保存
+            # 生データのみ保存
             raw_data_id = self.save_raw_data(adapter, institution_id)
             
-            # 構造化データを保存
-            if raw_data_id:
-                self.save_structured_data(adapter, institution_id, raw_data_id)
-            
             self.connection.commit()
-            logger.info(f"Item saved successfully: {adapter.get('product_name', 'Unknown')}")
+            logger.info(f"Raw data saved: {adapter.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}")
             
         except Exception as e:
             self.connection.rollback()
@@ -98,9 +95,28 @@ class MySQLPipeline:
         return self.cursor.lastrowid
     
     def save_raw_data(self, adapter, institution_id):
-        """生データテーブルに保存"""
+        """生データテーブルに保存（構造化抽出結果もJSONで保存）"""
         html_content = adapter.get('html_content', '')
-        extracted_text = adapter.get('extracted_text', '')
+        
+        # Scrapyで抽出した構造化データを保存（AI処理前の状態）
+        structured_data = {
+            'product_name': adapter.get('product_name'),
+            'loan_category': adapter.get('loan_category'),
+            'min_interest_rate': adapter.get('min_interest_rate'),
+            'max_interest_rate': adapter.get('max_interest_rate'),
+            'min_loan_amount': adapter.get('min_loan_amount'),
+            'max_loan_amount': adapter.get('max_loan_amount'),
+            'min_loan_period_months': adapter.get('min_loan_period_months'),
+            'max_loan_period_months': adapter.get('max_loan_period_months'),
+            'guarantor_fee': adapter.get('guarantor_fee'),
+            'application_conditions': adapter.get('application_conditions'),
+            'repayment_method': adapter.get('repayment_method'),
+            'prepayment_fee': adapter.get('prepayment_fee'),
+            'application_method': adapter.get('application_method'),
+            'required_documents': adapter.get('required_documents'),
+            'guarantor_info': adapter.get('guarantor_info'),
+            'collateral_info': adapter.get('collateral_info')
+        }
         
         # コンテンツハッシュを生成
         content_hash = hashlib.sha256(html_content.encode('utf-8')).hexdigest()
@@ -118,7 +134,7 @@ class MySQLPipeline:
         insert_sql = """
             INSERT INTO raw_loan_data (
                 institution_id, source_url, page_title, html_content, 
-                extracted_text, content_hash, content_length, scraped_at, created_at, updated_at
+                structured_data, content_hash, content_length, scraped_at, created_at, updated_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
@@ -130,7 +146,7 @@ class MySQLPipeline:
             adapter.get('source_url', ''),
             adapter.get('page_title', ''),
             html_content,
-            extracted_text,
+            json.dumps(structured_data, ensure_ascii=False),
             content_hash,
             len(html_content) if html_content else 0,
             scraped_at,
@@ -140,112 +156,6 @@ class MySQLPipeline:
         
         return self.cursor.lastrowid
     
-    def save_structured_data(self, adapter, institution_id, raw_data_id):
-        """構造化データをloan_productsテーブルに保存"""
-        # AI要約データ構造を作成
-        ai_summary = {
-            'product_name': adapter.get('product_name'),
-            'loan_category': adapter.get('loan_category'),
-            'interest_rates': {
-                'min': adapter.get('min_interest_rate'),
-                'max': adapter.get('max_interest_rate'),
-                'type': adapter.get('interest_rate_type')
-            },
-            'loan_amounts': {
-                'min': adapter.get('min_loan_amount'),
-                'max': adapter.get('max_loan_amount')
-            },
-            'loan_periods': {
-                'min_months': adapter.get('min_loan_period_months'),
-                'max_months': adapter.get('max_loan_period_months')
-            },
-            'requirements': {
-                'min_age': adapter.get('min_age'),
-                'max_age': adapter.get('max_age'),
-                'income': adapter.get('income_requirement'),
-                'guarantor_required': adapter.get('guarantor_required')
-            },
-            'features': adapter.get('features'),
-            'documents': adapter.get('required_documents'),
-            'application_method': adapter.get('application_method'),
-            'repayment_method': adapter.get('repayment_method')
-        }
-        
-        # processed_loan_dataテーブルに保存
-        processed_sql = """
-            INSERT INTO processed_loan_data (
-                raw_data_id, institution_id, ai_summary, ai_model, 
-                processing_status, processed_at, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        
-        now = datetime.now()
-        self.cursor.execute(processed_sql, (
-            raw_data_id,
-            institution_id,
-            json.dumps(ai_summary, ensure_ascii=False),
-            'scrapy_parser_v1.0',
-            'completed',
-            now,
-            now,
-            now
-        ))
-        
-        processed_id = self.cursor.lastrowid
-        
-        # loan_productsテーブルに保存
-        product_sql = """
-            INSERT INTO loan_products (
-                processed_data_id, institution_id, product_name, loan_type, loan_category,
-                interest_rate_min, interest_rate_max, interest_rate_type,
-                loan_amount_min, loan_amount_max, loan_term_min, loan_term_max,
-                repayment_methods, application_requirements, features,
-                created_at, updated_at, data_updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                interest_rate_min = VALUES(interest_rate_min),
-                interest_rate_max = VALUES(interest_rate_max),
-                loan_amount_min = VALUES(loan_amount_min),
-                loan_amount_max = VALUES(loan_amount_max),
-                updated_at = VALUES(updated_at),
-                data_updated_at = VALUES(data_updated_at)
-        """
-        
-        # 期間を年に変換（月から）
-        min_term_years = None
-        max_term_years = None
-        if adapter.get('min_loan_period_months'):
-            min_term_years = int(adapter.get('min_loan_period_months') / 12)
-        if adapter.get('max_loan_period_months'):
-            max_term_years = int(adapter.get('max_loan_period_months') / 12)
-        
-        # JSONフィールドの準備
-        repayment_methods = json.dumps([adapter.get('repayment_method')] if adapter.get('repayment_method') else [])
-        requirements = json.dumps(ai_summary['requirements'])
-        features_json = json.dumps([adapter.get('features')] if adapter.get('features') else [])
-        
-        self.cursor.execute(product_sql, (
-            processed_id,
-            institution_id,
-            adapter.get('product_name', ''),
-            adapter.get('loan_category', ''),
-            adapter.get('loan_category', ''),
-            adapter.get('min_interest_rate'),
-            adapter.get('max_interest_rate'),
-            adapter.get('interest_rate_type'),
-            adapter.get('min_loan_amount'),
-            adapter.get('max_loan_amount'),
-            min_term_years,
-            max_term_years,
-            repayment_methods,
-            requirements,
-            features_json,
-            now,
-            now,
-            now
-        ))
-        
-        return self.cursor.lastrowid
 
 class LoanpediaScraperPipeline:
     def process_item(self, item, spider):
