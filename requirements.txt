@@ -26,6 +26,9 @@ scrapy==2.11.2
 selenium==4.23.1
 beautifulsoup4==4.12.3
 
+# PDF処理
+PyPDF2==3.0.1
+
 # ログ・デバッグ用
 python-dotenv==1.0.1
 
