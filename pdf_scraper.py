@@ -196,6 +196,18 @@ class PDFScraper:
                 'pages': 0
             }
     
+    def extract_text_from_bytes(self, pdf_bytes: bytes) -> Dict[str, any]:
+        """
+        PDFバイトデータからテキストを抽出（パブリックメソッド）
+        
+        Args:
+            pdf_bytes: PDFのバイトデータ
+            
+        Returns:
+            Dict: 抽出結果
+        """
+        return self._extract_text_from_bytes(pdf_bytes)
+    
     def extract_loan_info(self, text: str) -> Dict[str, any]:
         """
         抽出されたテキストからローン情報を検索
