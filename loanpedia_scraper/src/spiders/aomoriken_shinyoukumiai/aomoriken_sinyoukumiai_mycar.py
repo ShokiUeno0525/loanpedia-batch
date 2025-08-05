@@ -1,7 +1,7 @@
 import scrapy
 import hashlib
 from datetime import datetime
-from ...items import LoanItem
+from src.items import LoanItem
 
 class AomorikenSinyoukumiaiMycarSpider(scrapy.Spider):
     name = "aomoriken_sinyoukumiai_mycar"

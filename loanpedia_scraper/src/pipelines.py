@@ -3,7 +3,13 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
-import pymysql
+try:
+    import pymysql
+    PYMYSQL_AVAILABLE = True
+except ImportError:
+    PYMYSQL_AVAILABLE = False
+    pymysql = None
+
 import hashlib
 import json
 from datetime import datetime
@@ -27,6 +33,10 @@ class MySQLPipeline:
     
     def open_spider(self, spider):
         """スパイダー開始時にデータベース接続を開く"""
+        if not PYMYSQL_AVAILABLE:
+            logger.warning("pymysql not available, database operations will be skipped")
+            return
+            
         try:
             self.connection = pymysql.connect(**self.mysql_settings)
             self.connection.cursorclass = pymysql.cursors.DictCursor
@@ -34,7 +44,10 @@ class MySQLPipeline:
             logger.info("Database connection established")
         except Exception as e:
             logger.error(f"Failed to connect to database: {e}")
-            raise
+            # データベース接続失敗でもスクレイピングは継続
+            logger.warning("Continuing without database connection")
+            self.connection = None
+            self.cursor = None
     
     def close_spider(self, spider):
         """スパイダー終了時にデータベース接続を閉じる"""
@@ -46,6 +59,11 @@ class MySQLPipeline:
     
     def process_item(self, item, spider):
         """生データのみをデータベースに保存（AI処理は別バッチで実行）"""
+        # データベース接続がない場合はスキップ
+        if not self.connection or not self.cursor:
+            logger.info(f"Database not available, skipping item: {ItemAdapter(item).get('source_url', 'Unknown URL')}")
+            return item
+            
         try:
             adapter = ItemAdapter(item)
             
@@ -62,9 +80,11 @@ class MySQLPipeline:
             logger.info(f"Raw data saved: {adapter.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}")
             
         except Exception as e:
-            self.connection.rollback()
+            if self.connection:
+                self.connection.rollback()
             logger.error(f"Error processing item: {e}")
-            raise
+            # エラーでも処理を継続
+            logger.warning("Continuing despite database error")
         
         return item
     
