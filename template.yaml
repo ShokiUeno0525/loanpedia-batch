@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   sam-app
@@ -24,7 +24,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         MonthlySchedule:
           Type: Schedule # More info about Schedule Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#schedule
@@ -41,7 +41,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Timeout: 900 # 15分（スクレイピング処理のため長めに設定）
       Events:
         MonthlySchedule:
@@ -53,34 +53,39 @@ Resources:
             Enabled: true
 
   # 青森みちのく銀行
-  MichinokuBankScraperFunction:
+  AomorimichinokuBankScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: handlers/
-      Handler: aomorimitinoku_bank.lambda_handler
+      CodeUri: loanpedia_scraper/
+      Handler: src.handlers.aomori_mitinoku_bank.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Timeout: 900
       Events:
         MonthlySchedule:
           Type: Schedule
           Properties:
             Schedule: rate(30 days)
-            Name: MichinokuBankMonthlySchedule
+            Name: AomorimichinokuBankMonthlySchedule
             Description: 青森みちのく銀行の月次スクレイピング
             Enabled: true
 
   # 青い森信用金庫
   AoimoriShinkinScraperFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: python3.13
     Properties:
-      CodeUri: handlers/
-      Handler: aoimori_shinkin.lambda_handler
+      CodeUri: loanpedia_scraper/
+      Handler: src.handlers.aoimori_shinkin.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Timeout: 900
+      Environment:
+        Variables:
+          PYTHONPATH: /var/task:/var/task/src
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -91,40 +96,40 @@ Resources:
             Enabled: true
 
   # 東奥信用金庫
-  ToshinShinkinScraperFunction:
+  TououshinkinScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: handlers/
-      Handler: toshin_shinkin.lambda_handler
+      CodeUri: loanpedia_scraper/
+      Handler: src.handlers.touou_shinkin.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Timeout: 900
       Events:
         MonthlySchedule:
           Type: Schedule
           Properties:
             Schedule: rate(30 days)
-            Name: ToshinShinkinMonthlySchedule
+            Name: TououshinkinMonthlySchedule
             Description: 東奥信用金庫の月次スクレイピング
             Enabled: true
 
   # 青森県信用組合
-  AomoriShinkinScraperFunction:
+  AomorikenshinyoukumiaiScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: handlers/
-      Handler: aomori_shinkin.lambda_handler
+      CodeUri: loanpedia_scraper/
+      Handler: src.handlers.aomoriken_shinyoukumiai.lambda_handler
       Runtime: python3.13
       Architectures:
-      - x86_64
+        - x86_64
       Timeout: 900
       Events:
         MonthlySchedule:
           Type: Schedule
           Properties:
             Schedule: rate(30 days)
-            Name: AomoriShinkinMonthlySchedule
+            Name: AomorikenshinyoukumiaiMonthlySchedule
             Description: 青森県信用組合の月次スクレイピング
             Enabled: true
 
@@ -140,13 +145,13 @@ Resources:
     Properties:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
+      AutoConfigurationEnabled: "true"
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World 
+    Description: API Gateway endpoint URL for Prod stage for Hello World
       function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
   HelloWorldFunction:
