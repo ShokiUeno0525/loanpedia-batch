@@ -151,7 +151,7 @@
 
 - **バッチ処理**: Python 3.12 + AWS Lambda
 
-  - Web スクレイピング: Selenium, BeautifulSoup4
+  - Web スクレイピング: BeautifulSoup4, requests
   - スケジュール: EventBridge または Cron
   - エラーハンドリング: リトライ機構 + CloudWatch
 
