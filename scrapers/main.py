@@ -13,6 +13,17 @@ from aoimori_shinkin import AoimoriShinkinScraper
 from touou_shinkin import TououShinkinScraper
 from aomoriken_shinyoukumiai import AomorikenShinyoukumiaiScraper
 
+# データベースライブラリをインポート
+try:
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'database'))
+    from loan_database import get_database_config
+    DATABASE_AVAILABLE = True
+except ImportError:
+    DATABASE_AVAILABLE = False
+    get_database_config = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,12 +32,18 @@ class LoanScrapingOrchestrator:
     全金融機関のローン情報スクレイピングを統括するオーケストレーター
     """
     
-    def __init__(self):
+    def __init__(self, save_to_db=False):
+        # データベース設定を取得
+        db_config = None
+        if save_to_db and DATABASE_AVAILABLE and get_database_config:
+            db_config = get_database_config()
+        
+        self.save_to_db = save_to_db
         self.scrapers = {
-            'aomori_michinoku': AomorimichinokuBankScraper(),
-            'aoimori_shinkin': AoimoriShinkinScraper(),
-            'touou_shinkin': TououShinkinScraper(),
-            'aomoriken_shinyoukumiai': AomorikenShinyoukumiaiScraper()
+            'aomori_michinoku': AomorimichinokuBankScraper(),  # まだDB対応していない
+            'aoimori_shinkin': AoimoriShinkinScraper(save_to_db=save_to_db, db_config=db_config),
+            'touou_shinkin': TououShinkinScraper(),  # まだDB対応していない
+            'aomoriken_shinyoukumiai': AomorikenShinyoukumiaiScraper()  # まだDB対応していない
         }
         self.results = []
         self.errors = []
@@ -125,12 +142,35 @@ class LoanScrapingOrchestrator:
 
 def main():
     """メイン実行関数"""
+    import argparse
+    
+    # コマンドライン引数の設定
+    parser = argparse.ArgumentParser(description='ローン情報スクレイピング統合実行')
+    parser.add_argument('--save-to-db', action='store_true', help='データベースに保存する')
+    parser.add_argument('--institution', type=str, help='特定の金融機関のみ実行')
+    args = parser.parse_args()
+    
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    orchestrator = LoanScrapingOrchestrator()
+    if args.save_to_db:
+        logger.info("データベース保存モードで実行します")
+    
+    orchestrator = LoanScrapingOrchestrator(save_to_db=args.save_to_db)
+    
+    if args.institution:
+        # 特定の金融機関のみ実行
+        result = orchestrator.run_single_scraper(args.institution)
+        if result:
+            print(f"\n✅ {args.institution} スクレイピング成功")
+            print(f"商品名: {result.get('product_name', 'N/A')}")
+            if 'min_interest_rate' in result:
+                print(f"金利: {result['min_interest_rate']}% - {result.get('max_interest_rate', 'N/A')}%")
+        else:
+            print(f"\n❌ {args.institution} スクレイピング失敗")
+        return
     
     # 全スクレイパー実行
     summary = orchestrator.run_all_scrapers()

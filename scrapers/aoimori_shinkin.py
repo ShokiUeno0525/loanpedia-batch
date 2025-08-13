@@ -10,6 +10,18 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
+import sys
+import os
+
+# データベースライブラリをインポート
+try:
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'database'))
+    from loan_database import LoanDatabase, get_database_config
+    DATABASE_AVAILABLE = True
+except ImportError:
+    DATABASE_AVAILABLE = False
+    LoanDatabase = None
+    get_database_config = None
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +32,18 @@ class AoimoriShinkinScraper:
     requests + BeautifulSoupによるシンプル実装
     """
 
-    def __init__(self):
+    def __init__(self, save_to_db=False, db_config=None):
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
+        
+        # データベース保存設定
+        self.save_to_db = save_to_db and DATABASE_AVAILABLE
+        self.db_config = db_config or (get_database_config() if get_database_config else None)
+        
+        if save_to_db and not DATABASE_AVAILABLE:
+            logger.warning("データベース保存が要求されましたが、データベースライブラリが利用できません")
 
     def scrape_loan_info(self, url="https://www.aoimorishinkin.co.jp/loan/car/"):
         """
@@ -62,12 +81,16 @@ class AoimoriShinkinScraper:
                 # フォールバック情報を使用
                 self._create_fallback_item(item)
             
+            # データベースに保存
+            if self.save_to_db:
+                self._save_to_database(item)
+            
             return item
             
         except requests.RequestException as e:
             logger.error(f"リクエストエラー: {e}")
             # フォールバック情報で最低限のデータを返す
-            return self._create_fallback_item({
+            fallback_item = self._create_fallback_item({
                 "institution_name": "青い森信用金庫",
                 "institution_code": "1250",
                 "product_name": "青い森しんきんカーライフプラン",
@@ -75,6 +98,7 @@ class AoimoriShinkinScraper:
                 "source_url": url,
                 "scraped_at": datetime.now().isoformat()
             })
+            return fallback_item
         except Exception as e:
             logger.error(f"スクレイピングエラー: {e}")
             return None
@@ -160,6 +184,10 @@ class AoimoriShinkinScraper:
         item["features"] = features
 
         logger.info(f"✅ 抽出完了: {item['product_name']}")
+        
+        # データベースに保存
+        if self.save_to_db:
+            self._save_to_database(item)
 
     def _create_fallback_item(self, item):
         """フォールバック情報を設定"""
@@ -184,7 +212,29 @@ class AoimoriShinkinScraper:
             "guarantor_required": False
         })
         
+        # データベースに保存
+        if self.save_to_db:
+            self._save_to_database(item)
+        
         return item
+
+    def _save_to_database(self, item):
+        """データベースに保存"""
+        if not self.save_to_db or not self.db_config:
+            return
+            
+        try:
+            with LoanDatabase(self.db_config) as db:
+                if db:
+                    raw_data_id = db.save_loan_data(item)
+                    if raw_data_id:
+                        logger.info(f"✅ データベース保存完了: ID={raw_data_id}")
+                    else:
+                        logger.warning("❌ データベース保存に失敗しました")
+                else:
+                    logger.warning("❌ データベース接続に失敗しました")
+        except Exception as e:
+            logger.error(f"❌ データベース保存エラー: {e}")
 
 
 def main():

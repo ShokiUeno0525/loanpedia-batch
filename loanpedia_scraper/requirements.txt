@@ -1,9 +1,0 @@
-# Python 3.13対応バージョン
-scrapy>=2.11.2
-beautifulsoup4>=4.12.3
-requests>=2.32.3
-lxml>=4.9.0
-Twisted>=22.10.0
-pyOpenSSL>=22.0.0
-cryptography>=38.0.0
-service-identity>=21.1.0

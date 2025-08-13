@@ -157,7 +157,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     
     scraper = AomorimichinokuBankScraper()
-    result = scraper.scrap_loan_info()
+    result = scraper.scrape_loan_info()
     
     if result:
         print("スクレイピング成功!")
