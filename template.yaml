@@ -8,41 +8,29 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
-
+    Timeout: 900 # スクレイピング処理のため15分に設定
+    MemorySize: 512 # メモリサイズを512MBに設定
+    Runtime: python3.13
     Tracing: Active
+    Environment:
+      Variables:
+        PYTHONPATH: /var/task:/var/task/scrapers:/var/task/database
+        SAVE_TO_DB: "true"
+        LOG_LEVEL: "INFO"
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
   Api:
     TracingEnabled: true
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      CodeUri: hello_world/
-      Handler: app.lambda_handler
-      Runtime: python3.13
-      Architectures:
-        - x86_64
-      Events:
-        MonthlySchedule:
-          Type: Schedule # More info about Schedule Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#schedule
-          Properties:
-            Schedule: rate(30 days) # 月次実行（30日ごと）
-            Name: HelloWorldMonthlySchedule
-            Description: HelloWorld関数の月次実行スケジュール
-            Enabled: true
-
   LoanpediaScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: loanpedia_scraper/
       Handler: app.lambda_handler
-      Runtime: python3.13
+      Description: 全金融機関のローン情報スクレイピング統合実行
       Architectures:
         - x86_64
-      Timeout: 900 # 15分（スクレイピング処理のため長めに設定）
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -147,16 +135,18 @@ Resources:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: "true"
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World
-      function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  LoanpediaScraperFunction:
+    Description: メインスクレイピング Lambda Function ARN
+    Value: !GetAtt LoanpediaScraperFunction.Arn
+  AoimoriShinkinScraperFunction:
+    Description: 青い森信用金庫スクレイピング Lambda Function ARN
+    Value: !GetAtt AoimoriShinkinScraperFunction.Arn
+  AomorimichinokuBankScraperFunction:
+    Description: 青森みちのく銀行スクレイピング Lambda Function ARN
+    Value: !GetAtt AomorimichinokuBankScraperFunction.Arn
+  TououshinkinScraperFunction:
+    Description: 東奥信用金庫スクレイピング Lambda Function ARN
+    Value: !GetAtt TououshinkinScraperFunction.Arn
+  AomorikenshinyoukumiaiScraperFunction:
+    Description: 青森県信用組合スクレイピング Lambda Function ARN
+    Value: !GetAtt AomorikenshinyoukumiaiScraperFunction.Arn
