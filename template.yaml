@@ -40,12 +40,12 @@ Resources:
             Description: ローン情報スクレイピングの月次実行スケジュール
             Enabled: true
 
-  # 青森みちのく銀行
+  # 青森みちのく銀行（統合）
   AomorimichinokuBankScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: loanpedia_scraper/
-      Handler: src.handlers.aomori_mitinoku_bank.lambda_handler
+      Handler: src.handlers.aomori_michinoku_bank.lambda_handler
       Runtime: python3.13
       Architectures:
         - x86_64
@@ -56,7 +56,7 @@ Resources:
           Properties:
             Schedule: rate(30 days)
             Name: AomorimichinokuBankMonthlySchedule
-            Description: 青森みちのく銀行の月次スクレイピング
+            Description: 青森みちのく銀行全商品の月次スクレイピング
             Enabled: true
 
   # 青い森信用金庫
