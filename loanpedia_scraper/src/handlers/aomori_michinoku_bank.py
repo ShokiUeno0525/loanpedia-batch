@@ -24,7 +24,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     Args:
         event: Lambda イベントデータ
-               - product: 'all', 'mycar', 'education' (デフォルト: 'all')
+               - product: 'all', 'mycar', 'education', 'education_deed' (デフォルト: 'all')
         context: Lambda コンテキスト
         
     Returns:
@@ -40,7 +40,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         # スクレイパーをインポート
         from scrapers.aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
-        from scrapers.aomori_michinoku_bank.education import AomorimichinokuEducationScraper
+        from scrapers.aomori_michinoku_bank.education_repetition import AomorimichinokuEducationRepetitionScraper
+        from scrapers.aomori_michinoku_bank.education_deed import AomorimichinokuEducationDeedScraper
         
         # 利用可能なスクレイパーマッピング
         scrapers = {
@@ -49,8 +50,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'name': 'マイカーローン'
             },
             'education': {
-                'class': AomorimichinokuEducationScraper,
-                'name': '教育ローン'
+                'class': AomorimichinokuEducationRepetitionScraper,
+                'name': '教育ローン（反復利用型）'
+            },
+            'education_deed': {
+                'class': AomorimichinokuEducationDeedScraper,
+                'name': '教育ローン（証書貸付型）'
             }
         }
         
@@ -169,11 +174,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def get_available_products() -> List[str]:
     """利用可能な商品一覧を取得"""
-    return ['mycar', 'education']
+    return ['mycar', 'education', 'education_deed']
 
 def get_product_info() -> Dict[str, str]:
     """商品情報を取得"""
     return {
         'mycar': 'マイカーローン',
-        'education': '教育ローン'
+        'education': '教育ローン（反復利用型）',
+        'education_deed': '教育ローン（証書貸付型）'
     }

@@ -3,9 +3,11 @@
 """
 
 from .mycar import AomorimichinokuBankScraper
-from .education import AomorimichinokuEducationScraper
+from .education_repetition import AomorimichinokuEducationRepetitionScraper
+from .education_deed import AomorimichinokuEducationDeedScraper
 
 __all__ = [
     'AomorimichinokuBankScraper',
-    'AomorimichinokuEducationScraper'
+    'AomorimichinokuEducationRepetitionScraper',
+    'AomorimichinokuEducationDeedScraper'
 ]

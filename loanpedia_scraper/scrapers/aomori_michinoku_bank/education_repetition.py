@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class AomorimichinokuEducationScraper:
+class AomorimichinokuEducationRepetitionScraper:
     """
     青森みちのく銀行の教育ローン情報をHTMLから抽出するスクレイパー
     requests + BeautifulSoupによる実装
@@ -116,14 +116,15 @@ class AomorimichinokuEducationScraper:
         for pattern, description in rate_patterns:
             match = re.search(pattern, full_text)
             if match:
-                if len(match.groups()) == 3:  # 基準金利 + 優遇後範囲
-                    item["min_interest_rate"] = float(match.group(2))
-                    item["max_interest_rate"] = float(match.group(3))
+                groups = match.groups()
+                if len(groups) == 3:  # 基準金利 + 優遇後範囲
+                    item["min_interest_rate"] = float(groups[1])  # 2番目のグループ
+                    item["max_interest_rate"] = float(groups[2])  # 3番目のグループ
                     logger.info(f"✅ {description}: {item['min_interest_rate']}% - {item['max_interest_rate']}%")
                     return
-                elif len(match.groups()) == 2:  # 範囲のみ
-                    item["min_interest_rate"] = float(match.group(1))
-                    item["max_interest_rate"] = float(match.group(2))
+                elif len(groups) == 2:  # 範囲のみ
+                    item["min_interest_rate"] = float(groups[0])  # 1番目のグループ
+                    item["max_interest_rate"] = float(groups[1])  # 2番目のグループ
                     logger.info(f"✅ {description}: {item['min_interest_rate']}% - {item['max_interest_rate']}%")
                     return
         
@@ -272,7 +273,7 @@ def main():
     """テスト実行"""
     logging.basicConfig(level=logging.INFO)
     
-    scraper = AomorimichinokuEducationScraper()
+    scraper = AomorimichinokuEducationRepetitionScraper()
     result = scraper.scrape_loan_info()
     
     if result and result.get("scraping_status") == "success":
