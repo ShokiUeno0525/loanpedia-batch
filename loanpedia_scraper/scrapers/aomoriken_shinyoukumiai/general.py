@@ -98,6 +98,7 @@ class AomorikenShinyoukumiaiScraper:
         logger.info("マイカーローンセクションから情報抽出")
         
         # 金利情報の抽出
+        # 汎用的な金利パターン（touou_shinkinと同じパターンを使用）
         rate_patterns = [
             r"年\s*(\d+\.\d+)\s*[%％]",
             r"金利\s*(\d+\.\d+)\s*[%％]",

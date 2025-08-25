@@ -90,6 +90,7 @@ class TououShinkinScraper:
 
     def _extract_interest_rates(self, item, main_content, relevant_texts):
         """金利情報を抽出"""
+        # 汎用的な金利パターン（aomoriken_shinyoukumiaiと同じパターンを使用）
         rate_patterns = [
             r"年\s*(\d+\.\d+)\s*[%％]",
             r"金利\s*(\d+\.\d+)\s*[%％]",

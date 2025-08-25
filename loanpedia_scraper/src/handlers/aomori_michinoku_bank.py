@@ -24,7 +24,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     Args:
         event: Lambda イベントデータ
-               - product: 'all', 'mycar', 'education', 'education_deed' (デフォルト: 'all')
+               - product: 'all', 'mycar', 'education', 'education_deed', 'education_card' (デフォルト: 'all')
         context: Lambda コンテキスト
         
     Returns:
@@ -42,6 +42,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         from scrapers.aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
         from scrapers.aomori_michinoku_bank.education_repetition import AomorimichinokuEducationRepetitionScraper
         from scrapers.aomori_michinoku_bank.education_deed import AomorimichinokuEducationDeedScraper
+        from scrapers.aomori_michinoku_bank.education_card import AomorimichinokuEducationCardScraper
         
         # 利用可能なスクレイパーマッピング
         scrapers = {
@@ -56,6 +57,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'education_deed': {
                 'class': AomorimichinokuEducationDeedScraper,
                 'name': '教育ローン（証書貸付型）'
+            },
+            'education_card': {
+                'class': AomorimichinokuEducationCardScraper,
+                'name': '教育カードローン'
             }
         }
         
@@ -174,12 +179,62 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def get_available_products() -> List[str]:
     """利用可能な商品一覧を取得"""
-    return ['mycar', 'education', 'education_deed']
+    return ['mycar', 'education', 'education_deed', 'education_card']
 
 def get_product_info() -> Dict[str, str]:
     """商品情報を取得"""
     return {
         'mycar': 'マイカーローン',
         'education': '教育ローン（反復利用型）',
-        'education_deed': '教育ローン（証書貸付型）'
+        'education_deed': '教育ローン（証書貸付型）',
+        'education_card': '教育カードローン'
     }
+
+
+def main():
+    """ローカルテスト用のメイン関数"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='青森みちのく銀行スクレイパー')
+    parser.add_argument('--product', default='all', 
+                       choices=['all', 'mycar', 'education', 'education_deed', 'education_card'],
+                       help='対象商品 (デフォルト: all)')
+    
+    args = parser.parse_args()
+    
+    # ログ設定
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    # テスト用イベント
+    test_event = {
+        'product': args.product
+    }
+    
+    # ハンドラー実行
+    result = lambda_handler(test_event, None)
+    
+    # 結果表示
+    print("=" * 50)
+    print("スクレイピング結果")
+    print("=" * 50)
+    print(f"ステータス: {result['statusCode']}")
+    print(f"成功: {result['body']['success']}")
+    print(f"メッセージ: {result['body']['message']}")
+    print(f"実行サマリー: {result['body']['summary']}")
+    
+    for item in result['body']['results']:
+        print(f"\n【{item['product_name']}】")
+        if item['success']:
+            data = item['result']
+            print(f"  ✅ 成功")
+            print(f"  商品名: {data.get('product_name')}")
+            print(f"  金利: {data.get('min_interest_rate')}% - {data.get('max_interest_rate')}%")
+            print(f"  融資額: {data.get('min_loan_amount'):,}円 - {data.get('max_loan_amount'):,}円")
+            print(f"  期間: {data.get('min_loan_term_months')}ヶ月 - {data.get('max_loan_term_months')}ヶ月")
+            print(f"  年齢: {data.get('min_age')}歳 - {data.get('max_age')}歳")
+        else:
+            print(f"  ❌ 失敗: {item['error']}")
+
+
+if __name__ == "__main__":
+    main()
