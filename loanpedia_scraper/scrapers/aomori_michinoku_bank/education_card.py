@@ -161,7 +161,8 @@ class AomorimichinokuEducationCardScraper:
                     max_amount = int(match.group(1).replace(",", ""))
                     web_limit = int(match.group(2).replace(",", ""))
                     item["min_loan_amount"] = 500000  # 50万円
-                    item["max_loan_amount"] = max_amount * 10000
+                    # WEB完結型の制限がある場合は、より低い方を採用
+                    item["max_loan_amount"] = min(max_amount, web_limit) * 10000
                 else:
                     item["min_loan_amount"] = 500000  # 50万円
                     item["max_loan_amount"] = int(match.group(1).replace(",", "")) * 10000
