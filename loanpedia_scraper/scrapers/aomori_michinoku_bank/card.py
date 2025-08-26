@@ -2,88 +2,36 @@
 """
 青森みちのく銀行カードローンスクレイピング
 
-通常カードローンの情報を抽出
+通常カードローンの情報を抽出（共通基盤版）
 """
 
-import hashlib
-import re
-import requests
-from bs4 import BeautifulSoup
-from datetime import datetime
+from .base_scraper import BaseLoanScraper
+from .extraction_utils import ExtractionUtils
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
 
-class AomorimichinokuCardScraper:
+class AomorimichinokuCardScraper(BaseLoanScraper):
     """
     青森みちのく銀行のカードローン情報をHTMLから抽出するスクレイパー
-    requests + BeautifulSoupによる実装
+    共通基盤 BaseLoanScraper を継承
     """
 
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
-        )
+    def get_default_url(self) -> str:
+        return "https://www.am-bk.co.jp/kojin/loan/cardloan/"
+    
+    def get_loan_type(self) -> str:
+        return "カードローン"
+    
+    def get_loan_category(self) -> str:
+        return "カードローン"
 
-    def scrape_loan_info(self, url="https://www.am-bk.co.jp/kojin/loan/cardloan/"):
-        try:
-            response = self.session.get(url, timeout=10)
-            response.raise_for_status()
-
-            soup = BeautifulSoup(response.content, "html.parser")
-            item = {
-                # financial_institutions テーブル用データ
-                "institution_code": "0117",
-                "institution_name": "青森みちのく銀行",
-                "website_url": "https://www.am-bk.co.jp/",
-                "institution_type": "銀行",
-                # raw_loan_data テーブル用データ
-                "source_url": url,
-                "html_content": response.text,
-                "extracted_text": soup.get_text().strip(),
-                "content_hash": hashlib.md5(response.text.encode()).hexdigest(),
-                "scraping_status": "success",
-                "scraped_at": datetime.now().isoformat(),
-                # loan_products テーブル用の基本データ
-                "product_name": self._extract_product_name(soup),
-                "loan_type": "カードローン",
-                "category": "カードローン",
-                "interest_type": "変動金利",
-            }
-
-            # 金利情報を抽出
-            self._extract_interest_rates(soup, item)
-
-            # 融資金額を抽出
-            self._extract_loan_amounts(soup, item)
-
-            # 融資期間を抽出
-            self._extract_loan_periods(soup, item)
-
-            # 年齢制限の抽出
-            self._extract_age_requirements(soup, item)
-
-            # 収入・保証人・商品特徴の抽出
-            self._extract_detailed_requirements(soup, item)
-
-            # 返済方法の抽出
-            self._extract_repayment_method(soup, item)
-
-            return item
-
-        except requests.RequestException as e:
-            logger.error(f"リクエストエラー: {e}")
-            return {"scraping_status": "failed", "error": str(e)}
-        except Exception as e:
-            logger.error(f"スクレイピングエラー: {e}")
-            return {"scraping_status": "failed", "error": str(e)}
+    # 基底クラスのscrape_loan_infoを使用（共通実装）
 
     def _extract_product_name(self, soup):
-        """商品名を抽出"""
+        """商品名を抽出（カードローン特化）"""
         title_elem = soup.find("title")
         if title_elem:
             title_text = title_elem.get_text().strip()
@@ -98,13 +46,54 @@ class AomorimichinokuCardScraper:
 
         return "青森みちのくカードローン"
 
+    def _get_default_interest_rates(self):
+        """カードローンのデフォルト金利範囲"""
+        return (2.4, 14.5)
+
+    def _get_default_loan_terms(self):
+        """カードローンのデフォルト融資期間範囲（ヶ月）"""
+        return (12, 36)  # 1年～3年
+
+    def _extract_guarantor_requirements(self, full_text: str) -> str:
+        """カードローンの保証人要件を抽出"""
+        if "保証人" in full_text and (
+            "不要" in full_text or "エム・ユー信用保証" in full_text
+        ):
+            return "原則不要（エム・ユー信用保証が保証）"
+        elif "保証会社" in full_text:
+            return "保証会社による保証"
+        return ""
+    
+    def _extract_special_features(self, full_text: str) -> str:
+        """カードローン特有の商品特徴を抽出"""
+        features = ExtractionUtils.extract_common_features(full_text)
+        
+        # カードローン特有の特徴
+        if "1,000円" in full_text:
+            features.append("1,000円から借入可能")
+        if "自動更新" in full_text:
+            features.append("3年自動更新")
+        if "カード" in full_text and "専用" in full_text:
+            features.append("専用カード発行")
+        if "月" in full_text and "2,000円" in full_text:
+            features.append("月々2,000円からの返済")
+        
+        return "; ".join(features)
+
+    def _get_default_repayment_method(self) -> str:
+        """カードローンのデフォルト返済方法"""
+        return "残高スライド返済（口座自動振替）"
+
     def _extract_interest_rates(self, soup, item):
         """金利情報を抽出（カードローン特化）"""
         full_text = soup.get_text()
 
         # カードローン特有の金利パターンを検索
         rate_patterns = [
-            (r"年\s*(\d+\.\d+)\s*[%％]\s*[〜～]\s*年\s*(\d+\.\d+)\s*[%％]", "基本金利範囲"),
+            (
+                r"年\s*(\d+\.\d+)\s*[%％]\s*[〜～]\s*年\s*(\d+\.\d+)\s*[%％]",
+                "基本金利範囲",
+            ),
             (r"(\d+\.\d+)\s*[%％]\s*[〜～]\s*(\d+\.\d+)\s*[%％]", "金利範囲"),
             (r"金利.*?(\d+\.\d+)\s*[%％].*?(\d+\.\d+)\s*[%％]", "金利テーブル"),
         ]
@@ -148,8 +137,12 @@ class AomorimichinokuCardScraper:
                                 item["min_interest_rate"] = rate
                                 item["max_interest_rate"] = rate
                             else:
-                                item["min_interest_rate"] = min(item["min_interest_rate"], rate)
-                                item["max_interest_rate"] = max(item["max_interest_rate"], rate)
+                                item["min_interest_rate"] = min(
+                                    item["min_interest_rate"], rate
+                                )
+                                item["max_interest_rate"] = max(
+                                    item["max_interest_rate"], rate
+                                )
 
         if "min_interest_rate" in item:
             logger.info(
@@ -159,25 +152,60 @@ class AomorimichinokuCardScraper:
     def _extract_loan_amounts(self, soup, item):
         """融資金額を抽出（カードローン特化）"""
         full_text = soup.get_text()
+        logger.info(f"🔍 融資金額抽出開始 - テキストサンプル: {full_text[:200]}...")
 
         amount_patterns = [
-            r"(\d+)\s*万円\s*[〜～]\s*(\d+(?:,\d{3})*)\s*万円",
-            r"最高\s*(\d+(?:,\d{3})*)\s*万円",
-            r"限度額\s*(\d+(?:,\d{3})*)\s*万円",
+            # 「10万円～1,000万円」「10万～1000万円」形式
+            (
+                r"(\d+(?:,\d{3})*)\s*万円?\s*[〜～から]\s*(\d+(?:,\d{3})*)\s*万円",
+                "範囲指定（万円単位）",
+            ),
+            # 「100,000円～10,000,000円」形式
+            (
+                r"(\d+(?:,\d{3})*)\s*円\s*[〜～から]\s*(\d+(?:,\d{3})*)\s*円",
+                "範囲指定（円単位）",
+            ),
+            # 「最高1,000万円」「限度額1000万円」形式
+            (r"(?:最高|限度額|上限)\s*(\d+(?:,\d{3})*)\s*万円", "上限のみ（万円単位）"),
+            # 「最高10,000,000円」形式
+            (r"(?:最高|限度額|上限)\s*(\d+(?:,\d{3})*)\s*円", "上限のみ（円単位）"),
         ]
 
-        for pattern in amount_patterns:
+        for pattern, pattern_type in amount_patterns:
             match = re.search(pattern, full_text)
             if match:
-                if len(match.groups()) == 2:
-                    item["min_loan_amount"] = int(match.group(1).replace(",", "")) * 10000
-                    item["max_loan_amount"] = int(match.group(2).replace(",", "")) * 10000
-                else:
-                    item["min_loan_amount"] = 100000  # 10万円
-                    item["max_loan_amount"] = int(match.group(1).replace(",", "")) * 10000
-                
                 logger.info(
-                    f"✅ 融資金額範囲: {item['min_loan_amount']:,}円 - {item['max_loan_amount']:,}円"
+                    f"🎯 パターンマッチ: {pattern_type} - マッチ内容: {match.group()}"
+                )
+
+                groups = match.groups()
+                if len(groups) == 2:
+                    # 範囲指定の場合
+                    min_amount = int(groups[0].replace(",", ""))
+                    max_amount = int(groups[1].replace(",", ""))
+
+                    # 万円単位か円単位かで調整
+                    if "万円" in pattern:
+                        item["min_loan_amount"] = min_amount * 10000
+                        item["max_loan_amount"] = max_amount * 10000
+                    else:
+                        item["min_loan_amount"] = min_amount
+                        item["max_loan_amount"] = max_amount
+
+                elif len(groups) == 1:
+                    # 上限のみの場合
+                    max_amount = int(groups[0].replace(",", ""))
+
+                    # 万円単位か円単位かで調整
+                    if "万円" in pattern:
+                        item["min_loan_amount"] = 100000  # デフォルト10万円
+                        item["max_loan_amount"] = max_amount * 10000
+                    else:
+                        item["min_loan_amount"] = 100000  # デフォルト10万円
+                        item["max_loan_amount"] = max_amount
+
+                logger.info(
+                    f"✅ 融資金額範囲 ({pattern_type}): {item['min_loan_amount']:,}円 - {item['max_loan_amount']:,}円"
                 )
                 return
 
@@ -203,7 +231,7 @@ class AomorimichinokuCardScraper:
                 years = int(match.group(1))
                 item["min_loan_term_months"] = 12  # 最低1年
                 item["max_loan_term_months"] = years * 12
-                
+
                 logger.info(
                     f"✅ 融資期間: {item.get('min_loan_term_months', 0)}ヶ月 - {item.get('max_loan_term_months', 0)}ヶ月 ({pattern_type})"
                 )
@@ -220,7 +248,7 @@ class AomorimichinokuCardScraper:
 
         age_patterns = [
             r"満(\d+)歳以上.*?満(\d+)歳未満",
-            r"満(\d+)歳以上.*?満(\d+)歳以下", 
+            r"満(\d+)歳以上.*?満(\d+)歳以下",
             r"(\d+)歳以上.*?(\d+)歳以下",
             r"(\d+)歳[〜～](\d+)歳",
         ]
@@ -230,7 +258,7 @@ class AomorimichinokuCardScraper:
             if match:
                 item["min_age"] = int(match.group(1))
                 max_age_value = int(match.group(2))
-                
+
                 # 「未満」の場合は-1する（75歳未満 = 74歳以下）
                 if "未満" in pattern:
                     item["max_age"] = max_age_value - 1
@@ -255,11 +283,17 @@ class AomorimichinokuCardScraper:
         if "継続的な収入" in full_text:
             income_requirements.append("継続的な収入があること")
 
-        item["income_requirements"] = "; ".join(income_requirements) if income_requirements else "安定した収入があること"
+        item["income_requirements"] = (
+            "; ".join(income_requirements)
+            if income_requirements
+            else "安定した収入があること"
+        )
 
         # 保証人要件
         guarantor_text = ""
-        if "保証人" in full_text and ("不要" in full_text or "エム・ユー信用保証" in full_text):
+        if "保証人" in full_text and (
+            "不要" in full_text or "エム・ユー信用保証" in full_text
+        ):
             guarantor_text = "原則不要（エム・ユー信用保証が保証）"
         elif "保証会社" in full_text:
             guarantor_text = "保証会社による保証"
