@@ -1,239 +1,521 @@
+# handlers_aomori_michinoku.py
+# -*- coding: utf-8 -*-
 """
-青森みちのく銀行統合 Lambda ハンドラー
-全商品（マイカーローン、教育ローン）を統合処理
+青森みちのく銀行 統合Lambdaハンドラー
+- 固定PDF+HTML金利スクレイプの各商品スクレイパーを集約
+- API Gateway / SQS / ローカル直叩き で共通に使えるディスパッチ
 """
 
 import json
 import logging
 import os
 import sys
+import time
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 
-# プロジェクトルートをパスに追加
-sys.path.append('/var/task')
-sys.path.append('/var/task/scrapers')
-sys.path.append('/var/task/database')
+# Lambdaパッケージ配置を考慮（必要に応じて調整）
+sys.path.extend(
+    [
+        "/var/task",
+        "/var/task/scrapers",
+        "/var/task/database",
+        os.path.dirname(os.path.abspath(__file__)),  # ローカル実行用
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scrapers", "aomori_michinoku_bank"),
+    ]
+)
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+INSTITUTION_KEY = "aomori_michinoku"
+FINANCIAL_INSTITUTION_ID = 1  # 青森みちのく銀行のID
+
+
+# ========== レスポンス・ユーティリティ（Lambda Proxy 互換） ==========
+def _resp(status: int, body: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "statusCode": status,
+        "headers": {"Content-Type": "application/json; charset=utf-8"},
+        "body": json.dumps(body, ensure_ascii=False),
+    }
+
+
+def _ok(body: Dict[str, Any]) -> Dict[str, Any]:
+    return _resp(200, body)
+
+
+def _err(status: int, code: str, message: str, **extra) -> Dict[str, Any]:
+    payload = {
+        "success": False,
+        "error": code,
+        "message": message,
+        "institution": INSTITUTION_KEY,
+        "timestamp": datetime.now().isoformat(),
+    }
+    payload.update(extra)
+    return _resp(status, payload)
+
+
+def _to_event_dict(event: Any) -> Dict[str, Any]:
+    if event is None:
+        return {}
+    if isinstance(event, str):
+        try:
+            return json.loads(event)
+        except Exception:
+            return {}
+    if isinstance(event, dict):
+        return event
+    return {}
+
+
+# ========== スクレイパーレジストリ ==========
+def _load_registry():
     """
-    青森みちのく銀行統合 Lambda ハンドラー関数
-    
-    Args:
-        event: Lambda イベントデータ
-               - product: 'all', 'mycar', 'education', 'education_deed', 'education_card' (デフォルト: 'all')
-        context: Lambda コンテキスト
-        
-    Returns:
-        Dict[str, Any]: 実行結果
+    各商品スクレイパーのクラスを遅延インポートしてレジストリ化。
+    新しいスクレイパーモジュールを使用。
     """
-    logger.info("青森みちのく銀行の統合スクレイピングを開始")
-    logger.info(f"Event: {json.dumps(event, ensure_ascii=False)}")
+    # Lambda環境での絶対インポートパス
+    import sys
+    import os
     
-    # 対象商品を判定
-    target_product = event.get('product', 'all')
-    logger.info(f"対象商品: {target_product}")
+    # スクレイパーモジュールへのパスを追加
+    scraper_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scrapers", "aomori_michinoku_bank")
+    if scraper_path not in sys.path:
+        sys.path.insert(0, scraper_path)
     
     try:
-        # スクレイパーをインポート
-        from scrapers.aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
-        from scrapers.aomori_michinoku_bank.education_repetition import AomorimichinokuEducationRepetitionScraper
-        from scrapers.aomori_michinoku_bank.education_deed import AomorimichinokuEducationDeedScraper
-        from scrapers.aomori_michinoku_bank.education_card import AomorimichinokuEducationCardScraper
-        
-        # 利用可能なスクレイパーマッピング
-        scrapers = {
-            'mycar': {
-                'class': AomorimichinokuBankScraper,
-                'name': 'マイカーローン'
-            },
-            'education': {
-                'class': AomorimichinokuEducationRepetitionScraper,
-                'name': '教育ローン（反復利用型）'
-            },
-            'education_deed': {
-                'class': AomorimichinokuEducationDeedScraper,
-                'name': '教育ローン（証書貸付型）'
-            },
-            'education_card': {
-                'class': AomorimichinokuEducationCardScraper,
-                'name': '教育カードローン'
-            }
-        }
-        
-        results = []
-        success_count = 0
-        error_count = 0
-        
-        # 実行対象を決定
-        if target_product == 'all':
-            target_scrapers = scrapers
-        elif target_product in scrapers:
-            target_scrapers = {target_product: scrapers[target_product]}
-        else:
-            return {
-                'statusCode': 400,
-                'body': {
-                    'success': False,
-                    'error': 'InvalidProduct',
-                    'message': f'指定された商品が無効です: {target_product}',
-                    'available_products': list(scrapers.keys()),
-                    'institution': 'aomori_michinoku',
-                    'timestamp': datetime.now().isoformat()
-                }
-            }
-        
-        # 各スクレイパーを実行
-        for product_key, scraper_info in target_scrapers.items():
-            try:
-                logger.info(f"{scraper_info['name']}のスクレイピングを開始")
-                
-                scraper = scraper_info['class']()
-                result = scraper.scrape_loan_info()
-                
-                if result and result.get("scraping_status") == "success":
-                    results.append({
-                        'product': product_key,
-                        'product_name': scraper_info['name'],
-                        'success': True,
-                        'result': result
-                    })
-                    success_count += 1
-                    logger.info(f"✅ {scraper_info['name']}のスクレイピング成功")
-                else:
-                    error_msg = result.get('error', '不明なエラー') if result else 'スクレイパーからの結果なし'
-                    results.append({
-                        'product': product_key,
-                        'product_name': scraper_info['name'],
-                        'success': False,
-                        'error': error_msg
-                    })
-                    error_count += 1
-                    logger.error(f"❌ {scraper_info['name']}のスクレイピング失敗: {error_msg}")
-                    
-            except Exception as product_error:
-                error_msg = f"{scraper_info['name']}で予期しないエラー: {str(product_error)}"
-                results.append({
-                    'product': product_key,
-                    'product_name': scraper_info['name'],
-                    'success': False,
-                    'error': error_msg
-                })
-                error_count += 1
-                logger.error(error_msg, exc_info=True)
-        
-        # 統合レスポンスを作成
-        overall_success = success_count > 0 and error_count == 0
-        status_code = 200 if overall_success else 207 if success_count > 0 else 500
-        
-        response = {
-            'statusCode': status_code,
-            'body': {
-                'success': overall_success,
-                'message': f'青森みちのく銀行統合スクレイピング完了: 成功{success_count}件、失敗{error_count}件',
-                'institution': 'aomori_michinoku',
-                'target_product': target_product,
-                'summary': {
-                    'total_products': len(target_scrapers),
-                    'success_count': success_count,
-                    'error_count': error_count
-                },
-                'results': results,
-                'timestamp': datetime.now().isoformat()
-            }
-        }
-        
-        logger.info(f"統合スクレイピング完了: 成功{success_count}件、失敗{error_count}件")
-        return response
-        
+        from product_scraper import scrape_product
+        from config import profiles
     except ImportError as e:
-        error_msg = f"モジュールインポートエラー: {str(e)}"
-        logger.error(error_msg)
-        return {
-            'statusCode': 500,
-            'body': {
-                'success': False,
-                'error': 'ImportError',
-                'message': error_msg,
-                'institution': 'aomori_michinoku',
-                'timestamp': datetime.now().isoformat()
-            }
-        }
-        
-    except Exception as e:
-        error_msg = f"予期しないエラー: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        return {
-            'statusCode': 500,
-            'body': {
-                'success': False,
-                'error': 'UnexpectedError',
-                'message': error_msg,
-                'institution': 'aomori_michinoku',
-                'timestamp': datetime.now().isoformat()
-            }
-        }
+        logger.error(f"Failed to import scraper modules: {e}")
+        raise
+    
+    # 商品プロファイルベースのスクレイパー生成
+    class ProductScraper:
+        def __init__(self, url: str, pdf_url_override: str = None):
+            self.url = url
+            self.pdf_url_override = pdf_url_override
+            
+        def scrape_loan_info(self) -> Dict[str, Any]:
+            try:
+                product, raw_data = scrape_product(
+                    self.url, 
+                    fin_id=1, 
+                    pdf_url_override=self.pdf_url_override
+                )
+                return {
+                    "scraping_status": "success",
+                    "product_name": product.product_name,
+                    "loan_type": product.loan_type,
+                    "category": product.category,
+                    "min_interest_rate": product.min_interest_rate,
+                    "max_interest_rate": product.max_interest_rate,
+                    "interest_type": product.interest_type,
+                    "min_loan_amount": product.min_loan_amount,
+                    "max_loan_amount": product.max_loan_amount,
+                    "min_loan_term": product.min_loan_term,
+                    "max_loan_term": product.max_loan_term,
+                    "min_loan_term_months": product.min_loan_term,
+                    "max_loan_term_months": product.max_loan_term,
+                    "repayment_method": product.repayment_method,
+                    "min_age": product.min_age,
+                    "max_age": product.max_age,
+                    "special_features": product.special_features,
+                    "source_reference": product.source_reference,
+                    "raw_data": raw_data.model_dump() if raw_data else None,
+                }
+            except Exception as e:
+                return {
+                    "scraping_status": "error", 
+                    "error": str(e)
+                }
+    
+    # key: APIで指定するproduct、name: 表示名、cls: スクレイパークラス
+    registry = {}
+    
+    # マイカーローン
+    registry["mycar"] = {
+        "name": "青森みちのくマイカーローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-75.pdf"
+        ),
+    }
+    
+    # 教育ローン（反復利用型）
+    registry["education"] = {
+        "name": "青森みちのく教育ローン反復利用型",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/kyouikuloan_hanpuku/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-77.pdf"
+        ),
+    }
+    
+    # 教育ローン（証書貸付型）
+    registry["education_deed"] = {
+        "name": "青森みちのく教育ローン証書貸付型",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/certificate/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-78.pdf"
+        ),
+    }
+    
+    # 教育カードローン
+    registry["education_card"] = {
+        "name": "青森みちのく教育カードローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-79.pdf"
+        ),
+    }
+    
+    # フリーローン
+    registry["freeloan"] = {
+        "name": "青森みちのくフリーローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/freeloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-81.pdf"
+        ),
+    }
+    
+    # おまとめローン
+    registry["omatomeloan"] = {
+        "name": "青森みちのくおまとめローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-83.pdf"
+        ),
+    }
+    
+    return registry
+
 
 def get_available_products() -> List[str]:
-    """利用可能な商品一覧を取得"""
-    return ['mycar', 'education', 'education_deed', 'education_card']
+    return list(_load_registry().keys())
+
 
 def get_product_info() -> Dict[str, str]:
-    """商品情報を取得"""
-    return {
-        'mycar': 'マイカーローン',
-        'education': '教育ローン（反復利用型）',
-        'education_deed': '教育ローン（証書貸付型）',
-        'education_card': '教育カードローン'
-    }
+    reg = _load_registry()
+    return {k: v["name"] for k, v in reg.items()}
 
 
-def main():
-    """ローカルテスト用のメイン関数"""
-    import argparse
+# ========== 実行ロジック ==========
+def _save_to_database(product_data: Dict[str, Any], raw_data_dict: Dict[str, Any]) -> bool:
+    """
+    スクレイピング結果をデータベースに保存
+    """
+    if not os.getenv("SAVE_TO_DB", "true").lower() in ("true", "1", "yes"):
+        logger.info("SAVE_TO_DB is disabled, skipping database save")
+        return True
     
-    parser = argparse.ArgumentParser(description='青森みちのく銀行スクレイパー')
-    parser.add_argument('--product', default='all', 
-                       choices=['all', 'mycar', 'education', 'education_deed', 'education_card'],
-                       help='対象商品 (デフォルト: all)')
-    
-    args = parser.parse_args()
-    
-    # ログ設定
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    
-    # テスト用イベント
-    test_event = {
-        'product': args.product
-    }
-    
-    # ハンドラー実行
-    result = lambda_handler(test_event, None)
-    
-    # 結果表示
-    print("=" * 50)
-    print("スクレイピング結果")
-    print("=" * 50)
-    print(f"ステータス: {result['statusCode']}")
-    print(f"成功: {result['body']['success']}")
-    print(f"メッセージ: {result['body']['message']}")
-    print(f"実行サマリー: {result['body']['summary']}")
-    
-    for item in result['body']['results']:
-        print(f"\n【{item['product_name']}】")
-        if item['success']:
-            data = item['result']
-            print(f"  ✅ 成功")
-            print(f"  商品名: {data.get('product_name')}")
-            print(f"  金利: {data.get('min_interest_rate')}% - {data.get('max_interest_rate')}%")
-            print(f"  融資額: {data.get('min_loan_amount'):,}円 - {data.get('max_loan_amount'):,}円")
-            print(f"  期間: {data.get('min_loan_term_months')}ヶ月 - {data.get('max_loan_term_months')}ヶ月")
-            print(f"  年齢: {data.get('min_age')}歳 - {data.get('max_age')}歳")
+    try:
+        # データベースモジュールをインポート
+        # ハンドラーの位置: loanpedia_scraper/src/handlers/
+        # データベースの位置: loanpedia_scraper/database/
+        database_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "database")
+        if database_path not in sys.path:
+            sys.path.insert(0, database_path)
+        from loan_database import LoanDatabase
+        
+        # データベース設定（環境変数から取得）
+        db_config = {
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'user': os.getenv('DB_USER', 'app_user'),
+            'password': os.getenv('DB_PASSWORD', 'app_password'),
+            'database': os.getenv('DB_NAME', 'app_db'),
+            'port': int(os.getenv('DB_PORT', '3307')),  # Docker Composeのポート
+            'charset': 'utf8mb4'
+        }
+        
+        db = LoanDatabase(db_config)
+        if not db.connect():
+            logger.error("Failed to connect to database")
+            return False
+        
+        # LoanDatabaseの期待する形式に統合
+        loan_data = {
+            'institution_code': 'aomori_michinoku',
+            'institution_name': '青森みちのく銀行',
+            'source_url': raw_data_dict.get('source_url', product_data.get('source_reference', '')),
+            'html_content': raw_data_dict.get('html_content', ''),
+            'extracted_text': raw_data_dict.get('extracted_text', ''),
+            'content_hash': raw_data_dict.get('content_hash', ''),
+            'scraping_status': 'success',
+            'scraped_at': datetime.now().isoformat(),
+            'product_name': product_data.get('product_name'),
+            'loan_type': product_data.get('loan_type'),
+            'category': product_data.get('category'),
+            'min_interest_rate': product_data.get('min_interest_rate'),
+            'max_interest_rate': product_data.get('max_interest_rate'),
+            'interest_type': product_data.get('interest_type'),
+            'min_loan_amount': product_data.get('min_loan_amount'),
+            'max_loan_amount': product_data.get('max_loan_amount'),
+            'min_loan_term': product_data.get('min_loan_term'),
+            'max_loan_term': product_data.get('max_loan_term'),
+            'repayment_method': product_data.get('repayment_method'),
+            'min_age': product_data.get('min_age'),
+            'max_age': product_data.get('max_age'),
+            'special_features': product_data.get('special_features'),
+        }
+        
+        # データベースに保存
+        success = db.save_loan_data(loan_data)
+        db.disconnect()
+        
+        if success:
+            logger.info(f"Successfully saved {product_data.get('product_name')} to database")
+            return True
         else:
-            print(f"  ❌ 失敗: {item['error']}")
+            logger.error(f"Failed to save {product_data.get('product_name')} to database")
+            return False
+        
+    except Exception as e:
+        logger.exception(f"Database save error: {e}")
+        return False
+
+
+def _run_one(product_key: str, reg: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    単一スクレイパーを実行して結果を標準化。
+    戻り値:
+      {
+        "product": "mycar",
+        "product_name": "マイカーローン",
+        "success": True/False,
+        "result": {...} or None,
+        "error": "..." or None
+      }
+    """
+    info = reg[product_key]
+    name = info["name"]
+    cls = info["cls"]
+
+    logger.info(f"▶ {name} のスクレイピング開始")
+    try:
+        scraper = cls()
+        result = scraper.scrape_loan_info()
+        if result and result.get("scraping_status") == "success":
+            logger.info(f"✅ {name} のスクレイピング成功")
+            
+            # データベースに保存
+            raw_data = result.get("raw_data", {})
+            db_saved = _save_to_database(result, raw_data)
+            
+            return {
+                "product": product_key,
+                "product_name": name,
+                "success": True,
+                "result": result,
+                "error": None,
+                "db_saved": db_saved,
+            }
+        else:
+            error_msg = (result or {}).get("error") or "スクレイパーが失敗/結果なし"
+            logger.error(f"❌ {name} のスクレイピング失敗: {error_msg}")
+            return {
+                "product": product_key,
+                "product_name": name,
+                "success": False,
+                "result": result,
+                "error": error_msg,
+            }
+    except Exception as e:
+        logger.exception(f"❌ {name} で例外発生")
+        return {
+            "product": product_key,
+            "product_name": name,
+            "success": False,
+            "result": None,
+            "error": f"Exception: {e}",
+        }
+
+
+def _run_many(targets: List[str]) -> Tuple[List[Dict[str, Any]], int, int]:
+    reg = _load_registry()
+    results: List[Dict[str, Any]] = []
+    ok = 0
+    ng = 0
+    for key in targets:
+        if key not in reg:
+            results.append(
+                {
+                    "product": key,
+                    "product_name": "(unknown)",
+                    "success": False,
+                    "result": None,
+                    "error": f"Unknown product: {key}",
+                }
+            )
+            ng += 1
+            continue
+        r = _run_one(key, reg)
+        results.append(r)
+        if r["success"]:
+            ok += 1
+        else:
+            ng += 1
+        # 過負荷防止（必要に応じて環境変数で間隔調整）
+        time.sleep(float(os.getenv("SCRAPE_SLEEP_SEC", "0.5")))
+    return results, ok, ng
+
+
+def _parse_targets(evt: Dict[str, Any]) -> List[str]:
+    """
+    event の "product" 指定を解釈:
+      - "all"（既定）: 全商品
+      - "mycar" のような文字列
+      - ["mycar","education_card"] のような配列
+    """
+    reg_keys = get_available_products()
+    p = evt.get("product", "all")
+
+    if isinstance(p, list):
+        return p or reg_keys
+    if isinstance(p, str):
+        if p == "all":
+            return reg_keys
+        return [p]
+    # 型不正時は全件
+    return reg_keys
+
+
+# ========== メイン・ディスパッチ ==========
+def _dispatch(evt: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    入力イベントの多形を吸収し、共通処理へディスパッチ。
+    - API Gateway (Lambda Proxy): {"httpMethod": "...", "body": "..."} に対応
+    - SQS: {"Records":[{"body":"...json..."}]} に対応（バッチ処理は簡略）
+    - 直叩き/StepFunctions/EventBridge: そのままJSON
+    """
+    # SQS（バッチ）は各レコードの body を再帰処理（ここでは簡略化しfailuresなしで返す）
+    if "Records" in evt and isinstance(evt["Records"], list):
+        for rec in evt["Records"]:
+            try:
+                body = json.loads(rec.get("body") or "{}")
+                _dispatch(body)
+            except Exception:
+                logger.exception("SQS record handling error")
+        return {"batchItemFailures": []}
+
+    # API Gateway（Lambda Proxy統合）
+    if "httpMethod" in evt and "body" in evt:
+        try:
+            body = json.loads(evt.get("body") or "{}")
+        except Exception:
+            body = {}
+        return _dispatch(body)
+
+    # 直叩き/汎用
+    targets = _parse_targets(evt)
+    all_keys = set(get_available_products())
+    invalid = [k for k in targets if k not in all_keys]
+    if invalid:
+        return _err(
+            400,
+            "InvalidProduct",
+            f"無効な商品指定: {invalid}",
+            available_products=sorted(all_keys),
+        )
+
+    results, ok, ng = _run_many(targets)
+    overall_success = ok > 0 and ng == 0
+    status = 200 if overall_success else (207 if ok > 0 else 500)
+
+    summary = {
+        "total_products": len(targets),
+        "success_count": ok,
+        "error_count": ng,
+    }
+    body = {
+        "success": overall_success,
+        "message": f"統合スクレイピング完了: 成功{ok}件、失敗{ng}件",
+        "institution": INSTITUTION_KEY,
+        "target_products": targets,
+        "summary": summary,
+        "results": results,
+        "timestamp": datetime.now().isoformat(),
+    }
+    return _resp(status, body)
+
+
+# ========== Lambdaエントリポイント ==========
+def lambda_handler(event, context):
+    logger.info("青森みちのく銀行 統合スクレイピング開始")
+    logger.info(f"Event(raw): {event!r}")
+    try:
+        return _dispatch(_to_event_dict(event))
+    except ImportError as e:
+        logger.exception("ImportError")
+        return _err(500, "ImportError", str(e))
+    except Exception as e:
+        logger.exception("Unhandled exception")
+        return _err(500, "UnexpectedError", str(e))
+
+
+# ========== ローカル実行（python handlers_aomori_michinoku.py --product ...） ==========
+def main():
+    import argparse
+
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
+
+    parser = argparse.ArgumentParser(
+        description="青森みちのく銀行 統合スクレイピング（ローカル）"
+    )
+    parser.add_argument(
+        "--product",
+        default="all",
+        help="対象商品。'all' / 'mycar' / 'education' / 'education_deed' / 'education_card' / 'freeloan' / 'omatomeloan' またはカンマ区切り",
+    )
+    args = parser.parse_args()
+
+    # 配列にも対応（mycar,education のような指定）
+    if "," in args.product:
+        products = [p.strip() for p in args.product.split(",") if p.strip()]
+        evt = {"product": products}
+    else:
+        evt = {"product": args.product}
+
+    resp = lambda_handler(evt, None)
+
+    print("=" * 60)
+    print("ステータス:", resp["statusCode"])
+    body = json.loads(resp["body"])  # Lambda Proxyではbodyは文字列
+    print("成功:", body["success"])
+    print("メッセージ:", body["message"])
+    print("サマリー:", body["summary"])
+    for item in body["results"]:
+        print(f"\n商品: {item['product']}")
+        if item["success"]:
+            data = item["result"] or {}
+            print("  ✅ 成功")
+            print(f"  DB保存: {'✅' if item.get('db_saved') else '❌'}")
+            print("  商品名:", data.get("product_name"))
+            print(
+                "  金利:",
+                data.get("min_interest_rate"),
+                "-",
+                data.get("max_interest_rate"),
+            )
+            print(
+                "  融資額:",
+                data.get("min_loan_amount"),
+                "-",
+                data.get("max_loan_amount"),
+            )
+            print(
+                "  期間(月):",
+                data.get("min_loan_term_months"),
+                "-",
+                data.get("max_loan_term_months"),
+            )
+            print("  年齢:", data.get("min_age"), "-", data.get("max_age"))
+        else:
+            print("  ❌ 失敗:", item["error"])
 
 
 if __name__ == "__main__":
