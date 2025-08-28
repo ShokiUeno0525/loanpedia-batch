@@ -14,22 +14,39 @@ import time
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 
-# Lambdaパッケージ配置を考慮（必要に応じて調整）
-sys.path.extend(
-    [
-        "/var/task",
+# パス設定ユーティリティ
+def _setup_paths():
+    """Lambda環境とローカル実行環境の両方でモジュールパスを設定"""
+    handler_dir = os.path.dirname(os.path.abspath(__file__))
+    # loanpedia_scraper レベルまで遡る
+    loanpedia_scraper_root = os.path.dirname(os.path.dirname(handler_dir))
+    
+    paths_to_add = [
+        "/var/task",  # Lambda環境
         "/var/task/scrapers",
-        "/var/task/database",
-        os.path.dirname(os.path.abspath(__file__)),  # ローカル実行用
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scrapers", "aomori_michinoku_bank"),
+        "/var/task/database", 
+        handler_dir,  # ローカル実行用
+        os.path.join(loanpedia_scraper_root, "scrapers", "aomori_michinoku_bank"),
+        os.path.join(loanpedia_scraper_root, "database"),
     ]
-)
+    
+    for path in paths_to_add:
+        if path not in sys.path:
+            sys.path.insert(0, path)
 
-logger = logging.getLogger()
+# パスの初期設定
+_setup_paths()
+
+# 設定とロガーの初期化
+logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
+# 定数定義
 INSTITUTION_KEY = "aomori_michinoku"
-FINANCIAL_INSTITUTION_ID = 1  # 青森みちのく銀行のID
+FINANCIAL_INSTITUTION_ID = int(os.getenv("AOMORI_MICHINOKU_ID", "1"))
+SCRAPE_SLEEP_SEC = float(os.getenv("SCRAPE_SLEEP_SEC", "2.0"))
+DB_RETRY_MAX = int(os.getenv("DB_RETRY_MAX", "5"))
+DB_RETRY_BASE_DELAY = float(os.getenv("DB_RETRY_BASE_DELAY", "1.0"))
 
 
 # ========== レスポンス・ユーティリティ（Lambda Proxy 互換） ==========
@@ -76,20 +93,18 @@ def _load_registry():
     各商品スクレイパーのクラスを遅延インポートしてレジストリ化。
     新しいスクレイパーモジュールを使用。
     """
-    # Lambda環境での絶対インポートパス
-    import sys
-    import os
-    
-    # スクレイパーモジュールへのパスを追加
-    scraper_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scrapers", "aomori_michinoku_bank")
-    if scraper_path not in sys.path:
-        sys.path.insert(0, scraper_path)
-    
     try:
-        from product_scraper import scrape_product
-        from config import profiles
+        # パスは既に_setup_paths()で設定済み
+        import product_scraper
+        import config
+        scrape_product = product_scraper.scrape_product
+        profiles = config.profiles
     except ImportError as e:
         logger.error(f"Failed to import scraper modules: {e}")
+        # 詳細なエラー情報を追加
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        logger.error(f"Current Python path: {sys.path[:5]}...")  # パスの最初の5つを表示
         raise
     
     # 商品プロファイルベースのスクレイパー生成
@@ -102,7 +117,7 @@ def _load_registry():
             try:
                 product, raw_data = scrape_product(
                     self.url, 
-                    fin_id=1, 
+                    fin_id=FINANCIAL_INSTITUTION_ID, 
                     pdf_url_override=self.pdf_url_override
                 )
                 return {
@@ -117,8 +132,8 @@ def _load_registry():
                     "max_loan_amount": product.max_loan_amount,
                     "min_loan_term": product.min_loan_term,
                     "max_loan_term": product.max_loan_term,
-                    "min_loan_term_months": product.min_loan_term,
-                    "max_loan_term_months": product.max_loan_term,
+                    "min_loan_term_months": product.min_loan_term,  # 月単位（互換性のため保持）
+                    "max_loan_term_months": product.max_loan_term,  # 月単位（互換性のため保持）
                     "repayment_method": product.repayment_method,
                     "min_age": product.min_age,
                     "max_age": product.max_age,
@@ -205,9 +220,22 @@ def get_product_info() -> Dict[str, str]:
 def _save_to_database(product_data: Dict[str, Any], raw_data_dict: Dict[str, Any]) -> bool:
     """
     スクレイピング結果をデータベースに保存
+    
+    Args:
+        product_data: 商品データ辞書
+        raw_data_dict: 生データ辞書
+        
+    Returns:
+        bool: 保存成功時True、失敗時False
     """
-    if not os.getenv("SAVE_TO_DB", "true").lower() in ("true", "1", "yes"):
+    save_to_db = os.getenv("SAVE_TO_DB", "true").lower()
+    if save_to_db not in ("true", "1", "yes"):
         logger.info("SAVE_TO_DB is disabled, skipping database save")
+        return True
+    
+    # デバッグモード: データベース保存を無効にして、スクレイピングの成功を確認
+    if os.getenv("DEBUG_SKIP_DB", "false").lower() in ("true", "1", "yes"):
+        logger.info("DEBUG_SKIP_DB is enabled, skipping database save for debugging")
         return True
     
     try:
@@ -217,21 +245,50 @@ def _save_to_database(product_data: Dict[str, Any], raw_data_dict: Dict[str, Any
         database_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "database")
         if database_path not in sys.path:
             sys.path.insert(0, database_path)
-        from loan_database import LoanDatabase
+        
+        try:
+            from loan_database import LoanDatabase
+        except ImportError as e:
+            logger.error(f"Failed to import LoanDatabase: {e}")
+            # 詳細なエラー情報を追加
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"Database path: {database_path}")
+            logger.error(f"Python path: {sys.path}")
+            raise
         
         # データベース設定（環境変数から取得）
         db_config = {
-            'host': os.getenv('DB_HOST', 'localhost'),
+            'host': os.getenv('DB_HOST', 'mysql'),
             'user': os.getenv('DB_USER', 'app_user'),
             'password': os.getenv('DB_PASSWORD', 'app_password'),
             'database': os.getenv('DB_NAME', 'app_db'),
-            'port': int(os.getenv('DB_PORT', '3307')),  # Docker Composeのポート
+            'port': int(os.getenv('DB_PORT', '3306')),  # Docker内のポート
             'charset': 'utf8mb4'
         }
         
-        db = LoanDatabase(db_config)
-        if not db.connect():
-            logger.error("Failed to connect to database")
+        # データベース接続をリトライ付きで実行（指数バックオフ）
+        for attempt in range(DB_RETRY_MAX):
+            try:
+                # 接続前に少し待機（リソース競合回避）
+                if attempt > 0:
+                    delay = DB_RETRY_BASE_DELAY * (2 ** (attempt - 1))  # 指数バックオフ
+                    logger.info(f"Waiting {delay} seconds before retry {attempt + 1}")
+                    time.sleep(delay)
+                
+                db = LoanDatabase(db_config)
+                if db.connect():
+                    logger.info(f"Database connection successful on attempt {attempt + 1}")
+                    break
+                else:
+                    logger.warning(f"Database connection attempt {attempt + 1} failed (returned False)")
+            except Exception as e:
+                logger.warning(f"Database connection attempt {attempt + 1} failed with exception: {e}")
+                if attempt == DB_RETRY_MAX - 1:
+                    logger.error("All database connection attempts failed")
+                    return False
+        else:
+            logger.error(f"Failed to connect to database after {DB_RETRY_MAX} retries")
             return False
         
         # LoanDatabaseの期待する形式に統合
@@ -356,8 +413,8 @@ def _run_many(targets: List[str]) -> Tuple[List[Dict[str, Any]], int, int]:
             ok += 1
         else:
             ng += 1
-        # 過負荷防止（必要に応じて環境変数で間隔調整）
-        time.sleep(float(os.getenv("SCRAPE_SLEEP_SEC", "0.5")))
+        # 過負荷防止とデータベース負荷軽減
+        time.sleep(SCRAPE_SLEEP_SEC)
     return results, ok, ng
 
 
