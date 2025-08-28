@@ -13,15 +13,23 @@ import logging
 import sys
 import os
 
-# データベースライブラリをインポート
+# データベースライブラリをインポート（パッケージ前提）
 try:
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'database'))
-    from loan_database import LoanDatabase, get_database_config
+    from database.loan_database import LoanDatabase, get_database_config
     DATABASE_AVAILABLE = True
-except ImportError:
-    DATABASE_AVAILABLE = False
-    LoanDatabase = None
-    get_database_config = None
+except Exception:
+    # ローカル実行時などでパスが噛み合わない場合のフォールバック
+    scraper_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    for p in [scraper_root, os.path.join(scraper_root, "database")]:
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    try:
+        from database.loan_database import LoanDatabase, get_database_config
+        DATABASE_AVAILABLE = True
+    except Exception:
+        DATABASE_AVAILABLE = False
+        LoanDatabase = None
+        get_database_config = None
 
 logger = logging.getLogger(__name__)
 

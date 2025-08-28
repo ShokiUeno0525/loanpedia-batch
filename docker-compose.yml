@@ -29,6 +29,7 @@ services:
       - "3307:3306" # ポート番号を変更してバッティング回避
     volumes:
       - mysql_data:/var/lib/mysql
+    command: --max_connections=300 --innodb_buffer_pool_size=256M --wait_timeout=600 --interactive_timeout=600
 
   localstack:
     image: localstack/localstack:3.0

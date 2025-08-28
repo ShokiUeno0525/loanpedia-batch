@@ -110,9 +110,24 @@ class LoanDatabase:
             
             # 生データを保存
             raw_data_id = self.save_raw_data(loan_data, institution_id)
-            
-            logger.info(f"Loan data saved: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}")
-            
+
+            # 明示的にコミット（コンテキスト外利用時の未コミット対策）
+            try:
+                if self.connection:
+                    self.connection.commit()
+                    logger.info(
+                        f"Committed loan data: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}"
+                    )
+            except Exception as ce:
+                logger.error(f"Commit failed, rolling back: {ce}")
+                if self.connection:
+                    self.connection.rollback()
+                return None
+
+            logger.info(
+                f"Loan data saved: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}"
+            )
+
             return raw_data_id
             
         except Exception as e:
@@ -199,6 +214,20 @@ class LoanDatabase:
                 datetime.now(),
                 existing['id']
             ))
+
+            # 更新時も明示コミット
+            try:
+                if self.connection:
+                    self.connection.commit()
+                    logger.info(
+                        f"Committed update for existing raw_loan_data ID: {existing['id']}"
+                    )
+            except Exception as ce:
+                logger.error(f"Commit failed after update, rolling back: {ce}")
+                if self.connection:
+                    self.connection.rollback()
+                raise
+
             return existing['id']
         
         # 新規保存

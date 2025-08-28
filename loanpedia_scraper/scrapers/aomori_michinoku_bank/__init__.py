@@ -1,13 +1,8 @@
-"""
-青森みちのく銀行スクレイピングモジュール
+"""青森みちのく銀行スクレイピングパッケージ。
+
+注意: ここではサブモジュールをインポートしません。
+Lambda/SAM 環境でのパッケージ初期化時に不要な依存を読み込まず、
+個別モジュールを明示的にインポートする運用とします。
 """
 
-from .mycar import AomorimichinokuBankScraper
-from .education_repetition import AomorimichinokuEducationRepetitionScraper
-from .education_deed import AomorimichinokuEducationDeedScraper
-
-__all__ = [
-    'AomorimichinokuBankScraper',
-    'AomorimichinokuEducationRepetitionScraper',
-    'AomorimichinokuEducationDeedScraper'
-]
+__all__: list[str] = []

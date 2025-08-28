@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "SAM Local Invoke (No Debug)",
+            "type": "shell",
+            "command": "sam",
+            "args": [
+                "local",
+                "invoke",
+                "AoimoriShinkinScraperFunction",
+                "--no-debug"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SAM Local Invoke with Event",
+            "type": "shell", 
+            "command": "sam",
+            "args": [
+                "local",
+                "invoke",
+                "AoimoriShinkinScraperFunction",
+                "--no-debug",
+                "--event",
+                "events/aoimori_shinkin_test.json"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
