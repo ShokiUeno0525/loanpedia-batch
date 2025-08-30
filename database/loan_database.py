@@ -302,16 +302,55 @@ DEFAULT_DB_CONFIG = {
 
 
 def get_database_config() -> Dict[str, Any]:
-    """環境変数またはデフォルト設定からデータベース設定を取得"""
+    """環境変数またはデフォルト設定からデータベース設定を取得
+
+    許容する環境変数のキー（優先順）:
+      - DB_NAME / DB_DATABASE / MYSQL_DATABASE
+      - DB_USER / DB_USERNAME / MYSQL_USER
+      - DB_PASSWORD / MYSQL_PASSWORD
+      - DB_HOST / MYSQL_HOST
+      - DB_PORT / MYSQL_PORT
+      - DB_CHARSET
+    """
     import os
-    
+
+    # フォールバック付き取得
+    host = (
+        os.getenv('DB_HOST')
+        or os.getenv('MYSQL_HOST')
+        or DEFAULT_DB_CONFIG['host']
+    )
+    user = (
+        os.getenv('DB_USER')
+        or os.getenv('DB_USERNAME')
+        or os.getenv('MYSQL_USER')
+        or DEFAULT_DB_CONFIG['user']
+    )
+    password = (
+        os.getenv('DB_PASSWORD')
+        or os.getenv('MYSQL_PASSWORD')
+        or DEFAULT_DB_CONFIG['password']
+    )
+    database = (
+        os.getenv('DB_NAME')
+        or os.getenv('DB_DATABASE')
+        or os.getenv('MYSQL_DATABASE')
+        or DEFAULT_DB_CONFIG['database']
+    )
+    port_env = os.getenv('DB_PORT') or os.getenv('MYSQL_PORT')
+    try:
+        port = int(port_env) if port_env else int(DEFAULT_DB_CONFIG['port'])
+    except Exception:
+        port = int(DEFAULT_DB_CONFIG['port'])
+    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+
     return {
-        'host': os.getenv('DB_HOST', DEFAULT_DB_CONFIG['host']),
-        'user': os.getenv('DB_USER', DEFAULT_DB_CONFIG['user']),
-        'password': os.getenv('DB_PASSWORD', DEFAULT_DB_CONFIG['password']),
-        'database': os.getenv('DB_NAME', DEFAULT_DB_CONFIG['database']),
-        'port': int(os.getenv('DB_PORT', DEFAULT_DB_CONFIG['port'])),
-        'charset': os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
+        'port': port,
+        'charset': charset,
     }
 
 

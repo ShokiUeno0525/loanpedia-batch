@@ -8,6 +8,10 @@ services:
       DB_HOST: mysql
       DB_DATABASE: app_db
       DB_USERNAME: app_user
+      # コードが参照するキー（両方設定して互換確保）
+      DB_NAME: app_db
+      DB_USER: app_user
+      DB_PORT: 3306
       DB_PASSWORD: app_password
       AWS_ENDPOINT_URL: http://localstack:4566
       AWS_ACCESS_KEY_ID: test

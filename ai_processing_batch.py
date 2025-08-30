@@ -203,14 +203,21 @@ class AIProcessingBatch:
         self.cursor = None
     
     def _load_db_config(self) -> Dict:
-        """データベース設定を読み込み"""
-        return {
-            'host': os.getenv('DB_HOST', 'localhost'),
-            'user': os.getenv('DB_USER', 'root'),
-            'password': os.getenv('DB_PASSWORD', ''),
-            'database': os.getenv('DB_NAME', 'app_db'),
-            'charset': 'utf8mb4'
-        }
+        """データベース設定を読み込み（共通ユーティリティ使用）"""
+        try:
+            # ルート直下から database パッケージを参照
+            from database.loan_database import get_database_config
+            return get_database_config()
+        except Exception:
+            # フォールバック（最小限）
+            return {
+                'host': os.getenv('DB_HOST', 'localhost'),
+                'user': os.getenv('DB_USER', 'root'),
+                'password': os.getenv('DB_PASSWORD', ''),
+                'database': os.getenv('DB_NAME', 'app_db'),
+                'port': int(os.getenv('DB_PORT', '3306')),
+                'charset': 'utf8mb4'
+            }
     
     def connect_database(self):
         """データベース接続"""

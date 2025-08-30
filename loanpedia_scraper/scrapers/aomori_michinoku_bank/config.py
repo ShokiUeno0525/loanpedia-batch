@@ -35,7 +35,7 @@ profiles: Dict[str, Dict[str, Any]] = {
             "限度額",
             "何度でも",
         ],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "repayment_method"],
+        "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-77.pdf"],
     },
     "/kojin/loan/certificate/": {
@@ -44,7 +44,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "教育",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["在学中据置", "学費", "入学金", "留学", "最長"],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "repayment_method"],
+        "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-78.pdf"],
     },
     "/kojin/loan/kyouikuloan/": {
@@ -53,7 +53,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "教育",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["学費", "入学金", "授業料", "ローンカード"],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "repayment_method"],
+        "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-79.pdf"],
     },
     "/kojin/loan/freeloan/": {

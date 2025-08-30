@@ -32,24 +32,14 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     logger.info(f"Event: {json.dumps(event, ensure_ascii=False)}")
     
     try:
-        # データベース保存を有効化
-        save_to_db = os.environ.get('SAVE_TO_DB', 'true').lower() == 'true'
-        
         # 青い森信用金庫スクレイパーをインポート
         from scrapers.aoimori_shinkin import AoimoriShinkinScraper
-        
-        # データベース設定を取得
-        db_config = None
-        if save_to_db:
-            try:
-                from database.loan_database import get_database_config
-                db_config = get_database_config()
-            except ImportError:
-                logger.warning("データベース設定の取得に失敗、ローカル保存のみ実行")
-                save_to_db = False
-        
-        # スクレイパーを初期化
-        scraper = AoimoriShinkinScraper(save_to_db=save_to_db, db_config=db_config)
+
+        # データベース保存を有効化（設定の詳細はスクレイパー側に委譲）
+        save_to_db = os.environ.get('SAVE_TO_DB', 'true').lower() == 'true'
+
+        # スクレイパーを初期化（db_configは内部で解決）
+        scraper = AoimoriShinkinScraper(save_to_db=save_to_db)
         
         # スクレイピング実行
         result = scraper.scrape_loan_info()

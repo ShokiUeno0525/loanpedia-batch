@@ -50,6 +50,17 @@ Resources:
       Architectures:
         - x86_64
       Timeout: 900
+      Environment:
+        Variables:
+          PYTHONPATH: /var/task:/var/task/scrapers:/var/task/database
+          LOG_LEVEL: "INFO"
+          # DB接続（SAMローカル: docker-composeのMySQLに接続）
+          # SAMのコンテナはcomposeネットワーク外なので、ホスト経由で接続する
+          DB_HOST: host.docker.internal
+          DB_PORT: 3307
+          DB_USER: app_user
+          DB_PASSWORD: app_password
+          DB_NAME: app_db
       Events:
         MonthlySchedule:
           Type: Schedule
