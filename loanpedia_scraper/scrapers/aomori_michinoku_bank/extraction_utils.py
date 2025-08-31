@@ -41,10 +41,10 @@ COMMON_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
     
     # 年齢制限パターン
     "age_requirements": [
-        r"満(\d+)歳以上.*?満(\d+)歳未満",
-        r"満(\d+)歳以上.*?満(\d+)歳以下", 
-        r"(\d+)歳以上.*?(\d+)歳以下",
-        r"(\d+)歳[〜～](\d+)歳",
+        (r"満(\d+)歳以上.*?満(\d+)歳未満", "満歳範囲（未満）"),
+        (r"満(\d+)歳以上.*?満(\d+)歳以下", "満歳範囲（以下）"), 
+        (r"(\d+)歳以上.*?(\d+)歳以下", "年齢範囲（以下）"),
+        (r"(\d+)歳[〜～](\d+)歳", "年齢範囲（記号）"),
     ],
 }
 
@@ -260,9 +260,8 @@ def extract_loan_periods(text: str) -> Optional[Dict[str, Any]]:
 
 def extract_age_requirements(text: str) -> Optional[Dict[str, Any]]:
     """年齢制限を抽出するヘルパー関数"""
-    age_patterns = cast(List[str], COMMON_PATTERNS["age_requirements"])
     return ExtractionUtils.extract_with_patterns(
         text,
-        [(p, f"年齢パターン{i+1}") for i, p in enumerate(age_patterns)],
+        cast(List[Tuple[str, str]], COMMON_PATTERNS["age_requirements"]),
         ExtractionUtils.convert_age_requirements
     )
