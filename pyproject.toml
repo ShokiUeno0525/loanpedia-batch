@@ -23,6 +23,7 @@ dependencies = [
     "selenium==4.23.1",
     "sqlalchemy==2.0.31",
     "types-requests==2.32.0.20240712",
+    "types-beautifulsoup4>=4.12.0.20240511",
     "urllib3==2.2.2",
     "pydantic>=2.6,<3",
     "pdfplumber>=0.11,<0.12",
@@ -44,6 +45,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-mock>=3.14.0",
     "types-requests>=2.32.0.20240712",
+    "types-beautifulsoup4>=4.12.0.20240511",
 ]
 
 [tool.scrapy]
