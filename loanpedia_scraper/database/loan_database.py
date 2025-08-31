@@ -8,14 +8,14 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, cast, TYPE_CHECKING
 
 try:
     import pymysql
     PYMYSQL_AVAILABLE = True
 except ImportError:
     PYMYSQL_AVAILABLE = False
-    pymysql = None
+    pymysql = cast(Any, None)
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,9 @@ class LoanDatabase:
                 }
         """
         self.db_config = db_config
-        self.connection = None
-        self.cursor = None
+        # 明示的な属性型（mypy対策）
+        self.connection: Optional[Any] = None
+        self.cursor: Optional[Any] = None
         
         if not PYMYSQL_AVAILABLE:
             logger.warning("pymysql not available, database operations will be skipped")
@@ -72,7 +73,7 @@ class LoanDatabase:
             self.connection.close()
         logger.info("Database connection closed")
     
-    def __enter__(self):
+    def __enter__(self) -> Optional["LoanDatabase"]:
         """コンテキストマネージャーの開始"""
         if self.connect():
             return self
@@ -145,6 +146,7 @@ class LoanDatabase:
             return None
             
         # 既存の金融機関を検索
+        assert self.cursor is not None
         select_sql = """
             SELECT id FROM financial_institutions 
             WHERE institution_code = %s OR institution_name = %s
@@ -163,10 +165,11 @@ class LoanDatabase:
         """
         now = datetime.now()
         self.cursor.execute(insert_sql, (institution_code, institution_name, now, now))
-        return self.cursor.lastrowid
+        return int(cast(Any, self.cursor.lastrowid))
     
     def save_raw_data(self, loan_data: Dict[str, Any], institution_id: Optional[int]) -> int:
         """生データテーブルに保存"""
+        assert self.cursor is not None
         html_content = loan_data.get('html_content', '')
         
         # 構造化データを準備
@@ -264,7 +267,7 @@ class LoanDatabase:
             now
         ))
         
-        return self.cursor.lastrowid
+        return int(cast(Any, self.cursor.lastrowid))
     
     def get_latest_data_by_institution(self, institution_code: str) -> Optional[Dict[str, Any]]:
         """指定金融機関の最新データを取得"""
@@ -294,7 +297,7 @@ class LoanDatabase:
 
 
 # データベース設定のデフォルト値（パッケージ内: コンテナ/Lambda想定）
-DEFAULT_DB_CONFIG = {
+DEFAULT_DB_CONFIG: Dict[str, Any] = {
     'host': 'mysql',
     'user': 'app_user',
     'password': 'app_password',

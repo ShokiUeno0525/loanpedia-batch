@@ -186,7 +186,8 @@ def discover_product_links(start_url: str = START) -> list[str]:
     soup = BeautifulSoup(html, "lxml")
     urls = set()
     for a in soup.select('a[href*="/kojin/loan/"]'):
-        href = a.get("href") or ""
+        href_val = a.get("href")
+        href = href_val if isinstance(href_val, str) else ""
         u = urljoin(start_url, href)
         if re.search(r"/kojin/loan/[^/]+/?$", u) and not u.rstrip("/").endswith("loan"):
             urls.add(u)

@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, cast
 
 # 型定義のインポート（相対インポートで上位ディレクトリから）
 # 型は各スクレイパーが返す辞書およびサマリー辞書を使用
@@ -124,7 +124,7 @@ class LoanScrapingOrchestrator:
             
             if result:
                 logger.info(f"✅ {institution_name} 成功")
-                return result
+                return cast(Dict[str, Any], result)
             else:
                 logger.error(f"❌ {institution_name} データ取得失敗")
                 return None

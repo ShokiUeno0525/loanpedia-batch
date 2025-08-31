@@ -12,24 +12,25 @@ from datetime import datetime
 import logging
 import sys
 import os
+from typing import Any, cast
 
 # データベースライブラリをインポート（パッケージ前提）
 try:
     from database.loan_database import LoanDatabase, get_database_config
     DATABASE_AVAILABLE = True
-except Exception:
-    # ローカル実行時などでパスが噛み合わない場合のフォールバック
-    scraper_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    for p in [scraper_root, os.path.join(scraper_root, "database")]:
-        if p not in sys.path:
-            sys.path.insert(0, p)
+    except Exception:
+        # ローカル実行時などでパスが噛み合わない場合のフォールバック
+        scraper_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        for p in [scraper_root, os.path.join(scraper_root, "database")]:
+            if p not in sys.path:
+                sys.path.insert(0, p)
     try:
         from database.loan_database import LoanDatabase, get_database_config
         DATABASE_AVAILABLE = True
     except Exception:
         DATABASE_AVAILABLE = False
-        LoanDatabase = None
-        get_database_config = None
+        LoanDatabase = cast(Any, None)
+        get_database_config = cast(Any, None)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class AoimoriShinkinScraper:
         
         # データベース保存設定
         self.save_to_db = save_to_db and DATABASE_AVAILABLE
-        self.db_config = db_config or (get_database_config() if get_database_config else None)
+        self.db_config = db_config or (get_database_config() if callable(get_database_config) else None)
         
         if save_to_db and not DATABASE_AVAILABLE:
             logger.warning("データベース保存が要求されましたが、データベースライブラリが利用できません")
