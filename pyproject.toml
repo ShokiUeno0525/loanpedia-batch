@@ -3,7 +3,7 @@ name = "loanpedia-batch"
 version = "0.1.0"
 description = "金融機関ローン情報収集バッチシステム"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = [
     "awscli-local==0.22.0",
     "beautifulsoup4==4.12.3",
