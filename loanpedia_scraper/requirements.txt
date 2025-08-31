@@ -4,9 +4,9 @@ botocore==1.34.131
 pymysql==1.1.1
 pypdf2==3.0.1
 python-dotenv==1.0.1
-requests==2.32.3
+requests>=2.32.4
 sqlalchemy==2.0.31
-urllib3==2.2.2
+urllib3>=2.5.0
 pdfplumber==0.11.4
 pdfminer.six==20231228
 pydantic==2.9.2
