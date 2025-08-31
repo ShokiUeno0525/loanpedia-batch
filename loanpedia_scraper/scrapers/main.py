@@ -9,10 +9,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, cast
 
 # 型定義のインポート（相対インポートで上位ディレクトリから）
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from types import ScrapingResult, LoanProductData
+from ..types import ScrapingResult, LoanProductData
 
 from aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
 from aoimori_shinkin.general import AoimoriShinkinScraper
