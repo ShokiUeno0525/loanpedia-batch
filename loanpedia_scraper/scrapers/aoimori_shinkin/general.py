@@ -16,7 +16,7 @@ from typing import Any, cast
 
 # データベースライブラリをインポート（パッケージ前提）
 try:
-    from database.loan_database import LoanDatabase, get_database_config
+    from database.loan_database import LoanDatabase as LoanDatabaseCls, get_database_config as get_db_config
     DATABASE_AVAILABLE = True
 except Exception:
     # ローカル実行時などでパスが噛み合わない場合のフォールバック
@@ -25,12 +25,12 @@ except Exception:
         if p not in sys.path:
             sys.path.insert(0, p)
     try:
-        from database.loan_database import LoanDatabase, get_database_config
+        from database.loan_database import LoanDatabase as LoanDatabaseCls, get_database_config as get_db_config
         DATABASE_AVAILABLE = True
     except Exception:
         DATABASE_AVAILABLE = False
-        LoanDatabase = cast(Any, None)
-        get_database_config = cast(Any, None)
+        LoanDatabaseCls = cast(Any, None)  # type: ignore[assignment]
+        get_db_config = cast(Any, None)  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class AoimoriShinkinScraper:
         
         # データベース保存設定
         self.save_to_db = save_to_db and DATABASE_AVAILABLE
-        self.db_config = db_config or (get_database_config() if callable(get_database_config) else None)
+        self.db_config = db_config or (get_db_config() if callable(get_db_config) else None)
         
         if save_to_db and not DATABASE_AVAILABLE:
             logger.warning("データベース保存が要求されましたが、データベースライブラリが利用できません")
@@ -233,7 +233,7 @@ class AoimoriShinkinScraper:
             return
             
         try:
-            with LoanDatabase(self.db_config) as db:
+            with LoanDatabaseCls(self.db_config) as db:
                 if db:
                     raw_data_id = db.save_loan_data(item)
                     if raw_data_id:

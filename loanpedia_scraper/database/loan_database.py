@@ -156,7 +156,7 @@ class LoanDatabase:
         result = self.cursor.fetchone()
         
         if result:
-            return result['id']
+            return int(cast(Any, result['id']))
         
         # 新規作成
         insert_sql = """
@@ -234,7 +234,7 @@ class LoanDatabase:
                     self.connection.rollback()
                 raise
 
-            return existing['id']
+            return int(cast(Any, existing['id']))
         
         # 新規保存
         insert_sql = """
@@ -284,7 +284,8 @@ class LoanDatabase:
         """
         
         self.cursor.execute(sql, (institution_code,))
-        return self.cursor.fetchone()
+        fetched = self.cursor.fetchone()
+        return cast(Optional[Dict[str, Any]], fetched)
     
     def get_all_institutions(self):
         """すべての金融機関を取得"""

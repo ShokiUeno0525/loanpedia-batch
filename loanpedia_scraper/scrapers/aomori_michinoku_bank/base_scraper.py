@@ -601,7 +601,7 @@ class BaseLoanScraper(ABC):
     
     def _extract_product_specific_data(self, soup: BeautifulSoup, product_type: str) -> Dict[str, Any]:
         """商品タイプに応じた固有データの抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         full_text = soup.get_text()
         
         if product_type == 'card':
