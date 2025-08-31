@@ -6,10 +6,10 @@
 """
 
 import re
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Tuple, Optional, Any, cast
 
 # 共通正規表現パターン定義
-COMMON_PATTERNS = {
+COMMON_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
     # 金利パターン
     "interest_rates": [
         (r"年\s*(\d+\.\d+)\s*[%％]\s*[〜～]\s*年\s*(\d+\.\d+)\s*[%％]", "基本金利範囲"),
@@ -235,7 +235,7 @@ def extract_interest_rates(text: str) -> Optional[Dict[str, Any]]:
     """金利情報を抽出するヘルパー関数"""
     return ExtractionUtils.extract_with_patterns(
         text, 
-        COMMON_PATTERNS["interest_rates"],
+        cast(List[Tuple[str, str]], COMMON_PATTERNS["interest_rates"]),
         ExtractionUtils.convert_interest_rates
     )
 
@@ -244,7 +244,7 @@ def extract_loan_amounts(text: str) -> Optional[Dict[str, Any]]:
     """融資金額を抽出するヘルパー関数"""
     return ExtractionUtils.extract_with_patterns(
         text,
-        COMMON_PATTERNS["loan_amounts"],
+        cast(List[Tuple[str, str]], COMMON_PATTERNS["loan_amounts"]),
         ExtractionUtils.convert_loan_amounts
     )
 
@@ -253,15 +253,16 @@ def extract_loan_periods(text: str) -> Optional[Dict[str, Any]]:
     """融資期間を抽出するヘルパー関数"""
     return ExtractionUtils.extract_with_patterns(
         text,
-        COMMON_PATTERNS["loan_periods"],
+        cast(List[Tuple[str, str]], COMMON_PATTERNS["loan_periods"]),
         ExtractionUtils.convert_loan_periods
     )
 
 
 def extract_age_requirements(text: str) -> Optional[Dict[str, Any]]:
     """年齢制限を抽出するヘルパー関数"""
+    age_patterns = cast(List[str], COMMON_PATTERNS["age_requirements"])
     return ExtractionUtils.extract_with_patterns(
         text,
-        [(p, f"年齢パターン{i+1}") for i, p in enumerate(COMMON_PATTERNS["age_requirements"])],
+        [(p, f"年齢パターン{i+1}") for i, p in enumerate(age_patterns)],
         ExtractionUtils.convert_age_requirements
     )
