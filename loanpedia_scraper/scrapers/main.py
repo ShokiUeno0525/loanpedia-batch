@@ -48,7 +48,7 @@ class LoanScrapingOrchestrator:
         self.results = []
         self.errors = []
 
-    def run_all_scrapers(self) -> Dict:
+    def run_all_scrapers(self) -> Dict[str, Any]:
         """
         全てのスクレイパーを実行
         
@@ -98,7 +98,7 @@ class LoanScrapingOrchestrator:
         
         return summary
 
-    def run_single_scraper(self, institution_name: str) -> Optional[Dict]:
+    def run_single_scraper(self, institution_name: str) -> Optional[Dict[str, Any]]:
         """
         指定した金融機関のスクレイパーのみ実行
         
