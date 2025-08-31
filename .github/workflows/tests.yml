@@ -60,11 +60,41 @@ jobs:
 
       - name: Setup test database
         run: |
-          # app_dbデータベースを作成し、test_userに権限を付与
+          # MySQL接続確認
+          echo "=== MySQL接続確認 ==="
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "SELECT VERSION();"
+          
+          # 既存データベース確認
+          echo "=== 既存データベース一覧 ==="
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "SHOW DATABASES;"
+          
+          # 既存ユーザー確認
+          echo "=== 既存ユーザー確認 ==="
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "SELECT User, Host FROM mysql.user;"
+          
+          # app_dbデータベースを作成
+          echo "=== app_dbデータベース作成 ==="
           mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "CREATE DATABASE IF NOT EXISTS app_db;"
+          
+          # test_userに権限を付与
+          echo "=== test_userに権限付与 ==="
           mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "GRANT ALL PRIVILEGES ON app_db.* TO 'test_user'@'%';"
           mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "FLUSH PRIVILEGES;"
+          
+          # 権限確認
+          echo "=== 権限確認 ==="
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "SHOW GRANTS FOR 'test_user'@'%';"
+          
+          # データベース一覧確認
+          echo "=== 作成後のデータベース一覧 ==="
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "SHOW DATABASES;"
+          
+          # test_userでapp_dbアクセステスト
+          echo "=== test_userでapp_dbアクセステスト ==="
+          mysql -h127.0.0.1 -P3306 -utest_user -ptest_password -e "USE app_db; SELECT 'Access OK' as result;"
+          
           # テーブル作成実行
+          echo "=== テーブル作成実行 ==="
           mysql -h127.0.0.1 -P3306 -utest_user -ptest_password app_db < loanpedia_scraper/database/create_tables.sql
         env:
           MYSQL_HOST: 127.0.0.1
