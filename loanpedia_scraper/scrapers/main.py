@@ -12,7 +12,13 @@ from typing import List, Dict, Optional, Any, cast
 # 型は各スクレイパーが返す辞書およびサマリー辞書を使用
 
 from aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
-from aoimori_shinkin.general import AoimoriShinkinScraper
+# オプション: 青い森信用金庫スクレイパー（現状未使用なら読み飛ばし）
+try:
+    from aoimori_shinkin.general import AoimoriShinkinScraper  # type: ignore[import-not-found]
+    AOIMORI_SHINKIN_AVAILABLE = True
+except Exception:
+    AOIMORI_SHINKIN_AVAILABLE = False
+    AoimoriShinkinScraper = None  # type: ignore[assignment]
 from touou_shinkin.general import TououShinkinScraper
 from aomoriken_shinyoukumiai.general import AomorikenShinyoukumiaiScraper
 
@@ -44,10 +50,11 @@ class LoanScrapingOrchestrator:
         self.save_to_db = save_to_db
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),  # まだDB対応していない
-            'aoimori_shinkin': AoimoriShinkinScraper(save_to_db=save_to_db, db_config=db_config),
             'touou_shinkin': TououShinkinScraper(),  # まだDB対応していない
             'aomoriken_shinyoukumiai': AomorikenShinyoukumiaiScraper()  # まだDB対応していない
         }
+        if AOIMORI_SHINKIN_AVAILABLE and AoimoriShinkinScraper is not None:  # type: ignore[truthy-function]
+            self.scrapers['aoimori_shinkin'] = AoimoriShinkinScraper(save_to_db=save_to_db, db_config=db_config)
         self.results = []
         self.errors = []
 
