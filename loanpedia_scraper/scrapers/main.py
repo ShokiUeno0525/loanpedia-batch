@@ -19,8 +19,20 @@ try:
 except Exception:
     AOIMORI_SHINKIN_AVAILABLE = False
     AoimoriShinkinScraper = None  # type: ignore[assignment]
-from touou_shinkin.general import TououShinkinScraper
-from aomoriken_shinyoukumiai.general import AomorikenShinyoukumiaiScraper
+# オプション: 東奥信用金庫 / 青森県信用組合スクレイパー
+try:
+    from touou_shinkin.general import TououShinkinScraper  # type: ignore[import-not-found]
+    TOUOU_AVAILABLE = True
+except Exception:
+    TOUOU_AVAILABLE = False
+    TououShinkinScraper = None  # type: ignore[assignment]
+
+try:
+    from aomoriken_shinyoukumiai.general import AomorikenShinyoukumiaiScraper  # type: ignore[import-not-found]
+    AOMORIKEN_AVAILABLE = True
+except Exception:
+    AOMORIKEN_AVAILABLE = False
+    AomorikenShinyoukumiaiScraper = None  # type: ignore[assignment]
 
 # データベースライブラリをインポート
 try:
@@ -50,9 +62,11 @@ class LoanScrapingOrchestrator:
         self.save_to_db = save_to_db
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),  # まだDB対応していない
-            'touou_shinkin': TououShinkinScraper(),  # まだDB対応していない
-            'aomoriken_shinyoukumiai': AomorikenShinyoukumiaiScraper()  # まだDB対応していない
         }
+        if TOUOU_AVAILABLE and TououShinkinScraper is not None:
+            self.scrapers['touou_shinkin'] = TououShinkinScraper()  # type: ignore[misc]
+        if AOMORIKEN_AVAILABLE and AomorikenShinyoukumiaiScraper is not None:
+            self.scrapers['aomoriken_shinyoukumiai'] = AomorikenShinyoukumiaiScraper()  # type: ignore[misc]
         if AOIMORI_SHINKIN_AVAILABLE and AoimoriShinkinScraper is not None:  # type: ignore[truthy-function]
             self.scrapers['aoimori_shinkin'] = AoimoriShinkinScraper(save_to_db=save_to_db, db_config=db_config)
         self.results = []
