@@ -60,7 +60,12 @@ jobs:
 
       - name: Setup test database
         run: |
-          mysql -h127.0.0.1 -P3306 -utest_user -ptest_password test_loanpedia < loanpedia_scraper/database/create_tables.sql
+          # app_dbデータベースを作成し、test_userに権限を付与
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "CREATE DATABASE IF NOT EXISTS app_db;"
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "GRANT ALL PRIVILEGES ON app_db.* TO 'test_user'@'%';"
+          mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "FLUSH PRIVILEGES;"
+          # テーブル作成実行
+          mysql -h127.0.0.1 -P3306 -utest_user -ptest_password app_db < loanpedia_scraper/database/create_tables.sql
         env:
           MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: 3306

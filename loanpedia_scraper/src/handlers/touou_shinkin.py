@@ -1,41 +1,96 @@
+"""
+東奥信用金庫専用 Lambda ハンドラー
+"""
+
 import json
 import logging
+import os
+import sys
+from datetime import datetime
+from typing import Dict, Any
+
+# プロジェクトルートをパスに追加
+sys.path.append('/var/task')
+sys.path.append('/var/task/scrapers')
+sys.path.append('/var/task/database')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-def lambda_handler(event, context):
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    東奥信用金庫のローン情報スクレイピング処理
-    機関コード: 1251
-    公式サイト: https://www.shinkin.co.jp/toshin/
+    東奥信用金庫専用 Lambda ハンドラー関数
+    
+    Args:
+        event: Lambda イベントデータ
+        context: Lambda コンテキスト
+        
+    Returns:
+        Dict[str, Any]: 実行結果
     """
-    logger.info("東奥信用金庫のローン情報スクレイピング処理を開始")
+    logger.info("東奥信用金庫のスクレイピングを開始")
+    logger.info(f"Event: {json.dumps(event, ensure_ascii=False)}")
     
     try:
-        # TODO: 東奥信用金庫の具体的なスクレイピング処理を実装
-        logger.info("東奥信用金庫のスクレイピング処理完了")
+        # 東奥信用金庫スクレイパーをインポート
+        from scrapers.touou_shinkin import TououShinkinScraper
         
+        # スクレイパーを初期化
+        scraper = TououShinkinScraper()
+        
+        # スクレイピング実行
+        result = scraper.scrape_loan_info()
+        
+        if result:
+            response = {
+                'statusCode': 200,
+                'body': {
+                    'success': True,
+                    'message': '東奥信用金庫のスクレイピング成功',
+                    'institution': 'touou_shinkin',
+                    'result': result,
+                    'timestamp': datetime.now().isoformat()
+                }
+            }
+            logger.info("東奥信用金庫のスクレイピング成功")
+        else:
+            response = {
+                'statusCode': 500,
+                'body': {
+                    'success': False,
+                    'message': '東奥信用金庫のスクレイピング失敗',
+                    'institution': 'touou_shinkin',
+                    'timestamp': datetime.now().isoformat()
+                }
+            }
+            logger.error("東奥信用金庫のスクレイピング失敗")
+        
+        return response
+        
+    except ImportError as e:
+        error_msg = f"モジュールインポートエラー: {str(e)}"
+        logger.error(error_msg)
         return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'message': '東奥信用金庫のローン情報スクレイピング処理が正常に完了しました',
-                'institution': '東奥信用金庫',
-                'institution_code': '1251',
-                'status': 'success'
-            }, ensure_ascii=False)
+            'statusCode': 500,
+            'body': {
+                'success': False,
+                'error': 'ImportError',
+                'message': error_msg,
+                'institution': 'touou_shinkin',
+                'timestamp': datetime.now().isoformat()
+            }
         }
         
     except Exception as e:
-        logger.error(f"東奥信用金庫のスクレイピング処理でエラーが発生: {str(e)}")
-        
+        error_msg = f"予期しないエラー: {str(e)}"
+        logger.error(error_msg, exc_info=True)
         return {
             'statusCode': 500,
-            'body': json.dumps({
-                'message': '東奥信用金庫のスクレイピング処理でエラーが発生しました',
-                'institution': '東奥信用金庫',
-                'institution_code': '1251',
-                'error': str(e),
-                'status': 'error'
-            }, ensure_ascii=False)
+            'body': {
+                'success': False,
+                'error': 'UnexpectedError',
+                'message': error_msg,
+                'institution': 'touou_shinkin',
+                'timestamp': datetime.now().isoformat()
+            }
         }
