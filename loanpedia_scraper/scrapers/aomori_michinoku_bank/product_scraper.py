@@ -11,7 +11,6 @@ from .html_parser import parse_common_fields_from_html, extract_interest_range_f
 from .pdf_parser import pdf_bytes_to_text, extract_pdf_fields
 from .extractors import interest_type_from_hints
 from .hash_utils import sha_bytes
-from .pdf_url_selector import select_overview_pdf_url
 from .models import LoanProduct, RawLoanData
 
 
@@ -148,10 +147,8 @@ def scrape_product(
     rate_min, rate_max = extract_interest_range_from_html(html)
 
     # 4) PDF URL（固定のみ）
-    pdf_url = select_overview_pdf_url(
-        product_profile=profile,
-        override_pdf_url=pdf_url_override,
-    )
+    # 固定運用: override優先 → プロファイルの固定PDF
+    pdf_url = pdf_url_override or profile.get("pdf_url_override")
     if pdf_url is None:
         raise ValueError(f"pdf_url_override is required for fixed-only mode: {url}")
 
