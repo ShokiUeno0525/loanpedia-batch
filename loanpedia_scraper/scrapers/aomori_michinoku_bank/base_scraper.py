@@ -447,7 +447,7 @@ class BaseLoanScraper(ABC):
         """
         構造化コンテンツの抽出（改良版）
         """
-        result = {}
+        result: Dict[str, Any] = {}
         
         # 1. テーブルデータを最優先で抽出
         table_data = self._extract_loan_table_data(soup)
@@ -472,7 +472,7 @@ class BaseLoanScraper(ABC):
     
     def _extract_loan_table_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
         """テーブル形式のローンデータを抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         
         tables = soup.find_all('table')
         

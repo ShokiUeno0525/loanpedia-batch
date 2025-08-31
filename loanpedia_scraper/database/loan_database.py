@@ -344,9 +344,9 @@ def get_database_config() -> Dict[str, Any]:
     )
     port_env = os.getenv('DB_PORT') or os.getenv('MYSQL_PORT')
     try:
-        port = int(port_env) if port_env else int(DEFAULT_DB_CONFIG['port'])
+        port = int(port_env) if port_env else cast(int, DEFAULT_DB_CONFIG['port'])
     except Exception:
-        port = int(DEFAULT_DB_CONFIG['port'])
+        port = cast(int, DEFAULT_DB_CONFIG['port'])
     charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
 
     return {

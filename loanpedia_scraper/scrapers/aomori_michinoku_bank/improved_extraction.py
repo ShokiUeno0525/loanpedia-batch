@@ -24,7 +24,7 @@ class ImprovedExtractionMethods:
         Returns:
             Dict: 抽出されたローンデータ
         """
-        result = {}
+        result: Dict[str, Any] = {}
         
         # すべてのテーブルを検索
         tables = soup.find_all('table')
@@ -119,7 +119,7 @@ class ImprovedExtractionMethods:
         """
         商品概要セクションからデータを抽出
         """
-        overview_data = {}
+        overview_data: Dict[str, str] = {}
         
         # 商品概要の見出しを検索
         overview_headers = soup.find_all(['h2', 'h3', 'h4'], string=re.compile(r'商品概要|商品詳細|商品内容'))
@@ -161,7 +161,7 @@ class ImprovedExtractionMethods:
         Returns:
             Dict: 抽出されたデータ
         """
-        result = {}
+        result: Dict[str, Any] = {}
         
         # 1. テーブルデータを最優先で抽出
         table_data = ImprovedExtractionMethods.extract_loan_table_data(soup)
@@ -190,7 +190,7 @@ class ImprovedExtractionMethods:
     @staticmethod
     def _extract_card_specific(soup: BeautifulSoup) -> Dict[str, Any]:
         """カードローン固有の抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         full_text = soup.get_text()
         
         # カードローン特有のフレーズ検索
@@ -205,7 +205,7 @@ class ImprovedExtractionMethods:
     @staticmethod
     def _extract_education_specific(soup: BeautifulSoup) -> Dict[str, Any]:
         """教育ローン固有の抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         full_text = soup.get_text()
         
         # 教育ローン特有の特徴
