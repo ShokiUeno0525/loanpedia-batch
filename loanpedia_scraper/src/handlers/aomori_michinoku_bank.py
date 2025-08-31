@@ -12,7 +12,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, cast
 
 # パス設定ユーティリティ
 def _setup_paths():
@@ -79,11 +79,11 @@ def _to_event_dict(event: Any) -> Dict[str, Any]:
         return {}
     if isinstance(event, str):
         try:
-            return json.loads(event)
+            return cast(Dict[str, Any], json.loads(event))
         except Exception:
             return {}
     if isinstance(event, dict):
-        return event
+        return cast(Dict[str, Any], event)
     return {}
 
 

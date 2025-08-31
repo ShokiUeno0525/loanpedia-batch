@@ -2,19 +2,32 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple, Optional, Dict
 import re
+import unicodedata
 from bs4 import BeautifulSoup
-from extractors import (
+from .extractors import (
     to_month_range,
     to_yen_range,
     extract_age,
     extract_repayment,
 )
 
+def _normalize_text(s: str) -> str:
+    """全角→半角、ダッシュ・波ダッシュの統一など簡易正規化"""
+    if not s:
+        return s
+    t = unicodedata.normalize("NFKC", s)
+    # ダッシュ/ハイフン類を半角ハイフンに統一
+    t = re.sub(r"[‐‑‒–—―−－]", "-", t)
+    # 波ダッシュ類を統一
+    t = re.sub(r"[~〜～]", "〜", t)
+    return t
+
 
 def _clean_text(soup: BeautifulSoup) -> str:
     for t in soup(["script", "style", "noscript"]):
         t.extract()
     txt = soup.get_text("\n", strip=True)
+    txt = _normalize_text(txt)
     return re.sub(r"\n{2,}", "\n", txt)
 
 
@@ -22,7 +35,7 @@ def parse_common_fields_from_html(html: str) -> Dict:
     soup = BeautifulSoup(html, "lxml")
     text = _clean_text(soup)
     h = soup.find(["h1", "h2"])
-    name = h.get_text(strip=True) if h else None
+    name = _normalize_text(h.get_text(strip=True)) if h else None
     amin, amax = to_yen_range(text)
     tmin, tmax = to_month_range(text)
     agemin, agemax = extract_age(text)

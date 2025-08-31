@@ -84,9 +84,9 @@ loanpedia-batch/
 
 - **main**: プロダクション用の安定したブランチ
 - **develop**: 開発用の統合ブランチ
-- **feature/\***: 機能開発用ブランチ（例：feature/loan-scraper）
-- **bugfix/\***: バグ修正用ブランチ（例：bugfix/scraper-timeout）
-- **hotfix/\***: 緊急修正用ブランチ（例：hotfix/api-security）
+- **feature/***: 機能開発用ブランチ（例：feature/loan-scraper）
+- **bugfix/***: バグ修正用ブランチ（例：bugfix/scraper-timeout）
+- **hotfix/***: 緊急修正用ブランチ（例：hotfix/api-security）
 
 ### コミットメッセージ規約
 
@@ -151,3 +151,4 @@ loanpedia-batch/
 - 機密情報の分離管理
 - 依存関係の定期的な更新
 - セキュリティアラートへの迅速な対応
+

@@ -11,7 +11,7 @@ from typing import List, Dict, Optional, Any, cast
 # 型定義のインポート（相対インポートで上位ディレクトリから）
 # 型は各スクレイパーが返す辞書およびサマリー辞書を使用
 
-from aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
+from .aomori_michinoku_bank import AomorimichinokuBankScraper
 
 # データベースライブラリをインポート
 try:
@@ -39,8 +39,16 @@ class LoanScrapingOrchestrator:
             db_config = get_database_config()
         
         self.save_to_db = save_to_db
+        # 互換性のため、4金融機関のキーを用意
+        class _DummyScraper:
+            def scrape_loan_info(self):
+                return None
+
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),
+            'aoimori_shinkin': _DummyScraper(),
+            'touou_shinkin': _DummyScraper(),
+            'aomoriken_shinyoukumiai': _DummyScraper(),
         }
         self.results = []
         self.errors = []

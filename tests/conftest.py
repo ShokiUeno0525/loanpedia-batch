@@ -160,6 +160,20 @@ def setup_test_logging():
     yield
 
 @pytest.fixture
+def mock_scraper_success():
+    """成功を返すスクレイパーモック"""
+    m = Mock()
+    m.scrape_loan_info.return_value = {'status': 'success'}
+    return m
+
+@pytest.fixture
+def mock_scraper_failure():
+    """例外を投げるスクレイパーモック"""
+    m = Mock()
+    m.scrape_loan_info.side_effect = Exception("mock failure")
+    return m
+
+@pytest.fixture
 def mock_successful_response(sample_mycar_html):
     """成功するHTTPレスポンスのモック"""
     mock_response = Mock()
