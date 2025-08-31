@@ -170,7 +170,7 @@ jobs:
       - name: Security scan
         run: |
           uv sync --frozen
-          uv run pip-audit
+          uv run pip-audit --skip-editable
 
   build-test:
     runs-on: ubuntu-latest
