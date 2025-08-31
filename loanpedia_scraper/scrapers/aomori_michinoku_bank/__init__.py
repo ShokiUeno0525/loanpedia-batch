@@ -1,5 +1,13 @@
-"""青森みちのく銀行スクレイピングパッケージ。"""
+"""
+青森みちのく銀行スクレイピングモジュール
+"""
 
-from .base_scraper import AomorimichinokuBankScraper
+from .mycar import AomorimichinokuBankScraper
+from .education_repetition import AomorimichinokuEducationRepetitionScraper
+from .education_deed import AomorimichinokuEducationDeedScraper
 
-__all__ = ['AomorimichinokuBankScraper']
+__all__ = [
+    'AomorimichinokuBankScraper',
+    'AomorimichinokuEducationRepetitionScraper',
+    'AomorimichinokuEducationDeedScraper'
+]

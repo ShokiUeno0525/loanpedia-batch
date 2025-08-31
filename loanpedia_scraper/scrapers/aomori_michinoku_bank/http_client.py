@@ -2,7 +2,7 @@
 # loan_scraper/http_client.py
 # -*- coding: utf-8 -*-
 import requests
-from .config import HEADERS
+from config import HEADERS
 
 
 def fetch_html(url: str, timeout: int = 30) -> str:

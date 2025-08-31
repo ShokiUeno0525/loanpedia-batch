@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple, Optional
 import re
-import unicodedata
 
 
 def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
@@ -54,11 +53,6 @@ def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
 
 
 def to_yen_range(text: str):
-    # 正規化
-    text = unicodedata.normalize("NFKC", text)
-    text = re.sub(r"[‐‑‒–—―−－]", "-", text)
-    text = re.sub(r"[~〜～]", "〜", text)
-
     def _to_yen(tok: str):
         tok = tok.replace(",", "").replace("円", "")
         m = re.match(r"(\d+(?:\.\d+)?)(億|万)?", tok)
@@ -72,27 +66,23 @@ def to_yen_range(text: str):
         return int(v)
 
     # より具体的な融資額パターンを探す
-    sep = r"[\-〜]"
     patterns = [
-        # 上限表現（限度額/最大/最高/上限）
-        rf"(?:最高|限度額|上限|最大)\s*(\d+(?:,\d+)?(?:\.\d+)?)(億|万)?円?",
-        # 範囲（〜/～/-）
-        rf"(\d+(?:,\d+)?(?:\.\d+)?)(億|万)?円?\s*{sep}\s*(\d+(?:,\d+)?(?:\.\d+)?)(億|万)?円?",
-        # 融資〜まで表現
+        r"(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?\s*(?:まで|以下|以内)",
+        r"(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?\s*～\s*(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?",
         r"融資.*?(\d+(?:,\d+)?)(万)円?\s*(?:まで|以下|以内)",
+        r"最高.*?(\d+(?:,\d+)?)(万|億)円?",
+        r"最大.*?(\d+(?:,\d+)?)(万|億)円?",
     ]
-
+    
     nums = []
-    matched_upper_only = False
     for pattern in patterns:
         matches = re.findall(pattern, text)
         for match in matches:
-            if len(match) == 2:  # 単一の金額（上限のみ等）
+            if len(match) == 2:  # 単一の金額
                 val, unit = match
                 parsed = _to_yen(f"{val}{unit}")
                 if parsed and parsed > 10000:  # 1万円以上の妥当な金額のみ
                     nums.append(parsed)
-                    matched_upper_only = True
             elif len(match) == 4:  # 範囲
                 val1, unit1, val2, unit2 = match
                 parsed1 = _to_yen(f"{val1}{unit1}")
@@ -101,7 +91,7 @@ def to_yen_range(text: str):
                     nums.append(parsed1)
                 if parsed2 and parsed2 > 10000:
                     nums.append(parsed2)
-
+    
     if not nums:
         # フォールバック: 一般的な数字パターン
         fallback_tokens = re.findall(r"(\d+(?:,\d+)?)(万|億)円?", text)
@@ -109,48 +99,17 @@ def to_yen_range(text: str):
             parsed = _to_yen(f"{val}{unit}")
             if parsed and parsed >= 10000:  # 1万円以上
                 nums.append(parsed)
-    if not nums:
-        return (None, None)
-
-    mn, mx = (min(nums), max(nums))
-    # 上限のみを拾ったと推測できる場合は既定の最小値（10万円）を補完
-    if matched_upper_only and mn == mx:
-        mn = min(mn, 100_000)
-    return (mn, mx)
+    
+    return (min(nums), max(nums)) if nums else (None, None)
 
 
 def extract_age(text: str) -> Tuple[Optional[int], Optional[int]]:
-    text = unicodedata.normalize("NFKC", text)
-
-    # 同行サイトで見られる代表的パターン
-    # 下限
-    m1 = re.search(r"満?\s*(\d{1,2})\s*歳\s*(?:以上|超)", text)
-
-    # 上限（未満/以下/まで/完済時〜以下）
-    m2 = re.search(r"完済時.*?満?\s*(\d{1,2})\s*歳\s*(以下|未満|まで)", text)
-    m3 = re.search(r"満?\s*(\d{1,2})\s*歳\s*(以下|未満|まで|以内)", text)
-
-    # 両端指定「xx歳以上yy歳以下」
-    m4 = re.search(r"(\d{1,2})\s*歳\s*以上.*?(\d{1,2})\s*歳\s*(以下|未満|まで)", text)
-
-    mn: Optional[int] = None
-    mx: Optional[int] = None
-
-    if m4:
-        mn = int(m4.group(1))
-        mx_val = int(m4.group(2))
-        mx = mx_val - 1 if m4.group(3) == "未満" else mx_val
-        return mn, mx
-
-    if m1:
-        mn = int(m1.group(1))
-    if m2:
-        val = int(m2.group(1))
-        mx = val - 1 if m2.group(2) == "未満" else val
-    elif m3:
-        val = int(m3.group(1))
-        mx = val - 1 if m3.group(2) == "未満" else val
-
+    m1 = re.search(r"満?\s*(\d{1,2})\s*歳\s*以上", text)
+    m2 = re.search(
+        r"(?:満?\s*(\d{1,2})\s*歳\s*以下|完済時.*?満?\s*(\d{1,2})\s*歳以下)", text
+    )
+    mn = int(m1.group(1)) if m1 else None
+    mx = int(m2.group(1) or m2.group(2)) if m2 else None
     return mn, mx
 
 

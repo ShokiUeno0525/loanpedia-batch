@@ -6,13 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import List, Dict, Optional, cast
-
-# 型定義のインポート（相対インポートで上位ディレクトリから）
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from types import ScrapingResult, LoanProductData
+from typing import List, Dict, Optional
 
 from aomori_michinoku_bank.mycar import AomorimichinokuBankScraper
 from aoimori_shinkin.general import AoimoriShinkinScraper
@@ -54,7 +48,7 @@ class LoanScrapingOrchestrator:
         self.results = []
         self.errors = []
 
-    def run_all_scrapers(self) -> ScrapingResult:
+    def run_all_scrapers(self) -> Dict:
         """
         全てのスクレイパーを実行
         
@@ -104,7 +98,7 @@ class LoanScrapingOrchestrator:
         
         return summary
 
-    def run_single_scraper(self, institution_name: str) -> Optional[ScrapingResult]:
+    def run_single_scraper(self, institution_name: str) -> Optional[Dict]:
         """
         指定した金融機関のスクレイパーのみ実行
         
@@ -127,7 +121,7 @@ class LoanScrapingOrchestrator:
             
             if result:
                 logger.info(f"✅ {institution_name} 成功")
-                return cast(ScrapingResult, result)
+                return result
             else:
                 logger.error(f"❌ {institution_name} データ取得失敗")
                 return None
