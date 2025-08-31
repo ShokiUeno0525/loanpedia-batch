@@ -11,7 +11,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
@@ -22,15 +22,15 @@ def _to_event_dict(event: Any) -> Dict[str, Any]:
         return {}
     if isinstance(event, str):
         try:
-            return json.loads(event)
+            return cast(Dict[str, Any], json.loads(event))
         except Exception:
             return {}
     if isinstance(event, dict):
-        return event
+        return cast(Dict[str, Any], event)
     return {}
 
 
-def _load_registry():
+def _load_registry() -> Dict[str, Dict[str, Any]]:
     """商品ごとのスクレイパーとメタのレジストリを構築"""
     # パス解決（Lambdaでは /var/task がモジュールルート）
     try:
@@ -49,7 +49,7 @@ def _load_registry():
     profiles = _config.profiles  # noqa: F401 (将来拡張で使用)
 
     class ProductScraper:
-        def __init__(self, url: str, pdf_url_override: str = None):
+        def __init__(self, url: str, pdf_url_override: str | None = None) -> None:
             self.url = url
             self.pdf_url_override = pdf_url_override
 

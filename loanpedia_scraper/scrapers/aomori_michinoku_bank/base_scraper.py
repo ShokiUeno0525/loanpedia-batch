@@ -447,7 +447,7 @@ class BaseLoanScraper(ABC):
         """
         構造化コンテンツの抽出（改良版）
         """
-        result = {}
+        result: Dict[str, Any] = {}
         
         # 1. テーブルデータを最優先で抽出
         table_data = self._extract_loan_table_data(soup)
@@ -472,7 +472,7 @@ class BaseLoanScraper(ABC):
     
     def _extract_loan_table_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
         """テーブル形式のローンデータを抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         
         tables = soup.find_all('table')
         
@@ -601,7 +601,7 @@ class BaseLoanScraper(ABC):
     
     def _extract_product_specific_data(self, soup: BeautifulSoup, product_type: str) -> Dict[str, Any]:
         """商品タイプに応じた固有データの抽出"""
-        result = {}
+        result: Dict[str, Any] = {}
         full_text = soup.get_text()
         
         if product_type == 'card':
@@ -625,3 +625,88 @@ class BaseLoanScraper(ABC):
                 result["bonus_repayment_available"] = True
         
         return result
+
+
+# ========== AomorimichinokuBankScraper 実装 ==========
+
+class AomorimichinokuBankScraper(BaseLoanScraper):
+    """
+    青森みちのく銀行の統合スクレイパー
+    各ローン商品の共通インターフェースを提供
+    """
+    
+    def __init__(self, product_type: str = "general", institution_code: str = "0117"):
+        super().__init__(institution_code)
+        self.product_type = product_type
+        
+    def get_default_url(self) -> str:
+        """商品タイプに応じたデフォルトURL"""
+        urls = {
+            "mycar": "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
+            "education": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan_hanpuku/",
+            "education_deed": "https://www.am-bk.co.jp/kojin/loan/certificate/",
+            "education_card": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
+            "freeloan": "https://www.am-bk.co.jp/kojin/loan/freeloan/",
+            "omatomeloan": "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
+        }
+        return urls.get(self.product_type, "https://www.am-bk.co.jp/kojin/loan/")
+    
+    def get_loan_type(self) -> str:
+        """商品タイプに応じたローンタイプ"""
+        types = {
+            "mycar": "マイカーローン",
+            "education": "教育ローン",
+            "education_deed": "教育ローン",
+            "education_card": "教育カードローン",
+            "freeloan": "フリーローン",
+            "omatomeloan": "おまとめローン",
+        }
+        return types.get(self.product_type, "ローン")
+    
+    def get_loan_category(self) -> str:
+        """商品タイプに応じたカテゴリ"""
+        categories = {
+            "mycar": "目的別ローン",
+            "education": "目的別ローン", 
+            "education_deed": "目的別ローン",
+            "education_card": "カードローン",
+            "freeloan": "多目的ローン",
+            "omatomeloan": "おまとめローン",
+        }
+        return categories.get(self.product_type, "その他ローン")
+    
+    def _get_default_interest_rates(self) -> Tuple[float, float]:
+        """商品タイプ別のデフォルト金利範囲"""
+        rates = {
+            "mycar": (1.8, 3.8),
+            "education": (2.3, 3.8),
+            "education_deed": (2.3, 3.8),
+            "education_card": (3.5, 5.5),
+            "freeloan": (6.8, 14.5),
+            "omatomeloan": (6.8, 12.5),
+        }
+        return rates.get(self.product_type, (2.0, 14.5))
+    
+    def _get_default_loan_amounts(self) -> Tuple[int, int]:
+        """商品タイプ別のデフォルト融資金額範囲"""
+        amounts = {
+            "mycar": (100000, 10000000),      # 10万円〜1000万円
+            "education": (100000, 5000000),   # 10万円〜500万円
+            "education_deed": (100000, 5000000),
+            "education_card": (100000, 3000000),  # 10万円〜300万円
+            "freeloan": (100000, 5000000),    # 10万円〜500万円
+            "omatomeloan": (100000, 5000000),
+        }
+        return amounts.get(self.product_type, (100000, 5000000))
+    
+    def _get_default_loan_terms(self) -> Tuple[int, int]:
+        """商品タイプ別のデフォルト融資期間範囲（ヶ月）"""
+        terms = {
+            "mycar": (6, 120),        # 6ヶ月〜10年
+            "education": (12, 180),   # 1年〜15年
+            "education_deed": (12, 180),
+            "education_card": (12, 36),   # 1年〜3年（自動更新）
+            "freeloan": (6, 84),      # 6ヶ月〜7年
+            "omatomeloan": (6, 120),  # 6ヶ月〜10年
+        }
+        return terms.get(self.product_type, (12, 84))

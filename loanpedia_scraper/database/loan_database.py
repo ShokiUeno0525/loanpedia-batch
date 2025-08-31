@@ -8,14 +8,14 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, cast, TYPE_CHECKING
 
 try:
     import pymysql
     PYMYSQL_AVAILABLE = True
 except ImportError:
     PYMYSQL_AVAILABLE = False
-    pymysql = None
+    pymysql = cast(Any, None)
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,9 @@ class LoanDatabase:
                 }
         """
         self.db_config = db_config
-        self.connection = None
-        self.cursor = None
+        # 明示的な属性型（mypy対策）
+        self.connection: Optional[Any] = None
+        self.cursor: Optional[Any] = None
         
         if not PYMYSQL_AVAILABLE:
             logger.warning("pymysql not available, database operations will be skipped")
@@ -72,7 +73,7 @@ class LoanDatabase:
             self.connection.close()
         logger.info("Database connection closed")
     
-    def __enter__(self):
+    def __enter__(self) -> Optional["LoanDatabase"]:
         """コンテキストマネージャーの開始"""
         if self.connect():
             return self
@@ -113,9 +114,24 @@ class LoanDatabase:
             
             # 生データを保存
             raw_data_id = self.save_raw_data(loan_data, institution_id)
-            
-            logger.info(f"Loan data saved: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}")
-            
+
+            # 明示的にコミット（コンテキスト外利用時の未コミット対策）
+            try:
+                if self.connection:
+                    self.connection.commit()
+                    logger.info(
+                        f"Committed loan data: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}"
+                    )
+            except Exception as ce:
+                logger.error(f"Commit failed, rolling back: {ce}")
+                if self.connection:
+                    self.connection.rollback()
+                return None
+
+            logger.info(
+                f"Loan data saved: {loan_data.get('source_url', 'Unknown URL')} -> ID: {raw_data_id}"
+            )
+
             return raw_data_id
             
         except Exception as e:
@@ -130,6 +146,7 @@ class LoanDatabase:
             return None
             
         # 既存の金融機関を検索
+        assert self.cursor is not None
         select_sql = """
             SELECT id FROM financial_institutions 
             WHERE institution_code = %s OR institution_name = %s
@@ -139,7 +156,7 @@ class LoanDatabase:
         result = self.cursor.fetchone()
         
         if result:
-            return result['id']
+            return int(cast(Any, result['id']))
         
         # 新規作成
         insert_sql = """
@@ -148,10 +165,11 @@ class LoanDatabase:
         """
         now = datetime.now()
         self.cursor.execute(insert_sql, (institution_code, institution_name, now, now))
-        return self.cursor.lastrowid
+        return int(cast(Any, self.cursor.lastrowid))
     
     def save_raw_data(self, loan_data: Dict[str, Any], institution_id: Optional[int]) -> int:
         """生データテーブルに保存"""
+        assert self.cursor is not None
         html_content = loan_data.get('html_content', '')
         
         # 構造化データを準備
@@ -202,7 +220,21 @@ class LoanDatabase:
                 datetime.now(),
                 existing['id']
             ))
-            return existing['id']
+
+            # 更新時も明示コミット
+            try:
+                if self.connection:
+                    self.connection.commit()
+                    logger.info(
+                        f"Committed update for existing raw_loan_data ID: {existing['id']}"
+                    )
+            except Exception as ce:
+                logger.error(f"Commit failed after update, rolling back: {ce}")
+                if self.connection:
+                    self.connection.rollback()
+                raise
+
+            return int(cast(Any, existing['id']))
         
         # 新規保存
         insert_sql = """
@@ -235,7 +267,7 @@ class LoanDatabase:
             now
         ))
         
-        return self.cursor.lastrowid
+        return int(cast(Any, self.cursor.lastrowid))
     
     def get_latest_data_by_institution(self, institution_code: str) -> Optional[Dict[str, Any]]:
         """指定金融機関の最新データを取得"""
@@ -252,7 +284,8 @@ class LoanDatabase:
         """
         
         self.cursor.execute(sql, (institution_code,))
-        return self.cursor.fetchone()
+        fetched = self.cursor.fetchone()
+        return cast(Optional[Dict[str, Any]], fetched)
     
     def get_all_institutions(self):
         """すべての金融機関を取得"""
@@ -264,36 +297,66 @@ class LoanDatabase:
         return self.cursor.fetchall()
 
 
-# データベース設定のデフォルト値
-DEFAULT_DB_CONFIG = {
+# データベース設定のデフォルト値（パッケージ内: コンテナ/Lambda想定）
+DEFAULT_DB_CONFIG: Dict[str, Any] = {
     'host': 'mysql',
     'user': 'app_user',
     'password': 'app_password',
     'database': 'app_db',
     'port': 3306,
-    'charset': 'utf8mb4',
-    'connect_timeout': 60,
-    'read_timeout': 30,
-    'write_timeout': 30,
-    'autocommit': True,
-    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-    'local_infile': False,
-    'use_unicode': True,
-    'max_allowed_packet': 16777216
+    'charset': 'utf8mb4'
 }
 
 
 def get_database_config() -> Dict[str, Any]:
-    """環境変数またはデフォルト設定からデータベース設定を取得"""
+    """環境変数またはデフォルト設定からデータベース設定を取得
+
+    許容する環境変数のキー（優先順）:
+      - DB_NAME / DB_DATABASE / MYSQL_DATABASE
+      - DB_USER / DB_USERNAME / MYSQL_USER
+      - DB_PASSWORD / MYSQL_PASSWORD
+      - DB_HOST / MYSQL_HOST
+      - DB_PORT / MYSQL_PORT
+      - DB_CHARSET
+    """
     import os
-    
+
+    host = (
+        os.getenv('DB_HOST')
+        or os.getenv('MYSQL_HOST')
+        or DEFAULT_DB_CONFIG['host']
+    )
+    user = (
+        os.getenv('DB_USER')
+        or os.getenv('DB_USERNAME')
+        or os.getenv('MYSQL_USER')
+        or DEFAULT_DB_CONFIG['user']
+    )
+    password = (
+        os.getenv('DB_PASSWORD')
+        or os.getenv('MYSQL_PASSWORD')
+        or DEFAULT_DB_CONFIG['password']
+    )
+    database = (
+        os.getenv('DB_NAME')
+        or os.getenv('DB_DATABASE')
+        or os.getenv('MYSQL_DATABASE')
+        or DEFAULT_DB_CONFIG['database']
+    )
+    port_env = os.getenv('DB_PORT') or os.getenv('MYSQL_PORT')
+    try:
+        port = int(port_env) if port_env else cast(int, DEFAULT_DB_CONFIG['port'])
+    except Exception:
+        port = cast(int, DEFAULT_DB_CONFIG['port'])
+    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+
     return {
-        'host': os.getenv('DB_HOST', DEFAULT_DB_CONFIG['host']),
-        'user': os.getenv('DB_USER', DEFAULT_DB_CONFIG['user']),
-        'password': os.getenv('DB_PASSWORD', DEFAULT_DB_CONFIG['password']),
-        'database': os.getenv('DB_NAME', DEFAULT_DB_CONFIG['database']),
-        'port': int(os.getenv('DB_PORT', DEFAULT_DB_CONFIG['port'])),
-        'charset': os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
+        'port': port,
+        'charset': charset,
     }
 
 
