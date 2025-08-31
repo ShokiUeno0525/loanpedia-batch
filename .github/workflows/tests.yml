@@ -2,7 +2,7 @@ name: Scraping Tests CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [ main, develop, 'feature/**', 'fix/**', 'bugfix/**' ]
   pull_request:
     branches: [ main, develop ]
   schedule:
