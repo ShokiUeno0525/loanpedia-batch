@@ -94,32 +94,54 @@ def _load_registry():
     新しいスクレイパーモジュールを使用。
     """
     try:
-        # 統一的な絶対インポートを使用
+        # 開発環境: 統一的な絶対インポート
         from loanpedia_scraper.scrapers.aomori_michinoku_bank import product_scraper
         from loanpedia_scraper.scrapers.aomori_michinoku_bank import config
         scrape_product = product_scraper.scrape_product
         profiles = config.profiles
-    except ImportError as e:
-        logger.error(f"Failed to import scraper modules: {e}")
-        # 詳細なエラー情報を追加
-        import traceback
-        logger.error(f"Full traceback: {traceback.format_exc()}")
-        logger.error(f"Current Python path: {sys.path[:5]}...")  # パスの最初の5つを表示
-        raise
+    except ImportError:
+        try:
+            # Lambda環境: scrapers ディレクトリから直接インポート
+            import sys
+            import os
+            scrapers_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scrapers', 'aomori_michinoku_bank')
+            if scrapers_path not in sys.path:
+                sys.path.insert(0, scrapers_path)
+            
+            import product_scraper
+            import config
+            scrape_product = product_scraper.scrape_product
+            profiles = config.profiles
+        except ImportError as e:
+            logger.error(f"Failed to import from both development and Lambda paths: {e}")
+            # 詳細なエラー情報を追加
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"Current Python path: {sys.path[:5]}...")  # パスの最初の5つを表示
+            raise
     
     # 商品プロファイルベースのスクレイパー生成
     class ProductScraper:
-        def __init__(self, url: str, pdf_url_override: str = None):
+        def __init__(self, url: str, pdf_url_override: str = None, variant: str | None = None):
             self.url = url
             self.pdf_url_override = pdf_url_override
+            self.variant = variant
             
         def scrape_loan_info(self) -> Dict[str, Any]:
             try:
                 product, raw_data = scrape_product(
-                    self.url, 
-                    fin_id=FINANCIAL_INSTITUTION_ID, 
-                    pdf_url_override=self.pdf_url_override
+                    self.url,
+                    fin_id=FINANCIAL_INSTITUTION_ID,
+                    pdf_url_override=self.pdf_url_override,
+                    variant=self.variant,
                 )
+                def _to_pct(v):
+                    if v is None:
+                        return None
+                    val = round(float(v) * 100, 3)
+                    # 末尾の不要な0や小数点をトリム
+                    s = ("%f" % val).rstrip('0').rstrip('.')
+                    return f"{s}％"
                 return {
                     "scraping_status": "success",
                     "product_name": product.product_name,
@@ -127,6 +149,8 @@ def _load_registry():
                     "category": product.category,
                     "min_interest_rate": product.min_interest_rate,
                     "max_interest_rate": product.max_interest_rate,
+                    "min_interest_rate_percent": _to_pct(product.min_interest_rate),
+                    "max_interest_rate_percent": _to_pct(product.max_interest_rate),
                     "interest_type": product.interest_type,
                     "min_loan_amount": product.min_loan_amount,
                     "max_loan_amount": product.max_loan_amount,
@@ -149,18 +173,36 @@ def _load_registry():
     
     # key: APIで指定するproduct、name: 表示名、cls: スクレイパークラス
     registry = {}
-    
-    # マイカーローン
-    registry["mycar"] = {
-        "name": "青森みちのくマイカーローン",
-        "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-75.pdf"
-        ),
+    # 変種を持つ可能性のあるスラッグ（rateページでWEB完結型/来店型が区別される）
+    variant_candidates = {
+        "mycarloan": ("mycar", "青森みちのくマイカーローン"),
+        "freeloan": ("freeloan", "青森みちのくフリーローン"),
+        "omatomeloan": ("omatomeloan", "青森みちのくおまとめローン"),
+        "reform": ("reform", "青森みちのくリフォームローン"),
     }
     
+    # マイカーローン（WEB/来店）
+    registry["mycar_web"] = {
+        "name": "青森みちのくマイカーローン〈WEB完結型〉",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-75.pdf",
+            variant="web",
+        ),
+    }
+    registry["mycar_store"] = {
+        "name": "青森みちのくマイカーローン〈来店型〉",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-75.pdf",
+            variant="store",
+        ),
+    }
+    # 既存の互換キーはWEB完結型に寄せる
+    registry["mycar"] = registry["mycar_web"]
+
     # 教育ローン（反復利用型）
-    registry["education"] = {
+    registry["education_repetition"] = {
         "name": "青森みちのく教育ローン反復利用型",
         "cls": lambda: ProductScraper(
             "https://www.am-bk.co.jp/kojin/loan/kyouikuloan_hanpuku/",
@@ -168,25 +210,116 @@ def _load_registry():
         ),
     }
     
-    
-    # フリーローン
-    registry["freeloan"] = {
-        "name": "青森みちのくフリーローン",
+    # 教育ローン(証書貸付型)
+    registry["education_deed"] = {
+        "name": "青森みちのく教育ローン証書貸付型",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/certificate/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-78.pdf"
+        ),
+    }
+
+    # 教育カードローン
+    registry["education_card"] = {
+        "name": "青森みちのく教育カードローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-79.pdf"
+        ),
+    }
+
+    # フリーローン（WEB/来店）
+    registry["freeloan_web"] = {
+        "name": "青森みちのくフリーローン〈WEB完結型〉",
         "cls": lambda: ProductScraper(
             "https://www.am-bk.co.jp/kojin/loan/freeloan/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-81.pdf"
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-81.pdf",
+            variant="web",
         ),
     }
-    
-    # おまとめローン
-    registry["omatomeloan"] = {
-        "name": "青森みちのくおまとめローン",
+    registry["freeloan_store"] = {
+        "name": "青森みちのくフリーローン〈来店型〉",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/freeloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-81.pdf",
+            variant="store",
+        ),
+    }
+    registry["freeloan"] = registry["freeloan_web"]
+
+    # おまとめローン（WEB/来店）
+    registry["omatomeloan_web"] = {
+        "name": "青森みちのくおまとめローン〈WEB完結型〉",
         "cls": lambda: ProductScraper(
             "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-83.pdf"
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-83.pdf",
+            variant="web",
         ),
     }
-    
+    registry["omatomeloan_store"] = {
+        "name": "青森みちのくおまとめローン〈来店型〉",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-83.pdf",
+            variant="store",
+        ),
+    }
+    registry["omatomeloan"] = registry["omatomeloan_web"]
+
+    # シルバーローン（単一）
+    registry["silverloan"] = {
+        "name": "青森みちのくシルバーローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/freeloan/silverloan",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-85.pdf"
+        ),
+    }
+
+    # 住宅サポートローン
+    registry["housing_support"] = {
+        "name": "青森みちのく住宅サポートローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/freeloan/support/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-86.pdf"
+        ),
+    }
+
+    # 住宅ローン(あおぎん信用保証型)
+    registry["housing_aogin"] = {
+        "name": "青森みちのく住宅ローン(あおぎん信用保証型)",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/jutakuloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-84.pdf"
+        ),
+    }
+
+    # 住宅ローン(全国保証型）
+    registry["housing_zenkoku"] = {
+        "name": "青森みちのく住宅ローン(全国保証型)",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/jutakuloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-84.pdf"
+        ),
+    }
+
+    # リフォームローン
+    registry["reform"] = {
+        "name": "青森みちのくリフォームローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/reform/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-87.pdf"
+        ),
+    }
+
+    # 空き家活用ローン
+    registry["vacant_house"] = {
+        "name": "青森みちのく空き家利活用ローン",
+        "cls": lambda: ProductScraper(
+            "https://www.am-bk.co.jp/kojin/loan/akiyarikatuyouloan/",
+            "https://www.am-bk.co.jp/kojin/loan/pdf/l-88.pdf"
+        ),
+    }
+
     return registry
 
 
@@ -202,117 +335,45 @@ def get_product_info() -> Dict[str, str]:
 # ========== 実行ロジック ==========
 def _save_to_database(product_data: Dict[str, Any], raw_data_dict: Dict[str, Any]) -> bool:
     """
-    スクレイピング結果をデータベースに保存
-    
-    Args:
-        product_data: 商品データ辞書
-        raw_data_dict: 生データ辞書
-        
-    Returns:
-        bool: 保存成功時True、失敗時False
+    スクレイピング結果をデータベースに保存（サービス層に統一）
     """
+    # 保存制御フラグ
     save_to_db = os.getenv("SAVE_TO_DB", "true").lower()
     if save_to_db not in ("true", "1", "yes"):
         logger.info("SAVE_TO_DB is disabled, skipping database save")
         return True
-    
-    # デバッグモード: データベース保存を無効にして、スクレイピングの成功を確認
+
     if os.getenv("DEBUG_SKIP_DB", "false").lower() in ("true", "1", "yes"):
         logger.info("DEBUG_SKIP_DB is enabled, skipping database save for debugging")
         return True
-    
+
+    # 正規化と保存はサービス層へ委譲
     try:
-        # データベースモジュールをインポート
-        # ハンドラーの位置: loanpedia_scraper/src/handlers/
-        # データベースの位置: loanpedia_scraper/database/
-        database_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "database")
-        if database_path not in sys.path:
-            sys.path.insert(0, database_path)
-        
         try:
-            from loan_database import LoanDatabase
-        except ImportError as e:
-            logger.error(f"Failed to import LoanDatabase: {e}")
-            # 詳細なエラー情報を追加
-            import traceback
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            logger.error(f"Database path: {database_path}")
-            logger.error(f"Python path: {sys.path}")
-            raise
-        
-        # データベース設定（環境変数から取得）
-        db_config = {
-            'host': os.getenv('DB_HOST', 'mysql'),
-            'user': os.getenv('DB_USER', 'app_user'),
-            'password': os.getenv('DB_PASSWORD', 'app_password'),
-            'database': os.getenv('DB_NAME', 'app_db'),
-            'port': int(os.getenv('DB_PORT', '3306')),  # Docker内のポート
-            'charset': 'utf8mb4'
-        }
-        
-        # データベース接続をリトライ付きで実行（指数バックオフ）
-        for attempt in range(DB_RETRY_MAX):
-            try:
-                # 接続前に少し待機（リソース競合回避）
-                if attempt > 0:
-                    delay = DB_RETRY_BASE_DELAY * (2 ** (attempt - 1))  # 指数バックオフ
-                    logger.info(f"Waiting {delay} seconds before retry {attempt + 1}")
-                    time.sleep(delay)
-                
-                db = LoanDatabase(db_config)
-                if db.connect():
-                    logger.info(f"Database connection successful on attempt {attempt + 1}")
-                    break
-                else:
-                    logger.warning(f"Database connection attempt {attempt + 1} failed (returned False)")
-            except Exception as e:
-                logger.warning(f"Database connection attempt {attempt + 1} failed with exception: {e}")
-                if attempt == DB_RETRY_MAX - 1:
-                    logger.error("All database connection attempts failed")
-                    return False
-        else:
-            logger.error(f"Failed to connect to database after {DB_RETRY_MAX} retries")
-            return False
-        
-        # LoanDatabaseの期待する形式に統合
-        loan_data = {
-            'institution_code': 'aomori_michinoku',
-            'institution_name': '青森みちのく銀行',
-            'source_url': raw_data_dict.get('source_url', product_data.get('source_reference', '')),
-            'html_content': raw_data_dict.get('html_content', ''),
-            'extracted_text': raw_data_dict.get('extracted_text', ''),
-            'content_hash': raw_data_dict.get('content_hash', ''),
-            'scraping_status': 'success',
-            'scraped_at': datetime.now().isoformat(),
-            'product_name': product_data.get('product_name'),
-            'loan_type': product_data.get('loan_type'),
-            'category': product_data.get('category'),
-            'min_interest_rate': product_data.get('min_interest_rate'),
-            'max_interest_rate': product_data.get('max_interest_rate'),
-            'interest_type': product_data.get('interest_type'),
-            'min_loan_amount': product_data.get('min_loan_amount'),
-            'max_loan_amount': product_data.get('max_loan_amount'),
-            'min_loan_term': product_data.get('min_loan_term'),
-            'max_loan_term': product_data.get('max_loan_term'),
-            'repayment_method': product_data.get('repayment_method'),
-            'min_age': product_data.get('min_age'),
-            'max_age': product_data.get('max_age'),
-            'special_features': product_data.get('special_features'),
-        }
-        
-        # データベースに保存
-        success = db.save_loan_data(loan_data)
-        db.disconnect()
-        
-        if success:
-            logger.info(f"Successfully saved {product_data.get('product_name')} to database")
+            from loanpedia_scraper.database.loan_service import save_scraped_product
+        except ImportError:
+            # フォールバック（Lambda直下配置やPYTHONPATH未設定時）
+            database_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "database",
+            )
+            if database_path not in sys.path:
+                sys.path.insert(0, database_path)
+            from loan_service import save_scraped_product  # type: ignore
+
+        ok = save_scraped_product(
+            institution_code="aomori_michinoku",
+            institution_name="青森みちのく銀行",
+            product_data=product_data,
+            raw_data_dict=raw_data_dict,
+        )
+        if ok:
+            logger.info(f"Successfully saved {product_data.get('product_name')} to database (service)")
             return True
-        else:
-            logger.error(f"Failed to save {product_data.get('product_name')} to database")
-            return False
-        
+        logger.error(f"Failed to save {product_data.get('product_name')} to database (service)")
+        return False
     except Exception as e:
-        logger.exception(f"Database save error: {e}")
+        logger.exception(f"Database save error via service: {e}")
         return False
 
 

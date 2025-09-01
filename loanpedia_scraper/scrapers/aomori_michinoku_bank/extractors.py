@@ -5,51 +5,57 @@ import re
 
 
 def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
-    # 具体的な期間パターンを探す
+    """返済期間の月数範囲を抽出（表記ゆれ対応）"""
+    # 「ヶ月/か月/カ月/ヵ月/ケ月」表記を許容
+    mon = r"(?:ヶ月|か月|カ月|ヵ月|ケ月)"
+
+    # 具体的な期間パターンを広くカバー
     patterns = [
-        r"(?:期間|返済期間|借入期間).*?(\d+)\s*年\s*以内",
-        r"(?:期間|返済期間|借入期間).*?(\d+)\s*ヶ月\s*以内",
-        r"(?:最長|最大).*?(\d+)\s*年",
-        r"(?:最長|最大).*?(\d+)\s*ヶ月",
-        r"(\d+)\s*年\s*以内",
-        r"(\d+)\s*ヶ月\s*以内",
+        rf"(?:期間|返済期間|借入期間)[^\n]{{0,20}}?(\d+)\s*年\s*(?:以内|まで|以下)?",
+        rf"(?:期間|返済期間|借入期間)[^\n]{{0,20}}?(\d+)\s*{mon}\s*(?:以内|まで|以下)?",
+        rf"(?:最長|最大)[^\n]{{0,10}}?(\d+)\s*年",
+        rf"(?:最長|最大)[^\n]{{0,10}}?(\d+)\s*{mon}",
+        r"(\d+)\s*年\s*(?:以内|まで|以下)",
+        rf"(\d+)\s*{mon}\s*(?:以内|まで|以下)",
+        r"(\d+)\s*年",
+        rf"(\d+)\s*{mon}",
     ]
-    
+
     months = []
     years = []
-    
-    # パターンベースの抽出
+
     for pattern in patterns:
-        matches = re.findall(pattern, text)
-        for match in matches:
-            val = int(match)
+        for m in re.findall(pattern, text):
+            try:
+                val = int(m)
+            except Exception:
+                continue
             if "年" in pattern:
-                if val <= 30:  # 妥当な年数範囲
+                if 1 <= val <= 40:  # 上限やや広く
                     years.append(val)
-            elif "ヶ月" in pattern:
-                if val <= 360:  # 妥当な月数範囲（30年以内）
+            else:
+                if 1 <= val <= 480:
                     months.append(val)
-    
-    # フォールバック: 一般的な期間パターン
+
+    # フォールバック
     if not months and not years:
-        month_matches = re.findall(r"(\d+)\s*ヶ月", text)
-        year_matches = re.findall(r"(\d+)\s*年", text)
-        
-        months = [int(x) for x in month_matches if 1 <= int(x) <= 360]
-        years = [int(x) for x in year_matches if 1 <= int(x) <= 30]
-    
-    # 候補を収集
-    cands = []
-    if months:
-        cands.append((min(months), max(months)))
+        months = [int(x) for x in re.findall(rf"(\d+)\s*{mon}", text) if 1 <= int(x) <= 480]
+        years = [int(x) for x in re.findall(r"(\d+)\s*年", text) if 1 <= int(x) <= 40]
+
+    # すべての候補（月単位）
+    all_months = list(months)
     if years:
-        year_months = [y * 12 for y in years]
-        cands.append((min(year_months), max(year_months)))
-    
-    if not cands:
+        all_months += [y * 12 for y in years]
+
+    if not all_months:
         return None, None
-    
-    return min(c[0] for c in cands), max(c[1] for c in cands)
+
+    # 妥当性フィルタ（最低6ヶ月を優先。一般的な無担保ローンの最短想定）
+    valid = [m for m in all_months if 6 <= m <= 480]
+    if valid:
+        return min(valid), max(valid)
+    # フィルタに全落ちの場合は非フィルタの範囲で返す
+    return min(all_months), max(all_months)
 
 
 def to_yen_range(text: str):
@@ -119,10 +125,17 @@ def extract_repayment(text: str):
 
 
 def interest_type_from_hints(text: str, hints: list[str]):
+    """ヒントに依存しすぎず、本文に『固定』『変動』があれば推定"""
+    t = text or ""
+    # まず本文から直接推定
+    if "固定" in t and "変動" not in t:
+        return "固定金利"
+    if "変動" in t:
+        return "変動金利"
+    # 本文から取れなければヒントで補完
     for h in hints or []:
-        if h in text:
-            if "固定" in h and "変動" not in h:
-                return "固定金利"
-            if "変動" in h:
-                return "変動金利"
+        if "固定" in h and "変動" not in h:
+            return "固定金利"
+        if "変動" in h:
+            return "変動金利"
     return None
