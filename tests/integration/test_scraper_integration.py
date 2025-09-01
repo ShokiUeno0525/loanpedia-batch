@@ -237,7 +237,7 @@ class TestScraperIntegration:
         <head><title>マイカーローン</title></head>
         <body>
             <h1>マイカーローン</h1>
-            <p>金利：年２．８％～３．８％</p>
+            <p>金利：年２．８％〜３．８％</p>
         </body>
         </html>
         """

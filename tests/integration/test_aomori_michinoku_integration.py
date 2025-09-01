@@ -14,7 +14,7 @@ from loanpedia_scraper.scrapers.aomori_michinoku_bank.base_scraper import Aomori
 class TestAomorimichinokuBankIntegration:
     """青森みちのく銀行統合テストクラス"""
 
-    @patch('loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client.requests.get')
+    @patch('loanpedia_scraper.scrapers.aomori_michinoku_bank.base_scraper.requests.Session.get')
     def test_scrape_with_mock_response(self, mock_get):
         """モックレスポンスでのスクレイピング統合テスト"""
         # HTMLレスポンスのモック
@@ -84,7 +84,7 @@ class TestAomorimichinokuBankIntegration:
         # 全商品タイプが正常に初期化されることを確認
         assert len(scrapers) == len(product_types)
 
-    @patch('loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client.requests.get')
+    @patch('loanpedia_scraper.scrapers.aomori_michinoku_bank.base_scraper.requests.Session.get')
     def test_error_handling_integration(self, mock_get):
         """エラーハンドリング統合テスト"""
         import requests
