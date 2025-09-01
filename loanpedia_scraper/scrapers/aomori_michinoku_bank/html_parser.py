@@ -4,7 +4,7 @@ from typing import Tuple, Optional, Dict
 import re
 import unicodedata
 from bs4 import BeautifulSoup
-from .extractors import (
+from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import (
     to_month_range,
     to_yen_range,
     extract_age,

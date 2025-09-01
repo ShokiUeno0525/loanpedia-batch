@@ -3,7 +3,7 @@
 from typing import Dict
 import io
 import pdfplumber
-from extractors import extract_age, to_month_range
+from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import extract_age, to_month_range
 
 
 def pdf_bytes_to_text(b: bytes) -> str:

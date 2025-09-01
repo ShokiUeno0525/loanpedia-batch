@@ -94,9 +94,9 @@ def _load_registry():
     新しいスクレイパーモジュールを使用。
     """
     try:
-        # パスは既に_setup_paths()で設定済み
-        import product_scraper
-        import config
+        # 統一的な絶対インポートを使用
+        from loanpedia_scraper.scrapers.aomori_michinoku_bank import product_scraper
+        from loanpedia_scraper.scrapers.aomori_michinoku_bank import config
         scrape_product = product_scraper.scrape_product
         profiles = config.profiles
     except ImportError as e:
@@ -168,23 +168,6 @@ def _load_registry():
         ),
     }
     
-    # 教育ローン（証書貸付型）
-    registry["education_deed"] = {
-        "name": "青森みちのく教育ローン証書貸付型",
-        "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/certificate/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-78.pdf"
-        ),
-    }
-    
-    # 教育カードローン
-    registry["education_card"] = {
-        "name": "青森みちのく教育カードローン",
-        "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-79.pdf"
-        ),
-    }
     
     # フリーローン
     registry["freeloan"] = {
@@ -423,7 +406,7 @@ def _parse_targets(evt: Dict[str, Any]) -> List[str]:
     event の "product" 指定を解釈:
       - "all"（既定）: 全商品
       - "mycar" のような文字列
-      - ["mycar","education_card"] のような配列
+      - ["mycar","education"] のような配列
     """
     reg_keys = get_available_products()
     p = evt.get("product", "all")
@@ -526,7 +509,7 @@ def main():
     parser.add_argument(
         "--product",
         default="all",
-        help="対象商品。'all' / 'mycar' / 'education' / 'education_deed' / 'education_card' / 'freeloan' / 'omatomeloan' またはカンマ区切り",
+        help="対象商品。'all' / 'mycar' / 'education' / 'freeloan' / 'omatomeloan' またはカンマ区切り",
     )
     args = parser.parse_args()
 
