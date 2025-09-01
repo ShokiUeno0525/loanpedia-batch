@@ -5,13 +5,24 @@ import time
 from urllib.parse import urljoin
 import re
 
-from .http_client import fetch_html, fetch_bytes
-from .config import START, pick_profile
-from .html_parser import parse_common_fields_from_html, extract_interest_range_from_html
-from .pdf_parser import pdf_bytes_to_text, extract_pdf_fields
-from .extractors import interest_type_from_hints
-from .hash_utils import sha_bytes
-from .models import LoanProduct, RawLoanData
+try:
+    # Lambda環境での絶対インポート
+    from aomori_michinoku_bank.http_client import fetch_html, fetch_bytes
+    from aomori_michinoku_bank.config import START, pick_profile
+    from aomori_michinoku_bank.html_parser import parse_common_fields_from_html, extract_interest_range_from_html
+    from aomori_michinoku_bank.pdf_parser import pdf_bytes_to_text, extract_pdf_fields
+    from aomori_michinoku_bank.extractors import interest_type_from_hints
+    from aomori_michinoku_bank.hash_utils import sha_bytes
+    from aomori_michinoku_bank.models import LoanProduct, RawLoanData
+except ImportError:
+    # 開発環境での相対インポート
+    from .http_client import fetch_html, fetch_bytes
+    from .config import START, pick_profile
+    from .html_parser import parse_common_fields_from_html, extract_interest_range_from_html
+    from .pdf_parser import pdf_bytes_to_text, extract_pdf_fields
+    from .extractors import interest_type_from_hints
+    from .hash_utils import sha_bytes
+    from .models import LoanProduct, RawLoanData
 
 
 def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:

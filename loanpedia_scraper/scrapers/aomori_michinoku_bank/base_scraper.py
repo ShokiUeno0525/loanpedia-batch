@@ -658,8 +658,6 @@ class AomorimichinokuBankScraper(BaseLoanScraper):
         urls = {
             "mycar": "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
             "education": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan_hanpuku/",
-            "education_deed": "https://www.am-bk.co.jp/kojin/loan/certificate/",
-            "education_card": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
             "freeloan": "https://www.am-bk.co.jp/kojin/loan/freeloan/",
             "omatomeloan": "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
         }

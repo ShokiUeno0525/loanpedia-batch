@@ -2,7 +2,12 @@
 # loan_scraper/http_client.py
 # -*- coding: utf-8 -*-
 import requests
-from config import HEADERS
+try:
+    # Lambda環境での絶対インポート
+    from aomori_michinoku_bank.config import HEADERS
+except ImportError:
+    # 開発環境での相対インポート
+    from .config import HEADERS
 
 
 def fetch_html(url: str, timeout: int = 30) -> str:

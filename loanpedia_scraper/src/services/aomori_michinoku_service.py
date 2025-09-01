@@ -112,20 +112,6 @@ def _load_registry() -> Dict[str, Dict[str, Any]]:
             "https://www.am-bk.co.jp/kojin/loan/pdf/l-77.pdf",
         ),
     }
-    reg["education_deed"] = {
-        "name": "青森みちのく教育ローン証書貸付型",
-        "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/certificate/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-78.pdf",
-        ),
-    }
-    reg["education_card"] = {
-        "name": "青森みちのく教育カードローン",
-        "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
-            "https://www.am-bk.co.jp/kojin/loan/pdf/l-79.pdf",
-        ),
-    }
     reg["freeloan"] = {
         "name": "青森みちのくフリーローン",
         "cls": lambda: ProductScraper(

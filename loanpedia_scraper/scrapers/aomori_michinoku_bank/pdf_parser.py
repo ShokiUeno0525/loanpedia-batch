@@ -3,7 +3,12 @@
 from typing import Dict
 import io
 import pdfplumber
-from extractors import extract_age, to_month_range
+try:
+    # Lambda環境での絶対インポート
+    from aomori_michinoku_bank.extractors import extract_age, to_month_range
+except ImportError:
+    # 開発環境での相対インポート
+    from .extractors import extract_age, to_month_range
 
 
 def pdf_bytes_to_text(b: bytes) -> str:
