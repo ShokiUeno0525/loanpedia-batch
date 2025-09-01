@@ -4,22 +4,12 @@ from typing import Tuple, Optional, Dict
 import re
 import unicodedata
 from bs4 import BeautifulSoup
-try:
-    # Lambda環境での絶対インポート
-    from aomori_michinoku_bank.extractors import (
-        to_month_range,
-        to_yen_range,
-        extract_age,
-        extract_repayment,
-    )
-except ImportError:
-    # 開発環境での相対インポート
-    from .extractors import (
-        to_month_range,
-        to_yen_range,
-        extract_age,
-        extract_repayment,
-    )
+from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import (
+    to_month_range,
+    to_yen_range,
+    extract_age,
+    extract_repayment,
+)
 
 def _normalize_text(s: str) -> str:
     """全角→半角、ダッシュ・波ダッシュの統一など簡易正規化"""

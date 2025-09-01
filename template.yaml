@@ -14,7 +14,7 @@ Globals:
     Tracing: Active
     Environment:
       Variables:
-        PYTHONPATH: /var/task:/var/task/scrapers:/var/task/database
+        PYTHONPATH: /var/task
         SAVE_TO_DB: "true"
         LOG_LEVEL: "INFO"
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
@@ -52,7 +52,7 @@ Resources:
       Timeout: 900
       Environment:
         Variables:
-          PYTHONPATH: /var/task:/var/task/scrapers:/var/task/database
+          PYTHONPATH: /var/task
           LOG_LEVEL: "INFO"
           # DB接続（SAMローカル: docker-composeのMySQLに接続）
           # SAMのコンテナはcomposeネットワーク外なので、ホスト経由で接続する
@@ -84,7 +84,7 @@ Resources:
       Timeout: 900
       Environment:
         Variables:
-          PYTHONPATH: /var/task:/var/task/src
+          PYTHONPATH: /var/task
       Events:
         MonthlySchedule:
           Type: Schedule
