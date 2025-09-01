@@ -5,13 +5,43 @@ import time
 from urllib.parse import urljoin
 import re
 
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client import fetch_html, fetch_bytes
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import START, pick_profile
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.html_parser import parse_common_fields_from_html, extract_interest_range_from_html
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.pdf_parser import pdf_bytes_to_text, extract_pdf_fields
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import interest_type_from_hints
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.hash_utils import sha_bytes
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.models import LoanProduct, RawLoanData
+try:
+    # Try package-style imports first
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client import fetch_html, fetch_bytes
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import START, pick_profile
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.html_parser import parse_common_fields_from_html, extract_interest_range_from_html
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.pdf_parser import pdf_bytes_to_text, extract_pdf_fields, extract_interest_range_from_pdf
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import interest_type_from_hints
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.hash_utils import sha_bytes
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.models import LoanProduct, RawLoanData
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.rate_pages import (
+        guess_rate_slug_from_url,
+        fetch_interest_range_from_rate_page,
+    )
+except ImportError:
+    # Fall back to direct module imports (Lambda environment)
+    import http_client
+    import config
+    import html_parser
+    import pdf_parser
+    import extractors
+    import hash_utils
+    import models
+    
+    fetch_html = http_client.fetch_html
+    fetch_bytes = http_client.fetch_bytes
+    START = config.START
+    pick_profile = config.pick_profile
+    parse_common_fields_from_html = html_parser.parse_common_fields_from_html
+    extract_interest_range_from_html = html_parser.extract_interest_range_from_html
+    pdf_bytes_to_text = pdf_parser.pdf_bytes_to_text
+    extract_pdf_fields = pdf_parser.extract_pdf_fields
+    extract_interest_range_from_pdf = pdf_parser.extract_interest_range_from_pdf
+    interest_type_from_hints = extractors.interest_type_from_hints
+    sha_bytes = hash_utils.sha_bytes
+    LoanProduct = models.LoanProduct
+    RawLoanData = models.RawLoanData
+    from rate_pages import guess_rate_slug_from_url, fetch_interest_range_from_rate_page
 
 
 def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:
@@ -76,12 +106,16 @@ def _apply_sanity(merged: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, 
 
 
 def build_loan_product(
-    fields: Dict[str, Any], profile: Dict[str, Any], source_ref: str, fin_id: int
+    fields: Dict[str, Any], profile: Dict[str, Any], source_ref: str, fin_id: int, variant: str | None = None
 ) -> LoanProduct:
     itype = interest_type_from_hints(
         fields["extracted_text"], profile.get("interest_type_hints", [])
     )
     special = extract_specials(fields["extracted_text"], profile)
+    if variant:
+        tag = "WEB完結型" if variant == "web" else ("来店型" if variant == "store" else None)
+        if tag:
+            special = f"{special} / {tag}" if special else tag
     return LoanProduct(
         financial_institution_id=fin_id,
         product_name=fields.get("product_name"),
@@ -120,7 +154,7 @@ def build_raw(
 
 
 def _choose_product_name(
-    html_fields: Dict[str, Any], profile: Dict[str, Any]
+    html_fields: Dict[str, Any], profile: Dict[str, Any], variant: str | None = None
 ) -> str | None:
     return (
         profile.get("product_name_override")
@@ -133,6 +167,7 @@ def scrape_product(
     url: str,
     fin_id: int = 1,
     pdf_url_override: str | None = None,  # 固定PDFのみ。カタログ/ページ内探索は行わない
+    variant: str | None = None,  # 'web' or 'store'
 ) -> Tuple[LoanProduct, RawLoanData]:
     # 1) HTML
     html = fetch_html(url)
@@ -140,10 +175,15 @@ def scrape_product(
 
     # 2) プロファイル＆名称
     profile = pick_profile(url)
-    product_name = _choose_product_name(html_fields, profile)
+    base_name = _choose_product_name(html_fields, profile, variant)
+    if variant:
+        suffix = "〈WEB完結型〉" if variant == "web" else ("〈来店型〉" if variant == "store" else "")
+        product_name = f"{base_name}{suffix}" if base_name else base_name
+    else:
+        product_name = base_name
     html_fields["product_name"] = product_name
 
-    # 3) 金利はHTML
+    # 3) 金利はHTML優先、なければPDFから補完
     rate_min, rate_max = extract_interest_range_from_html(html)
 
     # 4) PDF URL（固定のみ）
@@ -164,14 +204,27 @@ def scrape_product(
     )
     fields["extracted_text"] = pdf_text or fields["extracted_text"]
 
-    # 7) 金利はHTML最終
+    # 7) 金利: HTML優先、未取得ならPDF→金利一覧ページで補完
+    if rate_min is None and rate_max is None:
+        pmin, pmax = extract_interest_range_from_pdf(pdf_text)
+        rate_min, rate_max = pmin, pmax
+    slug = guess_rate_slug_from_url(url)
+    if rate_min is None and rate_max is None:
+        if slug:
+            rmin, rmax = fetch_interest_range_from_rate_page(slug)
+            rate_min, rate_max = rmin, rmax
+    # variant 指定があれば、rateページの該当区分で上書き（商品ページが単一値の場合の分離対応）
+    if slug and variant:
+        vrmin, vrmax = fetch_interest_range_from_rate_page(slug, variant=variant)
+        if vrmin is not None and vrmax is not None:
+            rate_min, rate_max = vrmin, vrmax
     fields["min_interest_rate"], fields["max_interest_rate"] = rate_min, rate_max
 
     # 7.5) 妥当性チェック/補完
     fields = _apply_sanity(fields, profile)
 
     # 8) 組み立て
-    product = build_loan_product(fields, profile, pdf_url, fin_id)
+    product = build_loan_product(fields, profile, pdf_url, fin_id, variant=variant)
     raw = build_raw(html, fields["extracted_text"], content_hash, url, fin_id)
     return product, raw
 

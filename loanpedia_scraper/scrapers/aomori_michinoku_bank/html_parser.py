@@ -4,12 +4,19 @@ from typing import Tuple, Optional, Dict
 import re
 import unicodedata
 from bs4 import BeautifulSoup
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import (
-    to_month_range,
-    to_yen_range,
-    extract_age,
-    extract_repayment,
-)
+try:
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import (
+        to_month_range,
+        to_yen_range,
+        extract_age,
+        extract_repayment,
+    )
+except ImportError:
+    import extractors
+    to_month_range = extractors.to_month_range
+    to_yen_range = extractors.to_yen_range
+    extract_age = extractors.extract_age
+    extract_repayment = extractors.extract_repayment
 
 def _normalize_text(s: str) -> str:
     """全角→半角、ダッシュ・波ダッシュの統一など簡易正規化"""
@@ -20,6 +27,8 @@ def _normalize_text(s: str) -> str:
     t = re.sub(r"[‐‑‒–—―−－]", "-", t)
     # 波ダッシュ類を統一
     t = re.sub(r"[~〜～]", "〜", t)
+    # 月表記ゆれ（か月/カ月/ヵ月/ケ月 → ヶ月）
+    t = re.sub(r"(か月|カ月|ヵ月|ケ月)", "ヶ月", t)
     return t
 
 
@@ -59,14 +68,26 @@ def extract_interest_range_from_html(
 ) -> Tuple[Optional[float], Optional[float]]:
     soup = BeautifulSoup(html, "lxml")
     text = _clean_text(soup)
+    # 年X%〜年Y% のように「年」が挟まるケースも許容、カンマ小数も許容
     m = re.search(
-        r"(\d+(?:\.\d+)?)\s*[％%]\s*[\-~〜～－–—]\s*(\d+(?:\.\d+)?)\s*[％%]", text
+        r"(?:年\s*)?(\d+(?:[\.,]\d+)?)\s*[％%]\s*[\-~〜～－–—]\s*(?:年\s*)?(\d+(?:[\.,]\d+)?)\s*[％%]",
+        text,
     )
     if m:
-        a = float(m.group(1)) / 100.0
-        b = float(m.group(2)) / 100.0
+        a = float(m.group(1).replace(",", ".")) / 100.0
+        b = float(m.group(2).replace(",", ".")) / 100.0
         return (min(a, b), max(a, b))
-    nums = [float(x) / 100.0 for x in re.findall(r"(\d+(?:\.\d+)?)\s*[％%]", text)]
+    # フォールバック: %を含む数値を収集。ただし「引下げ」「▲」「最大」等の割引表現は除外
+    nums = []
+    for mm in re.finditer(r"(\d+(?:[\.,]\d+)?)\s*[％%]", text):
+        s, e = mm.span()
+        ctx = text[max(0, s - 16) : min(len(text), e + 16)]
+        if any(k in ctx for k in ("引下げ", "▲", "最大", "割引")):
+            continue
+        try:
+            nums.append(float(mm.group(1).replace(",", ".")) / 100.0)
+        except Exception:
+            pass
     if nums:
         return (min(nums), max(nums))
     return (None, None)
