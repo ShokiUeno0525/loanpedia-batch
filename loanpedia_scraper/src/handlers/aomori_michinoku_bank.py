@@ -94,9 +94,9 @@ def _load_registry():
     新しいスクレイパーモジュールを使用。
     """
     try:
-        # パスは既に_setup_paths()で設定済み
-        import product_scraper
-        import config
+        # 統一的な絶対インポートを使用
+        from loanpedia_scraper.scrapers.aomori_michinoku_bank import product_scraper
+        from loanpedia_scraper.scrapers.aomori_michinoku_bank import config
         scrape_product = product_scraper.scrape_product
         profiles = config.profiles
     except ImportError as e:
