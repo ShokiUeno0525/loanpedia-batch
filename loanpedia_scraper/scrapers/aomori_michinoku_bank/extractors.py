@@ -105,8 +105,15 @@ def to_yen_range(text: str):
             parsed = _to_yen(f"{val}{unit}")
             if parsed and parsed >= 10000:  # 1万円以上
                 nums.append(parsed)
-    
-    return (min(nums), max(nums)) if nums else (None, None)
+    # 重複を除去して一意な金額数を確認
+    unique = sorted(set(nums))
+    if not unique:
+        return (None, None)
+    # 単一金額のみ検出された場合は上限のみとみなし、下限は未確定にする
+    # （後段の妥当性補完で10万円などのデフォルト最小額を設定する）
+    if len(unique) == 1:
+        return (None, unique[0])
+    return (min(unique), max(unique))
 
 
 def extract_age(text: str) -> Tuple[Optional[int], Optional[int]]:
