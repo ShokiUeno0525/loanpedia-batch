@@ -183,7 +183,7 @@ def scrape_product(
     fin_id: int = 1,
     pdf_url_override: str | None = None,  # 固定PDFのみ。カタログ/ページ内探索は行わない
     variant: str | None = None,  # 'web' or 'store'
-) -> Tuple[LoanProduct, RawLoanData]:
+) -> Tuple["LoanProduct", "RawLoanData"]:
     # 1) HTML
     html = fetch_html(url)
     html_fields = parse_common_fields_from_html(html)
