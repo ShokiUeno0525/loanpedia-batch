@@ -110,8 +110,18 @@ def save_scraped_product(
                 db.disconnect()
                 if saved_id:
                     # 主要項目を整形してログ出力
-                    def _fmt(v, suf=""):
+                    def _fmt(v, suf: str = "") -> str:
                         return (str(v) + suf) if v is not None and v != "" else "-"
+
+                    def _fmt_percent(v) -> str:
+                        if v is None or v == "":
+                            return "-"
+                        try:
+                            pct = round(float(v) * 100.0, 3)  # 小数点第3位まで
+                            s = f"{pct:.3f}".rstrip("0").rstrip(".")
+                            return s + "%"
+                        except Exception:
+                            return _fmt(v)
 
                     # ログは統一キーを使用
                     features = loan_data.get('features')
@@ -123,8 +133,8 @@ def save_scraped_product(
                     logger.info(
                         "Saved elements | product=%s | interest=%s-%s (%s) | amount=%s-%s 円 | term=%s-%s ヶ月 | ages=%s-%s 歳 | repayment=%s | features=%s | conditions=%s | url=%s | id=%s",
                         _fmt(loan_data.get('product_name')),
-                        _fmt(loan_data.get('min_interest_rate')),
-                        _fmt(loan_data.get('max_interest_rate')),
+                        _fmt_percent(loan_data.get('min_interest_rate')),
+                        _fmt_percent(loan_data.get('max_interest_rate')),
                         _fmt(loan_data.get('interest_rate_type')),
                         _fmt(loan_data.get('min_loan_amount')),
                         _fmt(loan_data.get('max_loan_amount')),
