@@ -2,7 +2,11 @@
 # loan_scraper/http_client.py
 # -*- coding: utf-8 -*-
 import requests
-from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import HEADERS
+try:
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import HEADERS
+except ImportError:
+    import config
+    HEADERS = config.HEADERS
 
 
 def fetch_html(url: str, timeout: int = 30) -> str:
