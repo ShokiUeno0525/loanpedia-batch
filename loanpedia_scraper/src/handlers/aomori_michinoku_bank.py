@@ -353,13 +353,15 @@ def _save_to_database(product_data: Dict[str, Any], raw_data_dict: Dict[str, Any
             from loanpedia_scraper.database.loan_service import save_scraped_product
         except ImportError:
             # フォールバック（Lambda直下配置やPYTHONPATH未設定時）
+            # 親ディレクトリをPYTHONPATHに追加し、package importで解決する
             database_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                 "database",
             )
-            if database_path not in sys.path:
-                sys.path.insert(0, database_path)
-            from loan_service import save_scraped_product  # type: ignore
+            parent_dir = os.path.dirname(database_path)
+            if parent_dir not in sys.path:
+                sys.path.insert(0, parent_dir)
+            from database.loan_service import save_scraped_product  # type: ignore
 
         ok = save_scraped_product(
             institution_code="aomori_michinoku",
