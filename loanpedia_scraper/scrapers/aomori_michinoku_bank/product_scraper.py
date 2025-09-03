@@ -1,6 +1,6 @@
 # loan_scraper/product_scraper.py
 # -*- coding: utf-8 -*-
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, TYPE_CHECKING, cast
 import time
 from urllib.parse import urljoin
 import re
@@ -13,7 +13,7 @@ try:
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.pdf_parser import pdf_bytes_to_text, extract_pdf_fields, extract_interest_range_from_pdf
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import interest_type_from_hints
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.hash_utils import sha_bytes
-    from loanpedia_scraper.scrapers.aomori_michinoku_bank.models import LoanProduct, RawLoanData
+    # models imported separately via importlib below
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.rate_pages import (
         guess_rate_slug_from_url,
         fetch_interest_range_from_rate_page,
@@ -26,7 +26,7 @@ except ImportError:
     import pdf_parser
     import extractors
     import hash_utils
-    import models
+    # models imported separately via importlib below
     
     fetch_html = http_client.fetch_html
     fetch_bytes = http_client.fetch_bytes
@@ -39,15 +39,24 @@ except ImportError:
     extract_interest_range_from_pdf = pdf_parser.extract_interest_range_from_pdf
     interest_type_from_hints = extractors.interest_type_from_hints
     sha_bytes = hash_utils.sha_bytes
-    # Import models classes for Lambda environment
-    import models
-    # Use getattr to avoid mypy type assignment errors
-    LoanProduct = getattr(models, 'LoanProduct')
-    RawLoanData = getattr(models, 'RawLoanData')
+    # models module is imported via importlib below
     # Import rate_pages functions
     import rate_pages
     guess_rate_slug_from_url = rate_pages.guess_rate_slug_from_url
     fetch_interest_range_from_rate_page = rate_pages.fetch_interest_range_from_rate_page
+
+# For type checking only, import model classes without affecting runtime
+if TYPE_CHECKING:
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.models import LoanProduct, RawLoanData
+
+# Resolve models module in both runtime environments without redefining imports
+import importlib
+try:
+    models_module = importlib.import_module(
+        "loanpedia_scraper.scrapers.aomori_michinoku_bank.models"
+    )
+except ImportError:
+    models_module = importlib.import_module("models")
 
 
 def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:
@@ -113,7 +122,7 @@ def _apply_sanity(merged: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, 
 
 def build_loan_product(
     fields: Dict[str, Any], profile: Dict[str, Any], source_ref: str, fin_id: int, variant: str | None = None
-) -> LoanProduct:
+) -> "LoanProduct":
     itype = interest_type_from_hints(
         fields["extracted_text"], profile.get("interest_type_hints", [])
     )
@@ -122,7 +131,7 @@ def build_loan_product(
         tag = "WEB完結型" if variant == "web" else ("来店型" if variant == "store" else None)
         if tag:
             special = f"{special} / {tag}" if special else tag
-    return LoanProduct(
+    return cast("LoanProduct", models_module.LoanProduct(
         financial_institution_id=fin_id,
         product_name=fields.get("product_name"),
         loan_type=profile.get("loan_type"),
@@ -142,13 +151,13 @@ def build_loan_product(
         special_features=special,
         source_reference=source_ref,
         is_active=True,
-    )
+    ))
 
 
 def build_raw(
     html: str, extracted_text: str, content_hash: str, url: str, fin_id: int
-) -> RawLoanData:
-    return RawLoanData(
+) -> "RawLoanData":
+    return cast("RawLoanData", models_module.RawLoanData(
         financial_institution_id=fin_id,
         source_url=url,
         html_content=html,
@@ -156,7 +165,7 @@ def build_raw(
         content_hash=content_hash,
         scraping_status="success",
         scraped_at=time.strftime("%Y-%m-%dT%H:%M:%S"),
-    )
+    ))
 
 
 def _choose_product_name(
