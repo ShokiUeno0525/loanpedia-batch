@@ -315,7 +315,8 @@ def _load_registry():
     registry["vacant_house"] = {
         "name": "青森みちのく空き家利活用ローン",
         "cls": lambda: ProductScraper(
-            "https://www.am-bk.co.jp/kojin/loan/akiyarikatuyouloan/",
+            # 正: akiyarikatsuyouloan（tsu入り）。誤: akiyarikatuyouloan
+            "https://www.am-bk.co.jp/kojin/loan/akiyarikatsuyouloan/",
             "https://www.am-bk.co.jp/kojin/loan/pdf/l-88.pdf"
         ),
     }
