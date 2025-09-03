@@ -39,6 +39,11 @@ except ImportError:
     extract_interest_range_from_pdf = pdf_parser.extract_interest_range_from_pdf
     interest_type_from_hints = extractors.interest_type_from_hints
     sha_bytes = hash_utils.sha_bytes
+    # Import models classes for Lambda environment
+    import models
+    # Use getattr to avoid mypy type assignment errors
+    LoanProduct = getattr(models, 'LoanProduct')
+    RawLoanData = getattr(models, 'RawLoanData')
     # Import rate_pages functions
     import rate_pages
     guess_rate_slug_from_url = rate_pages.guess_rate_slug_from_url

@@ -11,7 +11,13 @@ import time
 import logging
 from datetime import datetime
 
-from .loan_database import LoanDatabase, get_database_config
+try:
+    from .loan_database import LoanDatabase, get_database_config
+except ImportError:
+    # Lambda環境では相対インポートが失敗するため、直接インポートを使用
+    import loan_database
+    LoanDatabase = loan_database.LoanDatabase
+    get_database_config = loan_database.get_database_config
 
 logger = logging.getLogger(__name__)
 
