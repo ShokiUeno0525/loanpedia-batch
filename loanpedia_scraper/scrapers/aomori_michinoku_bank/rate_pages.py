@@ -10,8 +10,9 @@ import re
 try:
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client import fetch_html
 except ImportError:
-    from . import http_client  # type: ignore
-    fetch_html = http_client.fetch_html  # type: ignore
+    # Lambda環境では相対インポートが失敗するため、直接モジュールインポートを使用
+    import http_client
+    fetch_html = http_client.fetch_html
 
 
 BASE = "https://www.am-bk.co.jp"
