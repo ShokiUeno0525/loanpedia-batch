@@ -39,9 +39,10 @@ except ImportError:
     extract_interest_range_from_pdf = pdf_parser.extract_interest_range_from_pdf
     interest_type_from_hints = extractors.interest_type_from_hints
     sha_bytes = hash_utils.sha_bytes
-    LoanProduct = models.LoanProduct
-    RawLoanData = models.RawLoanData
-    from rate_pages import guess_rate_slug_from_url, fetch_interest_range_from_rate_page
+    # Import rate_pages functions
+    import rate_pages
+    guess_rate_slug_from_url = rate_pages.guess_rate_slug_from_url
+    fetch_interest_range_from_rate_page = rate_pages.fetch_interest_range_from_rate_page
 
 
 def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:
