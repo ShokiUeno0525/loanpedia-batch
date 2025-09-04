@@ -12,6 +12,10 @@ from typing import List, Dict, Optional, Any, cast
 # 型は各スクレイパーが返す辞書およびサマリー辞書を使用
 
 from .aomori_michinoku_bank import AomorimichinokuBankScraper
+try:
+    from .aoimori_shinkin.product_scraper import AoimoriShinkinScraper
+except Exception:
+    AoimoriShinkinScraper = None  # type: ignore
 
 # データベースライブラリをインポート
 try:
@@ -46,7 +50,7 @@ class LoanScrapingOrchestrator:
 
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),
-            'aoimori_shinkin': _DummyScraper(),
+            'aoimori_shinkin': (AoimoriShinkinScraper() if AoimoriShinkinScraper else _DummyScraper()),
             'touou_shinkin': _DummyScraper(),
             'aomoriken_shinyoukumiai': _DummyScraper(),
         }
