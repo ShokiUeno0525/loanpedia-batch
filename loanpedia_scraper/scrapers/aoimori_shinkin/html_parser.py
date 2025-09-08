@@ -267,6 +267,188 @@ def parse_aoimori_features(txt: str) -> list:
     
     return features
 
+def parse_aoimori_housing_loan_details(soup: BeautifulSoup, txt: str) -> Dict[str, Any]:
+    """青い森信用金庫住宅ローンページ特化の解析"""
+    result: Dict[str, Any] = {}
+    
+    # 商品名の解析
+    if "住宅ローン" in txt:
+        result["product_name"] = "住宅ローン"
+        if "無担保住宅ローン" in txt:
+            result["product_name"] = "無担保住宅ローン"
+        elif "住宅ローン住まいる" in txt:
+            result["product_name"] = "住宅ローン住まいる"
+    
+    # 金利情報の解析（住宅ローン特有のパターン）
+    import re
+    
+    # 変動金利の検索
+    variable_rate_match = re.search(r"変動金利.*?年\s*(\d+\.\d+)\s*[%％]", txt)
+    if variable_rate_match:
+        result["min_interest_rate"] = float(variable_rate_match.group(1))
+        result["interest_rate_type"] = "変動金利"
+    
+    # 固定金利の検索
+    fixed_rates = re.findall(r"固定金利.*?年\s*(\d+\.\d+)\s*[%％]", txt)
+    if fixed_rates:
+        if not result.get("min_interest_rate"):
+            result["min_interest_rate"] = float(fixed_rates[0])
+        result["max_interest_rate"] = float(max(fixed_rates, key=float))
+        if not result.get("interest_rate_type"):
+            result["interest_rate_type"] = "固定金利"
+    
+    # 一般的な金利パターン
+    if not result.get("min_interest_rate"):
+        rate_matches = re.findall(r"年\s*(\d+\.\d+)\s*[%％]", txt)
+        if rate_matches:
+            rates = [float(r) for r in rate_matches]
+            result["min_interest_rate"] = min(rates)
+            result["max_interest_rate"] = max(rates)
+    
+    # 融資金額の解析（住宅ローン特有のパターン）
+    # パターン1: 10万円〜1億円
+    amount_match = re.search(r"(\d+)万円[^0-9]*?(\d+(?:億|\d+万))円", txt)
+    if amount_match:
+        min_str, max_str = amount_match.groups()
+        result["min_loan_amount"] = int(min_str) * 10000  # 万円を円に変換
+        if "億" in max_str:
+            max_amount = int(max_str.replace("億", "")) * 100000000
+        else:
+            max_amount = int(max_str.replace("万", "")) * 10000
+        result["max_loan_amount"] = max_amount
+    
+    # パターン2: 最高○○万円
+    max_amount_match = re.search(r"最高\s*(\d+)\s*万円", txt)
+    if max_amount_match and not result.get("max_loan_amount"):
+        result["max_loan_amount"] = int(max_amount_match.group(1)) * 10000
+        result["min_loan_amount"] = result.get("min_loan_amount", 500000)  # デフォルト50万円
+    
+    # 融資期間の解析
+    # パターン1: 最長○○年
+    max_term_match = re.search(r"最長\s*(\d+)\s*年", txt)
+    if max_term_match:
+        result["max_loan_term_months"] = int(max_term_match.group(1)) * 12
+        result["min_loan_term_months"] = 12  # デフォルト1年
+    
+    # パターン2: ○年〜○年
+    term_range_match = re.search(r"(\d+)年[^0-9]*?(\d+)年", txt)
+    if term_range_match:
+        min_years, max_years = term_range_match.groups()
+        result["min_loan_term_months"] = int(min_years) * 12
+        result["max_loan_term_months"] = int(max_years) * 12
+    
+    # 住宅ローンの特徴
+    features = []
+    feature_keywords = [
+        ("新築住宅購入", ["新築", "新築住宅"]),
+        ("中古住宅購入", ["中古住宅", "中古物件"]),
+        ("マンション購入", ["マンション"]),
+        ("一戸建て購入", ["一戸建て", "戸建て"]),
+        ("土地購入", ["土地購入", "宅地"]),
+        ("住宅建築", ["住宅建築", "建築資金"]),
+        ("リフォーム資金", ["リフォーム", "改築", "増築"]),
+        ("借り換え対応", ["借り換え", "借換え"]),
+        ("繰上返済可能", ["繰上返済", "繰り上げ返済"]),
+        ("団体信用生命保険", ["団信", "団体信用生命保険"])
+    ]
+    
+    for feature_name, keywords in feature_keywords:
+        if any(keyword in txt for keyword in keywords):
+            features.append(feature_name)
+    
+    if features:
+        result["features"] = features
+    
+    return result
+
+
+def parse_aoimori_free_loan_details(soup: BeautifulSoup, txt: str) -> Dict[str, Any]:
+    """青い森信用金庫フリーローン（暮らし応援ローン）特化の解析"""
+    result: Dict[str, Any] = {}
+    
+    # 商品名の解析
+    if "暮らし応援ローン" in txt:
+        result["product_name"] = "暮らし応援ローン"
+    elif "フリーローンモア" in txt:
+        result["product_name"] = "フリーローンモア"
+    elif "フリーローン" in txt:
+        result["product_name"] = "フリーローン"
+    
+    # 金利情報の解析
+    import re
+    
+    # 金利範囲の検索（年3.5%〜14.5%など）
+    rate_range_match = re.search(r"年\s*(\d+\.\d+)\s*[%％][^0-9]*?(\d+\.\d+)\s*[%％]", txt)
+    if rate_range_match:
+        min_rate, max_rate = rate_range_match.groups()
+        result["min_interest_rate"] = float(min_rate)
+        result["max_interest_rate"] = float(max_rate)
+    else:
+        # 個別の金利を検索
+        rate_matches = re.findall(r"年\s*(\d+\.\d+)\s*[%％]", txt)
+        if rate_matches:
+            rates = [float(r) for r in rate_matches]
+            result["min_interest_rate"] = min(rates)
+            result["max_interest_rate"] = max(rates)
+    
+    # 金利種別
+    if "固定金利" in txt:
+        result["interest_rate_type"] = "固定金利"
+    else:
+        result["interest_rate_type"] = "固定金利"  # デフォルト
+    
+    # 融資金額の解析
+    # パターン1: 300万円以内
+    max_amount_match = re.search(r"(\d+)万円以内", txt)
+    if max_amount_match:
+        result["max_loan_amount"] = int(max_amount_match.group(1)) * 10000
+        result["min_loan_amount"] = 10000  # デフォルト1万円
+    
+    # パターン2: ○万円〜○万円
+    amount_range_match = re.search(r"(\d+)万円[^0-9]*?(\d+)万円", txt)
+    if amount_range_match and not result.get("max_loan_amount"):
+        min_amount, max_amount = amount_range_match.groups()
+        result["min_loan_amount"] = int(min_amount) * 10000
+        result["max_loan_amount"] = int(max_amount) * 10000
+    
+    # 融資期間の解析
+    # パターン1: 最長○年
+    max_term_match = re.search(r"最長\s*(\d+)\s*年", txt)
+    if max_term_match:
+        result["max_loan_term_months"] = int(max_term_match.group(1)) * 12
+        result["min_loan_term_months"] = 6  # デフォルト6ヶ月
+    
+    # パターン2: ○ヶ月〜○年
+    term_range_match = re.search(r"(\d+)ヶ月[^0-9]*?(\d+)年", txt)
+    if term_range_match:
+        min_months, max_years = term_range_match.groups()
+        result["min_loan_term_months"] = int(min_months)
+        result["max_loan_term_months"] = int(max_years) * 12
+    
+    # フリーローンの特徴
+    features = []
+    feature_keywords = [
+        ("使途自由", ["使途自由", "お使いみち自由"]),
+        ("レジャー資金", ["レジャー", "旅行"]),
+        ("ショッピング", ["ショッピング", "お買い物"]),
+        ("自分磨き", ["自分磨き", "習い事"]),
+        ("おまとめローン", ["おまとめ", "ローンおまとめ"]),
+        ("借り換え対応", ["借り換え", "借換え"]),
+        ("事業性資金除く", ["事業性資金", "投機性資金"]),
+        ("来店不要", ["来店不要", "WEB完結"]),
+        ("繰上返済可能", ["繰上返済", "繰り上げ返済"]),
+        ("保証人不要", ["保証人不要", "担保不要"])
+    ]
+    
+    for feature_name, keywords in feature_keywords:
+        if any(keyword in txt for keyword in keywords):
+            features.append(feature_name)
+    
+    if features:
+        result["features"] = features
+    
+    return result
+
 def validate_and_fix_loan_data(item: Dict[str, Any]) -> Dict[str, Any]:
     """ローンデータのバリデーションと修正"""
     
@@ -349,8 +531,43 @@ def parse_html_document(soup: BeautifulSoup) -> Dict[str, Any]:
     }
     txt = extract_text(soup)
     
-    # 青い森信用金庫マイカーローン特化の解析
-    specialized_data = parse_aoimori_car_loan_details(soup, txt)
+    # 商品別特化解析
+    specialized_data = {}
+    
+    # マイカーローンの特化解析
+    if any(keyword in txt for keyword in ["マイカー", "カーライフ", "自動車", "車"]) and "ローン" in txt:
+        specialized_data = parse_aoimori_car_loan_details(soup, txt)
+    
+    # 住宅ローンの特化解析
+    elif any(keyword in txt for keyword in ["住宅ローン", "住宅資金", "住まい"]):
+        specialized_data = parse_aoimori_housing_loan_details(soup, txt)
+    
+    # フリーローンの特化解析
+    elif any(keyword in txt for keyword in ["暮らし応援", "フリーローン", "自由資金"]):
+        specialized_data = parse_aoimori_free_loan_details(soup, txt)
+    
+    # 教育ローンの特化解析（既存のマイカーローン関数を参考に簡単な解析）
+    elif "教育ローン" in txt:
+        specialized_data = {
+            "product_name": "教育ローン",
+            "loan_category": "教育ローン"
+        }
+        # 基本的な金利・金額抽出
+        rates = parse_aoimori_interest_rates(txt)
+        if rates:
+            specialized_data.update(rates)
+    
+    # カードローンの特化解析
+    elif "カードローン" in txt:
+        specialized_data = {
+            "product_name": "カードローン", 
+            "loan_category": "カードローン"
+        }
+        # 基本的な金利・金額抽出
+        rates = parse_aoimori_interest_rates(txt)
+        if rates:
+            specialized_data.update(rates)
+    
     item.update(specialized_data)
     
     # 基本的な解析（フォールバック・補完）
