@@ -267,6 +267,82 @@ def parse_aoimori_features(txt: str) -> list:
     
     return features
 
+def validate_and_fix_loan_data(item: Dict[str, Any]) -> Dict[str, Any]:
+    """ローンデータのバリデーションと修正"""
+    
+    # 1. 融資額の逆転問題修正
+    min_amount = item.get("min_loan_amount")
+    max_amount = item.get("max_loan_amount")
+    if min_amount and max_amount and min_amount > max_amount:
+        # 逆転している場合は入れ替え
+        item["min_loan_amount"] = max_amount
+        item["max_loan_amount"] = min_amount
+    
+    # 2. 期間の逆転問題修正
+    min_term = item.get("min_loan_term_months")
+    max_term = item.get("max_loan_term_months")
+    if min_term and max_term and min_term > max_term:
+        # 逆転している場合は入れ替え
+        item["min_loan_term_months"] = max_term
+        item["max_loan_term_months"] = min_term
+    
+    # 3. 商品別デフォルト値設定
+    product_name = item.get("product_name", "").lower()
+    
+    # 住宅ローン特有の修正
+    if "住宅" in product_name:
+        if not min_amount or min_amount < 500000:  # 50万円未満は不適切
+            item["min_loan_amount"] = 500000    # 50万円
+        if not max_amount or max_amount < 50000000:  # 5,000万円未満は不適切
+            item["max_loan_amount"] = 100000000  # 1億円
+        if not min_term or min_term < 12:
+            item["min_loan_term_months"] = 12   # 1年
+        if not max_term or max_term < 360:
+            item["max_loan_term_months"] = 420  # 35年
+    
+    # カードローン特有の修正
+    elif "カード" in product_name:
+        if not min_amount or min_amount < 10000:
+            item["min_loan_amount"] = 10000     # 1万円
+        if not max_amount or max_amount > 5000000:  # 500万円超は不適切
+            item["max_loan_amount"] = 5000000   # 500万円
+        if not min_term or min_term > 12:  # カードローンは継続利用
+            item["min_loan_term_months"] = 1    # 1ヶ月
+        if not max_term or max_term < 12:
+            item["max_loan_term_months"] = 120  # 10年
+    
+    # 教育ローン特有の修正
+    elif "教育" in product_name:
+        if not min_amount or min_amount < 10000:
+            item["min_loan_amount"] = 10000     # 1万円
+        if not max_amount or max_amount < 3000000:
+            item["max_loan_amount"] = 10000000  # 1,000万円
+        if not min_term or min_term < 3:
+            item["min_loan_term_months"] = 3    # 3ヶ月
+        if not max_term or max_term < 120:
+            item["max_loan_term_months"] = 192  # 16年
+    
+    # フリーローン特有の修正
+    elif "フリー" in product_name or "暮らし" in product_name:
+        if not min_amount or min_amount < 10000:
+            item["min_loan_amount"] = 10000     # 1万円
+        if not max_amount or max_amount < 3000000:
+            item["max_loan_amount"] = 10000000  # 1,000万円
+        if not min_term or min_term < 6:
+            item["min_loan_term_months"] = 6    # 6ヶ月
+        if not max_term or max_term < 120:
+            item["max_loan_term_months"] = 120  # 10年
+    
+    # 4. 金利のバリデーション
+    min_rate = item.get("min_interest_rate")
+    max_rate = item.get("max_interest_rate")
+    if min_rate and max_rate and min_rate > max_rate:
+        # 逆転している場合は入れ替え
+        item["min_interest_rate"] = max_rate
+        item["max_interest_rate"] = min_rate
+    
+    return item
+
 def parse_html_document(soup: BeautifulSoup) -> Dict[str, Any]:
     item: Dict[str, Any] = {
         "product_name": parse_product_name(soup),
@@ -303,5 +379,8 @@ def parse_html_document(soup: BeautifulSoup) -> Dict[str, Any]:
             item["max_loan_term_months"] = 180  # 15年
     
     item.update(basic_age)
+    
+    # データバリデーションと修正
+    item = validate_and_fix_loan_data(item)
     
     return item
