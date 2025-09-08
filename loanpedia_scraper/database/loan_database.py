@@ -140,7 +140,7 @@ class LoanDatabase:
                 self.connection.rollback()
             return None
     
-    def get_or_create_institution(self, institution_code: str, institution_name: str) -> Optional[int]:
+    def get_or_create_institution(self, institution_code: str, institution_name: str, institution_name_kana: str = '') -> Optional[int]:
         """金融機関マスターからIDを取得、なければ作成"""
         if not institution_code and not institution_name:
             return None
@@ -160,11 +160,11 @@ class LoanDatabase:
         
         # 新規作成
         insert_sql = """
-            INSERT INTO financial_institutions (institution_code, institution_name, created_at, updated_at)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO financial_institutions (institution_code, institution_name, institution_name_kana, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s)
         """
         now = datetime.now()
-        self.cursor.execute(insert_sql, (institution_code, institution_name, now, now))
+        self.cursor.execute(insert_sql, (institution_code, institution_name, institution_name_kana, now, now))
         return int(cast(Any, self.cursor.lastrowid))
     
     def save_raw_data(self, loan_data: Dict[str, Any], institution_id: Optional[int]) -> int:
@@ -296,6 +296,220 @@ class LoanDatabase:
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
+    def save_structured_loan_data(self, scraper_result: Dict[str, Any]) -> Dict[str, int]:
+        """新しいテーブル構造に対応したローンデータ保存"""
+        assert self.cursor is not None
+        
+        saved_ids = {
+            'raw_data_ids': [],
+            'processed_data_ids': [],
+            'loan_product_ids': []
+        }
+        
+        try:
+            # 1. 金融機関の取得/作成
+            institution_id = self.get_or_create_institution(
+                scraper_result['institution_code'],
+                scraper_result['institution_name'],
+                scraper_result.get('institution_name_kana', '')
+            )
+            
+            # 2. 各商品の処理
+            for product in scraper_result.get('products', []):
+                # 生データ保存 (raw_loan_data)
+                raw_data_id = self._save_raw_loan_data_new(product, institution_id)
+                saved_ids['raw_data_ids'].append(raw_data_id)
+                
+                # AI処理済みデータ保存 (processed_loan_data)
+                processed_data_id = self._save_processed_loan_data(product, raw_data_id, institution_id)
+                saved_ids['processed_data_ids'].append(processed_data_id)
+                
+                # ローン商品保存 (loan_products)
+                loan_product_id = self._save_loan_product(product, processed_data_id, institution_id)
+                saved_ids['loan_product_ids'].append(loan_product_id)
+            
+            # コミット
+            if self.connection:
+                self.connection.commit()
+                logger.info(f"Successfully saved structured loan data: {saved_ids}")
+            
+        except Exception as e:
+            if self.connection:
+                self.connection.rollback()
+            logger.error(f"Error saving structured loan data: {e}")
+            raise
+        
+        return saved_ids
+    
+    def _save_raw_loan_data_new(self, product_data: Dict[str, Any], institution_id: int) -> int:
+        """新テーブル構造での生データ保存"""
+        assert self.cursor is not None
+        
+        # 構造化データ準備
+        structured_data = {
+            'product_name': product_data.get('product_name'),
+            'min_interest_rate': product_data.get('min_interest_rate'),
+            'max_interest_rate': product_data.get('max_interest_rate'),
+            'min_loan_term_months': product_data.get('min_loan_term_months'),
+            'max_loan_term_months': product_data.get('max_loan_term_months'),
+            'source_url': product_data.get('source_url'),
+            'scraping_status': product_data.get('scraping_status'),
+        }
+        
+        # コンテンツハッシュ生成
+        content_str = json.dumps(structured_data, sort_keys=True, ensure_ascii=False)
+        content_hash = hashlib.sha256(content_str.encode('utf-8')).hexdigest()
+        
+        # 重複チェック
+        check_sql = """
+            SELECT id FROM raw_loan_data 
+            WHERE content_hash = %s AND institution_id = %s
+        """
+        self.cursor.execute(check_sql, (content_hash, institution_id))
+        existing = self.cursor.fetchone()
+        
+        if existing:
+            logger.info(f"Raw data already exists: {existing['id']}")
+            return int(existing['id'])
+        
+        # 新規挿入
+        insert_sql = """
+            INSERT INTO raw_loan_data (
+                institution_id, source_url, page_title, html_content,
+                extracted_text, structured_data, content_hash, content_length,
+                http_status, scraped_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        now = datetime.now()
+        scraped_at_str = product_data.get('scraped_at')
+        scraped_at = datetime.fromisoformat(scraped_at_str) if scraped_at_str else now
+        
+        self.cursor.execute(insert_sql, (
+            institution_id,
+            product_data.get('source_url', ''),
+            product_data.get('product_name', ''),
+            '',  # html_content - 必要に応じて追加
+            json.dumps(structured_data, ensure_ascii=False),  # extracted_text
+            json.dumps(structured_data, ensure_ascii=False),  # structured_data
+            content_hash,
+            len(content_str),
+            200,  # http_status
+            scraped_at
+        ))
+        
+        return int(self.cursor.lastrowid)
+    
+    def _save_processed_loan_data(self, product_data: Dict[str, Any], raw_data_id: int, institution_id: int) -> int:
+        """AI処理済みデータ保存"""
+        assert self.cursor is not None
+        
+        # AI要約データ準備
+        ai_summary = {
+            'product_name': product_data.get('product_name'),
+            'loan_type': 'car_loan',  # マイカーローン
+            'interest_rates': {
+                'min': product_data.get('min_interest_rate'),
+                'max': product_data.get('max_interest_rate'),
+                'type': 'variable'  # 推定
+            },
+            'loan_terms': {
+                'min_months': product_data.get('min_loan_term_months'),
+                'max_months': product_data.get('max_loan_term_months')
+            },
+            'source_url': product_data.get('source_url'),
+            'extraction_method': 'web_scraping'
+        }
+        
+        insert_sql = """
+            INSERT INTO processed_loan_data (
+                raw_data_id, institution_id, ai_summary, ai_model,
+                processing_version, processing_status, validation_status, processed_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        self.cursor.execute(insert_sql, (
+            raw_data_id,
+            institution_id,
+            json.dumps(ai_summary, ensure_ascii=False),
+            'web_scraper_v1',
+            '1.0',
+            'completed',
+            'valid',
+            datetime.now()
+        ))
+        
+        return int(self.cursor.lastrowid)
+    
+    def _save_loan_product(self, product_data: Dict[str, Any], processed_data_id: int, institution_id: int) -> int:
+        """ローン商品保存"""
+        assert self.cursor is not None
+        
+        # 重複チェック
+        check_sql = """
+            SELECT id FROM loan_products 
+            WHERE institution_id = %s AND product_name = %s AND loan_type = %s
+        """
+        product_name = product_data.get('product_name', '自動車ローン')
+        loan_type = 'car_loan'
+        
+        self.cursor.execute(check_sql, (institution_id, product_name, loan_type))
+        existing = self.cursor.fetchone()
+        
+        if existing:
+            # 既存データを更新
+            update_sql = """
+                UPDATE loan_products SET
+                    processed_data_id = %s,
+                    interest_rate_min = %s,
+                    interest_rate_max = %s,
+                    loan_term_min = %s,
+                    loan_term_max = %s,
+                    loan_term_unit = %s,
+                    data_updated_at = %s,
+                    updated_at = %s
+                WHERE id = %s
+            """
+            self.cursor.execute(update_sql, (
+                processed_data_id,
+                product_data.get('min_interest_rate'),
+                product_data.get('max_interest_rate'),
+                product_data.get('min_loan_term_months'),
+                product_data.get('max_loan_term_months'),
+                '月',
+                datetime.now(),
+                datetime.now(),
+                existing['id']
+            ))
+            return int(existing['id'])
+        
+        # 新規挿入
+        insert_sql = """
+            INSERT INTO loan_products (
+                processed_data_id, institution_id, product_name, loan_type, loan_category,
+                summary, interest_rate_min, interest_rate_max, interest_rate_type,
+                loan_term_min, loan_term_max, loan_term_unit, data_updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        self.cursor.execute(insert_sql, (
+            processed_data_id,
+            institution_id,
+            product_name,
+            loan_type,
+            'マイカーローン',
+            f'{product_name}（金利: {product_data.get("min_interest_rate", 0)}%〜{product_data.get("max_interest_rate", 0)}%）',
+            product_data.get('min_interest_rate'),
+            product_data.get('max_interest_rate'),
+            '変動金利',  # 推定
+            product_data.get('min_loan_term_months'),
+            product_data.get('max_loan_term_months'),
+            '月',
+            datetime.now()
+        ))
+        
+        return int(self.cursor.lastrowid)
+
 
 # データベース設定のデフォルト値（パッケージ内: コンテナ/Lambda想定）
 DEFAULT_DB_CONFIG: Dict[str, Any] = {
@@ -348,7 +562,13 @@ def get_database_config() -> Dict[str, Any]:
         port = int(port_env) if port_env else cast(int, DEFAULT_DB_CONFIG['port'])
     except Exception:
         port = cast(int, DEFAULT_DB_CONFIG['port'])
-    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+    # 余分な空白を除去（Windowsの set で末尾スペースが入る事故対策）
+    host = str(host).strip()
+    user = str(user).strip()
+    password = str(password).strip()
+    database = str(database).strip()
+
+    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset']).strip()
 
     return {
         'host': host,

@@ -1,82 +1,152 @@
-**Purpose**
-- Codex エージェント（CLI）用の運用ガイド。安全・確実にスクレイピング/バッチ処理コードの開発・検証を進めるための共通ルールと手順をまとめる。
+##　目的
+Codex エージェント（CLI）用の運用ガイド。安全・確実にスクレイピング/バッチ処理コードの開発・検証を進めるための共通ルールと手順をまとめる。
 
-**Operating Mode**
-- 日本語で応対し、結果や差分の要点を簡潔に共有する。
-- 変更は小さく段階的に。目的に関係ない修正は避ける。
-- 重大変更や破壊的操作は事前に合意を取る。
+## プロジェクト概要
 
-**Project Context**
-- 4 レイヤーの線形パイプライン: 収集(Python) → AI(Bedrock) → 保存(MySQL) → 提供(Laravel+React)。
-- 月次のバッチ前提。スクレイピングは安定重視（エラーハンドリング/フォールバック/リトライ）。
+金融機関からローン情報を自動収集し、AI で処理してエンドユーザーに提供するローン情報集約システムです。月次データ収集サイクルでバッチ処理アーキテクチャを採用しています。
 
-**Safe Defaults**
-- 外部サイトに依存するテストは原則スキップ。まずユニットテストから。
-- スクレイピング先の仕様変更に備え、正規化・フォールバック（表/本文/PDF）を用意。
-- Lambda/DB 統合はフラグ駆動（`save_to_db` 等）で局所的に検証可能にする。
+## システムアーキテクチャ
 
-**Setup**
-- 依存同期: `uv sync`
-- 実行環境: Python 3.10 以上
-- 主要ライブラリ: `requests` `beautifulsoup4` `pdfplumber` `pytest`。
-- タイムアウト: `pytest-timeout` を導入済（`--timeout=300` が利用可能）。
+システムは線形パイプラインの 4 つの主要コンポーネントで構成されています：
 
-**Running Tests**
-- ユニット: `uv run pytest tests/unit -q`
-- オーケストレータ: `uv run pytest tests/unit/test_orchestrator.py -q`
-- スクレイピング（ライブ）: `uv run pytest tests/scraping/ -v --timeout=300`
-  - 環境やネットワーク状況により `skip` 条件あり。
-  - 長時間・外部依存のため、必要時のみ実行。
-- DB 統合: `tests/integration/test_database_integration.py`（`MYSQL_*` 環境変数が必要）
-  - 既定値: host `127.0.0.1`, port `3306`, user `test_user`, password `test_password`, db `test_loanpedia`
+1. **データ収集 (Python)**: 金融機関の Web サイトからローン情報を抽出する Web スクレイピングバッチジョブ
+2. **データ処理 (AI)**: BedRock API を使用してローンデータを要約・構造化
+3. **データ保存 (MySQL)**: 元データ、処理済み要約、タイムスタンプ、ソース情報を保存
+4. **ユーザーインターフェース (PHP Laravel + React)**: エンドユーザーがローンデータにアクセスするための API と Web インターフェース
 
-**Coding Guidelines**
-- 3 層の整理（I/O, Domain, Application）に従う。
-  - I/O: HTTP クライアント、PDF/HTML パーサなど副作用境界
-  - Domain: 抽出ロジック、正規化、モデル
-  - Application: スクレイパー統合、オーケストレーション
-- 既存スタイルに倣い、命名・ディレクトリ構造を踏襲。
-- 型ヒントは可能な範囲で付与。例外は握り潰さず、文脈を含むログを残す。
+## 主要コンポーネント
 
-**Scraping Guidelines**
-- HTTP: セッション共通ヘッダ（UA）を使用。軽量なリトライ/タイムアウトを設定。
-- HTML: まず構造化（テーブル/見出し）、なければ本文正規表現でフォールバック。
-- PDF: `pdfplumber` で表抽出し、列見出しの同義語解決 → 正規化数値に変換。
-- ロギング: 成功/フォールバック/デフォルト適用を INFO で記録。
+### バッチ処理レイヤー
 
-**Aoimori Shinkin Package**
-- 入口: `loanpedia_scraper/scrapers/aoimori_shinkin/`
-- ファイル:
-  - `config.py`: `BASE/START/PDF_URLS/HEADERS` を管理
-  - `http_client.py`: UA 付き `requests.Session`
-  - `html_parser.py`: 商品名と金利範囲の抽出
-  - `pdf_parser.py`: `pdfplumber` ベースの表抽出
-  - `extractors.py`: 正規化ユーティリティ
-  - `models.py`: ベース項目ビルド/マージ
-  - `product_scraper.py`: `AoimoriShinkinScraper` 本体（HTML/PDF を統合）
-- 利用例:
-  - `from loanpedia_scraper.scrapers.aoimori_shinkin import AoimoriShinkinScraper`
-  - `AoimoriShinkinScraper(save_to_db=False).scrape_loan_info()`
+- データ収集の月次スケジュール実行
+- 金融機関 Web サイトの Web スクレイピング
+- エラーハンドリングとリトライメカニズム
+- データ検証とクリーニング
 
-**Orchestrator**
-- 位置: `loanpedia_scraper/scrapers/main.py`
-- `LoanScrapingOrchestrator` が各スクレイパーを集合実行。
-- `aoimori_shinkin` 登録は段階的に差し替え可能（現状はダミー）。
+### AI 処理レイヤー
 
-**Git Workflow**
-- ブランチ: `feature/*` `bugfix/*` で作業。`main` 直 push 禁止。
-- コミットメッセージ（日本語）:
-  - 形式: `種別: 概要（50文字以内）` + 必要に応じて詳細箇条書き
-  - 種別: `feat` `fix` `docs` `refactor` `test` など
+- ローンデータ要約のための BedRock API 統合
+- 非構造化 Web コンテンツからの構造化データ生成
+- 一貫したデータ表示のための標準化フォーマット変換
 
-**Common Commands**
-- 依存同期: `uv sync`
-- テスト（短時間）: `uv run pytest tests/unit -q`
-- テスト（ライブ/スクレイピング）: `uv run pytest tests/scraping/ -v --timeout=300`
-- Mypy: `uv run mypy`
+### データレイヤー
 
-**Troubleshooting**
-- `--timeout` 未認識: `pytest-timeout` を導入済。`pyproject.toml` の依存を確認。
-- Lambda 相対 import: 絶対 import と `database` パッケージ化を優先（既存修正に倣う）。
-- 外部先変更: 抽出を段階的に（本文 → 表 → PDF）切替え、最小限のデフォルトで継続。
+- 永続化ストレージのための MySQL データベース
+- 生のスクレイピングデータと処理済み要約の分離保存
+- メタデータトラッキング（更新タイムスタンプ、データソース）
+- エンドユーザーアクセスのための効率的なクエリ
 
+### API レイヤー
+
+- データアクセスのための Laravel ベース REST API
+- ユーザーインターフェースのための React フロントエンド
+- アクセス制御とデータセキュリティ対策
+
+## 開発環境
+
+このプロジェクトは、標準的な Python .gitignore 設定でバッチ処理に Python を使用しています。コードベースは現在、最小限のファイルで初期セットアップ段階にあります。
+
+## プロジェクト構造
+
+```
+loanpedia-batch/
+├── docs/requirements.md    # 詳細な要件仕様書
+├── README.md              # 基本的なプロジェクト情報
+└── .gitignore            # Python フォーカスの ignore パターン
+```
+
+## 要件ドキュメント
+
+完全なシステム要件は `docs/requirements.md` に文書化されており、以下を含みます：
+
+- 各システムコンポーネントの機能要件
+- 非機能要件（パフォーマンス、可用性、セキュリティ）
+- 各レイヤーの技術仕様
+- システム統合フロー
+
+## 技術スタック
+
+- **バックエンド**: Python（バッチ処理）、PHP Laravel（API）
+- **フロントエンド**: React
+- **データベース**: MySQL
+- **AI**: BedRock API
+- **インフラ**: Web スクレイピングツール、スケジューリングシステム
+
+## 注意事項
+
+- ユーザーとは日本語でやり取りすること
+- コミットメッセージは日本語で作成
+
+## Git 運用ルール
+
+### ブランチ戦略
+
+- **main**: プロダクション用の安定したブランチ
+- **develop**: 開発用の統合ブランチ
+- **feature/\***: 機能開発用ブランチ（例：feature/loan-scraper）
+- **bugfix/\***: バグ修正用ブランチ（例：bugfix/scraper-timeout）
+- **hotfix/\***: 緊急修正用ブランチ（例：hotfix/api-security）
+
+### コミットメッセージ規約
+
+```
+種別: 概要（50文字以内）
+
+詳細説明（必要に応じて）
+- 変更内容の詳細
+- 変更理由
+- 影響範囲
+```
+
+**種別例:**
+
+- feat: 新機能
+- fix: バグ修正
+- docs: ドキュメント更新
+- refactor: リファクタリング
+- test: テスト追加・修正
+
+### プルリクエスト運用
+
+1. **作成前チェック**
+
+   - テストが通ることを確認
+   - コードレビューの観点を考慮
+   - 関連するドキュメントの更新
+
+2. **PR 説明**
+   - 変更概要
+   - 変更理由
+   - テスト方法
+   - 影響範囲
+
+### 開発フロー
+
+1. `main` から `feature/*` ブランチを作成
+2. 機能開発・テスト実装
+3. プルリクエスト作成
+4. コードレビュー
+5. `main` へマージ
+6. 不要なブランチの削除
+
+### 禁止事項
+
+- `main` ブランチへの直接プッシュ
+- 強制プッシュ（`git push --force`）
+- 機密情報（API キー、パスワード等）のコミット
+- 大量のファイル変更を含む単一コミット
+
+### 推奨事項
+
+- 小さく頻繁なコミット
+- わかりやすいコミットメッセージ
+- 定期的なリベース（`git rebase`）
+- `.gitignore` の適切な管理
+- タグを使用したリリース管理
+
+### セキュリティ対策
+
+- `.env` ファイルの除外
+- 機密情報の分離管理
+- 依存関係の定期的な更新
+- セキュリティアラートへの迅速な対応

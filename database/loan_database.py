@@ -342,7 +342,13 @@ def get_database_config() -> Dict[str, Any]:
         port = int(port_env) if port_env else int(DEFAULT_DB_CONFIG['port'])
     except Exception:
         port = int(DEFAULT_DB_CONFIG['port'])
-    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset'])
+    # 余分な空白を除去（Windowsの set で末尾スペースが入る事故対策）
+    host = str(host).strip()
+    user = str(user).strip()
+    password = str(password).strip()
+    database = str(database).strip()
+
+    charset = os.getenv('DB_CHARSET', DEFAULT_DB_CONFIG['charset']).strip()
 
     return {
         'host': host,
