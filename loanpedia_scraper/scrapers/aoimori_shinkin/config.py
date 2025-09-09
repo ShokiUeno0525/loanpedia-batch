@@ -63,5 +63,9 @@ def get_pdf_urls() -> List[str]:
                 return [str(u) for u in data]
         except Exception:
             pass
-    # default to provided MyCar loan PDF
-    return [f"{BASE}/pdf/poster_mycarroan_241010.pdf"]
+    # default to provided loan PDFs
+    return [
+        f"{BASE}/pdf/poster_mycarroan_241010.pdf",        # マイカーローン
+        f"{BASE}/pdf/poster_myhomeroan_241010.pdf",       # 住宅ローン  
+        f"{BASE}/pdf/kyouikuroan_241010.pdf"              # 教育ローン
+    ]

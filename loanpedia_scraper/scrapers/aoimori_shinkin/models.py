@@ -1,4 +1,4 @@
-"""Lightweight models/builders for Aoimori Shinkin results."""
+"""青い森信用金庫向けの軽量モデル/ビルダー"""
 from __future__ import annotations
 
 from typing import Any, Dict, Optional

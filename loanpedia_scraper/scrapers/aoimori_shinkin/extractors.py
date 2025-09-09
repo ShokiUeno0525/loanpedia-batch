@@ -1,4 +1,4 @@
-"""Common extractors and text utilities for Aoimori Shinkin."""
+"""青い森信用金庫向けの共通抽出ユーティリティとテキスト処理"""
 from __future__ import annotations
 
 import re
