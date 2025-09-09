@@ -1,7 +1,7 @@
-"""PDF parsing utilities.
+"""PDF解析ユーティリティ
 
-Thin wrapper around pdfplumber-based table extraction suitable for interest
-rate tables. OCR is intentionally omitted to avoid extra dependencies.
+pdfplumber による表抽出を中心とした薄いラッパー。金利表の抽出に適した実装。
+依存を増やさないため OCR は既定で無効（環境変数で有効化可能）。
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import pdfplumber
 
 from .extractors import z2h, clean_rate_cell
 
-# Optional OCR stack
+# 任意のOCRスタック（環境変数で有効化した場合のみ使用）
 try:
     import pypdfium2 as pdfium  # type: ignore
     from PIL import Image  # pillow
@@ -136,10 +136,10 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
         except Exception:
             continue
 
-    # OCR fallback when no records
+    # レコードが抽出できない場合のOCRフォールバック
     if not records and HAS_OCR and os.getenv("AOIMORI_SHINKIN_ENABLE_OCR", "false").lower() == "true":
         try:
-            # Allow custom Tesseract path
+            # Tesseractのパスを環境変数で上書き可能
             tess_cmd = os.getenv("TESSERACT_CMD")
             if tess_cmd:
                 import pytesseract as _pt
@@ -152,9 +152,9 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
                 img = bmp.to_pil()
                 t = pytesseract.image_to_string(img, lang=os.getenv("TESS_LANG", "jpn"))
                 texts.append(t)
-            # Aggregate parse over all text
+            # すべてのページのテキストを集約
             all_text = "\n".join(texts)
-            # product name heuristic
+            # 商品名のヒューリスティック抽出
             prod_name = None
             for ln in all_text.splitlines():
                 l = z2h(ln)
@@ -163,8 +163,7 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
                     break
             if not prod_name:
                 prod_name = "マイカーローン（ポスター）"
-
-            # date (validate month/day)
+            # 日付（年月日の妥当性を簡易チェック）
             as_of = guess_date(all_text)
             if as_of:
                 try:
@@ -173,13 +172,12 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
                         as_of = None
                 except Exception:
                     as_of = None
-
-            # collect all percentages and clamp to plausible range
+            # パーセンテージをすべて収集し、現実的な範囲へ絞り込み
             nums = [float(x) for x in re.findall(r"([0-9]+(?:\.[0-9]+)?)\s*%", all_text)]
             nums = [x for x in nums if 0.01 <= x <= 20.0]
             if nums:
                 rmin, rmax = min(nums), max(nums)
-                # ensure reasonable ordering
+                # 小さい方を下限、大きい方を上限に保証
                 if rmin > rmax:
                     rmin, rmax = rmax, rmin
                 records.append(
@@ -195,7 +193,7 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
                 )
         except Exception:
             pass
-
+    
     dedup: List[Dict[str, Any]] = []
     seen = set()
     for r in records:

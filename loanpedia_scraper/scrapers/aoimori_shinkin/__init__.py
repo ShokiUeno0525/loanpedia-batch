@@ -1,6 +1,6 @@
-"""Aoimori Shinkin scraper package.
+"""青い森信用金庫スクレイパーパッケージ
 
-3-layer structure inspired by aomori_michinoku_bank:
+aomori_michinoku_bank に倣った3層構成:
 - I/O: http_client, pdf_parser
 - Domain: extractors, models
 - Application: product_scraper (AoimoriShinkinScraper)

@@ -1,7 +1,7 @@
-"""HTTP client for Aoimori Shinkin.
+"""青い森信用金庫向けのHTTPクライアント
 
-Small wrapper around requests.Session to keep headers consistent and enable
-future proxy/retry if needed.
+共通ヘッダーを維持するための requests.Session の薄いラッパー。
+将来的なプロキシ/リトライ対応を見据えた構成。
 """
 from __future__ import annotations
 

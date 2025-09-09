@@ -222,24 +222,24 @@ def parse_aoimori_loan_terms(txt: str) -> Dict[str, Any]:
     if "3ヶ月" in txt and "15年" in txt:
         terms["min_loan_term_months"] = 3
         terms["max_loan_term_months"] = 15 * 12  # 180ヶ月
-        terms["loan_term_unit"] = "月"
+        terms["loan_term_unit"] = "月"  # type: ignore
     elif "6ヶ月" in txt and "15年" in txt:
         terms["min_loan_term_months"] = 6
         terms["max_loan_term_months"] = 15 * 12
-        terms["loan_term_unit"] = "月"
+        terms["loan_term_unit"] = "月"  # type: ignore
     
     # 15年以上のパターン（マイカーローンモア）
     if "15年以上" in txt:
         terms["min_loan_term_months"] = 15 * 12
         terms["max_loan_term_months"] = 25 * 12  # 推定最大
-        terms["loan_term_unit"] = "月"
+        terms["loan_term_unit"] = "月"  # type: ignore
     
     # その他のパターン
     term_match = re.search(r"(\d+)\s*ヶ?月.*?(\d+)\s*年", txt)
     if term_match:
         terms["min_loan_term_months"] = int(term_match.group(1))
         terms["max_loan_term_months"] = int(term_match.group(2)) * 12
-        terms["loan_term_unit"] = "月"
+        terms["loan_term_unit"] = "月"  # type: ignore
     
     return terms
 
