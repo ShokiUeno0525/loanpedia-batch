@@ -1,9 +1,11 @@
-"""青い森信用金庫スクレイパーパッケージ
+# loanpedia_scraper/scrapers/aoimori_shinkin/__init__.py
+"""Package init for aoimori_shinkin.
 
-aomori_michinoku_bank に倣った3層構成:
-- I/O: http_client, pdf_parser
-- Domain: extractors, models
-- Application: product_scraper (AoimoriShinkinScraper)
+Avoid importing submodules at import time to prevent circular imports.
 """
 
-from .product_scraper import AoimoriShinkinScraper  # re-export for handler
+__all__: list[str] = []
+# どうしても re-export したければ遅延評価で:
+# def get_scraper():
+#     from .product_scraper import AoimoriShinkinScraper
+#     return AoimoriShinkinScraper

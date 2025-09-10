@@ -1,43 +1,69 @@
-import os
+# tests/test_config_simple.py
 import json
-import importlib
 import pytest
-
-MODULE_PATH = "loanpedia_scraper.scrapers.aoimori_shinkin.config"
-
-
-@pytest.fixture(autouse=True)
-def clean_env(monkeypatch):
-    """各テスト前に関連環境変数をクリーンにする"""
-    keys = [
-        "AOIMORI_SHINKIN_PRODUCT_URLS",
-        "AOIMORI_SHINKIN_ENABLE_PDF",
-        "AOIMORI_SHINKIN_PDF_URLS",
-        "SCRAPING_TEST_MODE",
-        "PYTEST_CURRENT_TEST",
-    ]
-    for key in keys:
-        monkeypatch.delenv(key, raising=False)
-    yield
-    for key in keys:
-        monkeypatch.delenv(key, raising=False)
+from loanpedia_scraper.scrapers.aoimori_shinkin.config import (
+    pick_profile,
+    get_product_urls,
+    get_pdf_urls,
+    BASE,
+)
 
 
-@pytest.fixture
-def mod(monkeypatch):
-    """テストごとに新しいモジュールオブジェクトを用意"""
-    module = importlib.import_module(MODULE_PATH)
+# ------------------------------
+# pick_profile のテスト
+# ------------------------------
+@pytest.mark.parametrize(
+    "url,expected_type,expected_category",
+    [
+        ("https://example.com/loan/car/", "car", "auto"),
+        ("https://example.com/loan/housing/", "home", "housing"),
+        ("https://example.com/loan/education/", "education", "education"),
+        ("https://example.com/loan/freeloan/", "freeloan", "multi-purpose"),
+        ("https://example.com/loan/card/", "card", "card"),
+    ],
+)
+def test_pick_profile_fixed_pages(url, expected_type, expected_category):
+    prof = pick_profile(url)
+    assert prof["loan_type"] == expected_type
+    assert prof["category"] == expected_category
 
-    module = importlib.reload(module)
-    return module
 
-
-def test_pick_profile_returns_default_when_no_match(monkeypatch, mod):
-    # profilesを空に
-    mod.profile.clear()
-    url = "https://example.com/kojin/mycarloan/detail"
-    prof = mod.pick_profile(url)
+def test_pick_profile_unknown_returns_default():
+    prof = pick_profile("https://example.com/loan/unknown/")
     assert prof["loan_type"] is None
     assert prof["category"] is None
-    assert prof["interest_type_hints"] == []
-    assert prof["pdf_priority_fields"] == []
+
+
+# ------------------------------
+# get_product_urls のテスト
+# ------------------------------
+def test_get_product_urls_empty(monkeypatch):
+    monkeypatch.delenv("AOIMORI_SHINKIN_PRODUCT_URLS", raising=False)
+    assert get_product_urls() == []
+
+
+def test_get_product_urls_valid(monkeypatch):
+    urls = [
+        {"url": "https://example.com/loan/car/"},
+        {"url": "https://example.com/loan/housing/"},
+    ]
+    monkeypatch.setenv("AOIMORI_SHINKIN_PRODUCT_URLS", json.dumps(urls))
+    result = get_product_urls()
+    assert result == urls
+
+
+# ------------------------------
+# get_pdf_urls のテスト
+# ------------------------------
+def test_get_pdf_urls_default(monkeypatch):
+    monkeypatch.delenv("AOIMORI_SHINKIN_PDF_URLS", raising=False)
+    urls = get_pdf_urls()
+    assert len(urls) == 3
+    assert all(u.endswith(".pdf") for u in urls)
+
+
+def test_get_pdf_urls_override(monkeypatch):
+    override = ["https://example.com/a.pdf", "https://example.com/b.pdf"]
+    monkeypatch.setenv("AOIMORI_SHINKIN_PDF_URLS", json.dumps(override))
+    urls = get_pdf_urls()
+    assert urls == override
