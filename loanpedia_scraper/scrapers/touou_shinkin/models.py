@@ -1,23 +1,38 @@
-"""東奥信用金庫向けの軽量モデル/ビルダー"""
-from __future__ import annotations
-
-from typing import Any, Dict, Optional
-from datetime import datetime
-
-
-def build_base_item() -> Dict[str, Any]:
-    return {
-        "institution_code": "0004",
-        "institution_name": "東奥信用金庫",
-        "website_url": "https://www.shinkin.co.jp/toshin/",
-        "institution_type": "信用金庫",
-        "scraped_at": datetime.now().isoformat(),
-        "scraping_status": "success",
-    }
+# loan_scraper/models.py
+# -*- coding: utf-8 -*-
+from pydantic import BaseModel
+from typing import Optional
 
 
-def merge_product_fields(item: Dict[str, Any], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    out = dict(item)
-    if extra:
-        out.update(extra)
-    return out
+class LoanProduct(BaseModel):
+    financial_institution_id: int
+    product_code: Optional[str] = None
+    product_name: Optional[str] = None
+    loan_type: Optional[str] = None
+    category: Optional[str] = None
+    min_interest_rate: Optional[float] = None
+    max_interest_rate: Optional[float] = None
+    interest_type: Optional[str] = None
+    min_loan_amount: Optional[int] = None
+    max_loan_amount: Optional[int] = None
+    min_loan_term: Optional[int] = None  # months
+    max_loan_term: Optional[int] = None
+    repayment_method: Optional[str] = None
+    min_age: Optional[int] = None
+    max_age: Optional[int] = None
+    income_requirements: Optional[str] = None
+    guarantor_requirements: Optional[str] = None
+    special_features: Optional[str] = None
+    source_reference: Optional[str] = None
+    is_active: bool = True
+    published_at: Optional[str] = None
+
+
+class RawLoanData(BaseModel):
+    financial_institution_id: int
+    source_url: str
+    html_content: str
+    extracted_text: str
+    content_hash: str
+    scraping_status: str
+    scraped_at: str

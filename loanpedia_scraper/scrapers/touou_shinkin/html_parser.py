@@ -5,7 +5,7 @@ import re
 import unicodedata
 from bs4 import BeautifulSoup
 try:
-    from loanpedia_scraper.scrapers.touou_shinkin.extractors import (
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import (
         to_month_range,
         to_yen_range,
         extract_age,

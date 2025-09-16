@@ -1,31 +1,21 @@
-"""東奥信用金庫向けのHTTPクライアント
-
-共通ヘッダーを維持するための requests.Session の薄いラッパー。
-将来的なプロキシ/リトライ対応を見据えた構成。
-"""
-from __future__ import annotations
-
-from typing import Optional, Dict
+# loan_scraper/pdf_url_selector.py
+# loan_scraper/http_client.py
+# -*- coding: utf-8 -*-
 import requests
+try:
+    from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import HEADERS
+except ImportError:
+    import config
+    HEADERS = config.HEADERS
 
 
-def build_session(extra_headers: Optional[Dict[str, str]] = None) -> requests.Session:
-    s = requests.Session()
-    s.headers.update(
-        {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0 Safari/537.36 LoanpediaBot/1.0"
-            )
-        }
-    )
-    if extra_headers:
-        s.headers.update(extra_headers)
-    return s
+def fetch_html(url: str, timeout: int = 30) -> str:
+    r = requests.get(url, headers=HEADERS, timeout=timeout)
+    r.raise_for_status()
+    return r.text
 
 
-def get(session: requests.Session, url: str, timeout: int = 15) -> requests.Response:
-    resp = session.get(url, timeout=timeout)
-    resp.raise_for_status()
-    return resp
+def fetch_bytes(url: str, timeout: int = 30) -> bytes:
+    r = requests.get(url, headers=HEADERS, timeout=timeout)
+    r.raise_for_status()
+    return r.content
