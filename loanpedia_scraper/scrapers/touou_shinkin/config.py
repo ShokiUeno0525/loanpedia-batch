@@ -83,7 +83,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "多目的",
         "interest_type_hints": ["固定金利"],
         "special_keywords": ["使途自由", "おまとめ", "借換"],
-        "pdf_priority_fields": ["loan_amount_max_yen", "min_loan_term", "max_loan_term"],
+        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 
     # シルバーライフローン

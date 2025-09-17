@@ -64,6 +64,8 @@ def extract_touou_loan_amounts(text: str) -> Tuple[Optional[int], Optional[int]]
     text = unicodedata.normalize('NFKC', text or "")
 
     amounts = []
+    min_amount = None
+    max_amount = None
 
     def _to_yen(amount_str: str, unit: str) -> Optional[int]:
         try:
@@ -77,28 +79,53 @@ def extract_touou_loan_amounts(text: str) -> Tuple[Optional[int], Optional[int]]
         except ValueError:
             return None
 
-    # 融資金額パターン
-    patterns = [
-        r'融資金額[^0-9]*(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
-        r'(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
-        r'最大\s*(\d+(?:,\d+)?)\s*(万|億)円?',
-        r'限度額\s*(\d+(?:,\d+)?)\s*(万|億)円?'
-    ]
+    # 範囲パターン（X万円以上Y万円以内）
+    range_pattern = r'(\d+(?:,\d+)?)\s*(万|億)円?\s*以上[^0-9]*(\d+(?:,\d+)?)\s*(万|億)円?\s*以内'
+    range_matches = re.findall(range_pattern, text)
 
-    for pattern in patterns:
-        matches = re.findall(pattern, text)
-        for amount_str, unit in matches:
-            amount = _to_yen(amount_str, unit)
-            if amount and 10000 <= amount <= 100000000:  # 1万円〜1億円の妥当範囲
-                amounts.append(amount)
+    for min_str, min_unit, max_str, max_unit in range_matches:
+        min_val = _to_yen(min_str, min_unit)
+        max_val = _to_yen(max_str, max_unit)
+        if min_val and max_val and 10000 <= min_val <= max_val <= 100000000:
+            min_amount = min_val
+            max_amount = max_val
+            break  # 最初に見つかった範囲パターンを優先
 
-    if amounts:
-        # 重複除去
-        amounts = sorted(set(amounts))
-        if len(amounts) == 1:
-            return (None, amounts[0])  # 上限のみ
-        return (min(amounts), max(amounts))
-    return (None, None)
+    # 範囲パターンが見つからない場合、単一値パターンを検索
+    if min_amount is None and max_amount is None:
+        # 融資金額パターン（文脈を考慮して除外すべきパターンを避ける）
+        lines = text.split('\n')
+        for line in lines:
+            # 融資額と関連のない行を除外
+            if any(exclude in line for exclude in ['申込金額', '年収確認', '収入確認', '所得証明', '不要です']):
+                continue
+
+            # 融資金額の行のみを対象
+            if '融資金額' in line:
+                patterns = [
+                    r'融資金額[^0-9]*(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
+                    r'(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
+                    r'最大\s*(\d+(?:,\d+)?)\s*(万|億)円?',
+                    r'限度額\s*(\d+(?:,\d+)?)\s*(万|億)円?'
+                ]
+
+                for pattern in patterns:
+                    matches = re.findall(pattern, line)
+                    for amount_str, unit in matches:
+                        amount = _to_yen(amount_str, unit)
+                        if amount and 10000 <= amount <= 100000000:  # 1万円〜1億円の妥当範囲
+                            amounts.append(amount)
+
+        if amounts:
+            # 重複除去
+            amounts = sorted(set(amounts))
+            if len(amounts) == 1:
+                max_amount = amounts[0]  # 上限のみ
+            else:
+                min_amount = min(amounts)
+                max_amount = max(amounts)
+
+    return (min_amount, max_amount)
 
 
 def to_yen_range(text: str):
