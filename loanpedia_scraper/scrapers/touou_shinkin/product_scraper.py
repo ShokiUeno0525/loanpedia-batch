@@ -286,19 +286,41 @@ class TououShinkinScraper:
         from loanpedia_scraper.scrapers.touou_shinkin.config import get_pdf_urls, INSTITUTION_INFO
         self.pdf_urls = get_pdf_urls()
         self.institution_info = INSTITUTION_INFO
+        self.web_products_url = "https://www.shinkin.co.jp/toshin/01-2.html"
 
     def scrape_loan_info(self) -> Dict[str, Any]:
-        """PDFからローン商品情報を抽出する"""
+        """PDFとWebページからローン商品情報を抽出・統合する"""
         products = []
         errors = []
 
+        # 1. Webページから商品情報を取得
+        try:
+            from loanpedia_scraper.scrapers.touou_shinkin.web_parser import parse_loan_products_from_web
+            web_html = fetch_html(self.web_products_url)
+            web_products = parse_loan_products_from_web(web_html)
+        except Exception as e:
+            web_products = []
+            errors.append({"source": "web", "url": self.web_products_url, "error": str(e)})
+
+        # 2. PDFから詳細情報を取得
+        pdf_products = []
         for pdf_url in self.pdf_urls:
             try:
                 profile = pick_profile(pdf_url)
                 product, raw = scrape_product(pdf_url, fin_id=int(self.institution_info["institution_code"]), pdf_url_override=pdf_url)
-                products.append(product.dict() if hasattr(product, 'dict') else product)
+                pdf_product = product.dict() if hasattr(product, 'dict') else product
+                pdf_products.append(pdf_product)
             except Exception as e:
-                errors.append({"url": pdf_url, "error": str(e)})
+                errors.append({"source": "pdf", "url": pdf_url, "error": str(e)})
+
+        # 3. WebとPDFの情報を統合
+        try:
+            from loanpedia_scraper.scrapers.touou_shinkin.web_parser import match_web_to_pdf_products
+            products = match_web_to_pdf_products(web_products, pdf_products)
+        except Exception as e:
+            # 統合に失敗した場合はPDFのみを使用
+            products = pdf_products
+            errors.append({"source": "integration", "error": str(e)})
 
         return {
             "scraping_status": "completed",
@@ -306,5 +328,7 @@ class TououShinkinScraper:
             "products": products,
             "errors": errors,
             "total_products": len(products),
-            "total_errors": len(errors)
+            "total_errors": len(errors),
+            "web_products_found": len(web_products),
+            "pdf_products_found": len(pdf_products)
         }
