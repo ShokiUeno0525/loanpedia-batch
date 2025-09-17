@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 
 BASE_HOST = "https://www.shinkin.co.jp"
 BASE_DIR  = "/toshin/jyoho/loan/"
+START = f"{BASE_HOST}{BASE_DIR}"
 
 # 実行対象PDF（必要に応じて ?ver=... のクエリは省略可）
 PDF_URLS: List[str] = [
@@ -41,7 +42,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "自動車",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["新車", "中古車", "借換", "ロードサービス", "優遇"],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
         # "pdf_url_override": [...],  # 必要なら外部固定PDFを指定
     },
 
@@ -52,7 +53,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "教育",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["学費", "入学金", "授業料", "留学", "在学中", "据置"],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 
     # 新教育ローン（無担保など）
@@ -62,7 +63,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "教育",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["無担保", "学費", "入学金", "授業料", "最長"],
-        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_loan_term", "max_loan_term", "min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 
     # 教育カードローン
@@ -72,7 +73,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "教育",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["極度額", "カード", "学費", "随時借入"],
-        "pdf_priority_fields": ["loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 
     # フリーローン
@@ -92,7 +93,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "多目的",
         "interest_type_hints": ["固定金利"],
         "special_keywords": ["年金受給", "60歳以上", "医療", "介護"],
-        "pdf_priority_fields": ["min_age", "max_age", "loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_age", "max_age", "min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 
     # とうしんカードローン
@@ -102,7 +103,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "category": "多目的",
         "interest_type_hints": ["固定金利", "変動金利"],
         "special_keywords": ["極度額", "キャッシング", "随時借入"],
-        "pdf_priority_fields": ["loan_amount_max_yen"],
+        "pdf_priority_fields": ["min_loan_amount", "max_loan_amount", "min_interest_rate", "max_interest_rate"],
     },
 }
 
@@ -131,3 +132,12 @@ def pick_profile(url: str) -> Dict[str, Any]:
         }
     key = max(candidates, key=len)  # 最長一致
     return profiles[key]
+
+
+def pick_profile_from_pdf(pdf_url: str) -> Dict[str, Any]:
+    """PDFのURLに基づいてプロファイルを選択"""
+    return pick_profile(pdf_url)
+
+
+# テスト用のBASE定数を追加
+BASE = BASE_HOST

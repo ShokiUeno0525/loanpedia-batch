@@ -58,62 +58,52 @@ def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
     return min(all_months), max(all_months)
 
 
-def to_yen_range(text: str):
-    def _to_yen(tok: str):
-        tok = tok.replace(",", "").replace("円", "")
-        m = re.match(r"(\d+(?:\.\d+)?)(億|万)?", tok)
-        if not m:
-            return None
-        v, u = float(m.group(1)), m.group(2)
-        if u == "億":
-            return int(v * 100_000_000)
-        if u == "万":
-            return int(v * 10_000)
-        return int(v)
+def extract_touou_loan_amounts(text: str) -> Tuple[Optional[int], Optional[int]]:
+    """東奥信用金庫の融資額パターンに特化した抽出"""
+    import unicodedata
+    text = unicodedata.normalize('NFKC', text or "")
 
-    # より具体的な融資額パターンを探す
+    amounts = []
+
+    def _to_yen(amount_str: str, unit: str) -> Optional[int]:
+        try:
+            amount = int(amount_str.replace(',', ''))
+            if unit == '万':
+                return amount * 10000
+            elif unit == '億':
+                return amount * 100000000
+            else:
+                return amount
+        except ValueError:
+            return None
+
+    # 融資金額パターン
     patterns = [
-        r"(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?\s*(?:まで|以下|以内)",
-        r"(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?\s*～\s*(\d+(?:,\d+)?(?:\.\d+)?)(億|万)円?",
-        r"融資.*?(\d+(?:,\d+)?)(万)円?\s*(?:まで|以下|以内)",
-        r"最高.*?(\d+(?:,\d+)?)(万|億)円?",
-        r"最大.*?(\d+(?:,\d+)?)(万|億)円?",
+        r'融資金額[^0-9]*(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
+        r'(\d+(?:,\d+)?)\s*(万|億)円?\s*以内',
+        r'最大\s*(\d+(?:,\d+)?)\s*(万|億)円?',
+        r'限度額\s*(\d+(?:,\d+)?)\s*(万|億)円?'
     ]
-    
-    nums = []
+
     for pattern in patterns:
         matches = re.findall(pattern, text)
-        for match in matches:
-            if len(match) == 2:  # 単一の金額
-                val, unit = match
-                parsed = _to_yen(f"{val}{unit}")
-                if parsed and parsed > 10000:  # 1万円以上の妥当な金額のみ
-                    nums.append(parsed)
-            elif len(match) == 4:  # 範囲
-                val1, unit1, val2, unit2 = match
-                parsed1 = _to_yen(f"{val1}{unit1}")
-                parsed2 = _to_yen(f"{val2}{unit2}")
-                if parsed1 and parsed1 > 10000:
-                    nums.append(parsed1)
-                if parsed2 and parsed2 > 10000:
-                    nums.append(parsed2)
-    
-    if not nums:
-        # フォールバック: 一般的な数字パターン
-        fallback_tokens = re.findall(r"(\d+(?:,\d+)?)(万|億)円?", text)
-        for val, unit in fallback_tokens:
-            parsed = _to_yen(f"{val}{unit}")
-            if parsed and parsed >= 10000:  # 1万円以上
-                nums.append(parsed)
-    # 重複を除去して一意な金額数を確認
-    unique = sorted(set(nums))
-    if not unique:
-        return (None, None)
-    # 単一金額のみ検出された場合は上限のみとみなし、下限は未確定にする
-    # （後段の妥当性補完で10万円などのデフォルト最小額を設定する）
-    if len(unique) == 1:
-        return (None, unique[0])
-    return (min(unique), max(unique))
+        for amount_str, unit in matches:
+            amount = _to_yen(amount_str, unit)
+            if amount and 10000 <= amount <= 100000000:  # 1万円〜1億円の妥当範囲
+                amounts.append(amount)
+
+    if amounts:
+        # 重複除去
+        amounts = sorted(set(amounts))
+        if len(amounts) == 1:
+            return (None, amounts[0])  # 上限のみ
+        return (min(amounts), max(amounts))
+    return (None, None)
+
+
+def to_yen_range(text: str):
+    """融資額抽出（東奥信用金庫特化版を優先使用）"""
+    return extract_touou_loan_amounts(text)
 
 
 def extract_age(text: str) -> Tuple[Optional[int], Optional[int]]:
@@ -146,3 +136,39 @@ def interest_type_from_hints(text: str, hints: list[str]):
         if "変動" in h:
             return "変動金利"
     return None
+
+
+def zenkaku_to_hankaku(text: str) -> str:
+    """全角数字を半角数字に変換"""
+    zenkaku = "０１２３４５６７８９"
+    hankaku = "0123456789"
+    for z, h in zip(zenkaku, hankaku):
+        text = text.replace(z, h)
+    return text
+
+
+def z2h(text: str) -> str:
+    """全角文字を半角文字に変換（簡易版）"""
+    return zenkaku_to_hankaku(text)
+
+
+def clean_rate_cell(text: str) -> str:
+    """金利セルのテキストをクリーンアップ"""
+    if not text:
+        return ""
+    # 改行を空白に変換
+    text = text.replace("\n", " ").replace("\r", " ")
+    # 複数の空白を単一空白に変換
+    text = re.sub(r"\s+", " ", text)
+    # 前後の空白を削除
+    return text.strip()
+
+
+def extract_amount_from_text(text: str) -> Tuple[Optional[int], Optional[int]]:
+    """テキストから融資額の範囲を抽出"""
+    return to_yen_range(text)
+
+
+def extract_term_from_text(text: str) -> Tuple[Optional[int], Optional[int]]:
+    """テキストから融資期間の範囲を抽出"""
+    return to_month_range(text)
