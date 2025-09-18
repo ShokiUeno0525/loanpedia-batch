@@ -88,3 +88,8 @@ def extract_touou_interest_rates(pdf_text: str) -> Tuple[Optional[float], Option
 def extract_interest_range_from_pdf(pdf_text: str) -> Tuple[Optional[float], Optional[float]]:
     """PDF本文から金利範囲を抽出（東奥信用金庫特化版）"""
     return extract_touou_interest_rates(pdf_text)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/touou_shinkin/pdf_parser.py
+# PDF金利表からの抽出と正規化
+# なぜ: 公開金利の正確な取得とHTML不足分の補完のため
+# 関連: product_scraper.py, web_parser.py, html_parser.py

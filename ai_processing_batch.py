@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /ai_processing_batch.py
+# Bedrockを用いたAI処理バッチ（raw_loan_data → processed_loan_data）
+# なぜ: 生データをAI要約・構造化し、統合処理の入力を作るため
+# 関連: product_integration_batch.py, loanpedia_scraper/database/loan_database.py, template.yaml, docker-compose.yml
 """
 AI処理バッチ: BedRock APIを使用してローンデータを要約・構造化
 """

@@ -36,3 +36,8 @@ class RawLoanData(BaseModel):
     content_hash: str
     scraping_status: str
     scraped_at: str
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/models.py
+# スクレイピング結果のデータモデル
+# なぜ: 型と構造を固定し後段処理を安定化するため
+# 関連: product_scraper.py, ../../schemas.py, ../../database/loan_database.py

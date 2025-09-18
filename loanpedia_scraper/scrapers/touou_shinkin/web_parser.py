@@ -265,3 +265,8 @@ def match_web_to_pdf_products(web_products: List[Dict], pdf_products: List[Dict]
         merged_products.append(merged)
 
     return merged_products
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/touou_shinkin/web_parser.py
+# 東奥信用金庫のWebページ解析（PDF補完前提の軽量抽出）
+# なぜ: PDFとHTMLの役割分担で堅牢性を上げるため
+# 関連: product_scraper.py, pdf_parser.py, html_parser.py

@@ -1,4 +1,8 @@
 #!/bin/bash
+# /deploy.sh
+# AWS SAMでLambda群をビルド/デプロイする
+# なぜ: 一貫した確認付きデプロイを行うため
+# 関連: template.yaml, docker-compose.yml, setup_instructions.md, test-lambda.sh
 
 # AWS Lambda デプロイメントスクリプト
 # ローン情報スクレイピングバッチシステム

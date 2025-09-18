@@ -144,3 +144,8 @@ def pick_profile(url: str) -> Dict[str, Any]:
         }
     key = max(candidates, key=len)  # 最長一致
     return profiles[key]
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/config.py
+# スクレイパー設定（URL/セレクタ/しきい値）
+# なぜ: 頻繁に変わる値をコードから分離するため
+# 関連: product_scraper.py, rate_pages.py, html_parser.py

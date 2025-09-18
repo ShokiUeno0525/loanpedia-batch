@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /scripts/run_touou_shinkin.py
+# 東奥信用金庫スクレイパーの実行（PDF/HTMLから商品情報抽出）
+# なぜ: 個別スクレイパーの手動検証・デバッグ・JSON出力のため
+# 関連: loanpedia_scraper/scrapers/touou_shinkin/*, template.yaml, docker-compose.yml, ai_processing_batch.py
 """東奥信用金庫スクレイパーの実行スクリプト
 
 このスクリプトは東奥信用金庫のPDFからローン商品情報を抽出します。

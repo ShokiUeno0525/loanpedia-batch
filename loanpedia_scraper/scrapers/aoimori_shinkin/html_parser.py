@@ -232,3 +232,8 @@ def parse_html_document(soup: BeautifulSoup) -> Dict[str, Any]:
     result = validate_data(result)
 
     return result
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/html_parser.py
+# HTML解析と金利/条件/メタの抽出
+# なぜ: 画面構造変化に強い抽出ロジックを分離するため
+# 関連: product_scraper.py, rate_pages.py, extractors.py

@@ -1,4 +1,8 @@
 #!/bin/bash
+# /test-lambda.sh
+# SAM LocalでLambda関数を対話的にテスト実行する
+# なぜ: 関数単位の動作検証とイベント入力確認のため
+# 関連: template.yaml, setup_instructions.md, docker-compose.yml, deploy.sh
 
 # Lambda関数のローカルテスト用スクリプト
 

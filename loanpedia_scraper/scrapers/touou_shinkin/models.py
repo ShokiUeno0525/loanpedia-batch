@@ -36,3 +36,8 @@ class RawLoanData(BaseModel):
     content_hash: str
     scraping_status: str
     scraped_at: str
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/touou_shinkin/models.py
+# スクレイピング結果のデータモデル
+# なぜ: 抽出値の構造を固定し上流/下流の整合を保つため
+# 関連: product_scraper.py, ../../schemas.py, ../../database/loan_database.py

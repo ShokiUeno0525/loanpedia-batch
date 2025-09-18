@@ -208,3 +208,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/main.py
+# スクレイピング・オーケストレーター（全スクレイパーの起動/集約）
+# なぜ: Lambdaメイン/ハンドラーからの統合実行を簡素化するため
+# 関連: aoimori_shinkin/*, aomori_michinoku_bank/*, touou_shinkin/*, ../app.py

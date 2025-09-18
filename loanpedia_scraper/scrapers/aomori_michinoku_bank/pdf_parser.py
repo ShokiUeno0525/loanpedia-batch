@@ -46,3 +46,8 @@ def extract_interest_range_from_pdf(pdf_text: str) -> Tuple[Optional[float], Opt
     if nums:
         return (min(nums), max(nums))
     return (None, None)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/pdf_parser.py
+# PDFからの金利/条件抽出
+# なぜ: HTML欠落の補完と正確性向上のため
+# 関連: product_scraper.py, html_parser.py, rate_pages.py

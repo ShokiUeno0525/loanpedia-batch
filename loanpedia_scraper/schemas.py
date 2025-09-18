@@ -88,3 +88,8 @@ class ScrapingConfig(TypedDict, total=False):
     delay_seconds: float
     user_agent: str
     headers: dict[str, str]
+#!/usr/bin/env python3
+# /loanpedia_scraper/schemas.py
+# スクレイピング/AI要約で用いるスキーマ定義
+# なぜ: I/Fの型と整合性を保ち統合を簡素化するため
+# 関連: scrapers/*/models.py, ai_processing_batch.py, product_integration_batch.py

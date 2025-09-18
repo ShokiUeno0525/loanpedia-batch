@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# /loanpedia_scraper/database/loan_database.py
+# 低レベルDB操作（接続/保存/重複判定）
+# なぜ: スクレイパー/バッチからの一貫したDB I/F提供のため
+# 関連: loan_service.py, ../../ai_processing_batch.py, ../../product_integration_batch.py
 """
 ローンデータベース操作ライブラリ（BeautifulSoupスクレイパー用）
 

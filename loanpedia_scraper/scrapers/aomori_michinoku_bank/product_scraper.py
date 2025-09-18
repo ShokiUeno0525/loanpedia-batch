@@ -257,3 +257,8 @@ def discover_product_links(start_url: str = START) -> list[str]:
         if re.search(r"/kojin/loan/[^/]+/?$", u) and not u.rstrip("/").endswith("loan"):
             urls.add(u)
     return sorted(urls)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/product_scraper.py
+# 青森みちのく銀行のメインスクレイパー
+# なぜ: 金利/条件/商品情報を統合し標準データに変換するため
+# 関連: http_client.py, html_parser.py, pdf_parser.py, ../../database/loan_database.py

@@ -264,3 +264,8 @@ def run(event: Any) -> Dict[str, Any]:
         "headers": {"Content-Type": "application/json; charset=utf-8"},
         "body": json.dumps(body, ensure_ascii=False),
     }
+#!/usr/bin/env python3
+# /loanpedia_scraper/src/services/aomori_michinoku_service.py
+# 青森みちのく銀行向けのスクレイピング補助サービス
+# なぜ: ハンドラーとスクレイパーの間で共通処理を集約するため
+# 関連: ../handlers/aomori_michinoku_bank.py, ../../scrapers/aomori_michinoku_bank/*, ../../database/loan_database.py

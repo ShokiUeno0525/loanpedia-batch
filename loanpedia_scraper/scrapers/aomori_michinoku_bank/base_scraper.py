@@ -722,3 +722,8 @@ class AomorimichinokuBankScraper(BaseLoanScraper):
             "omatomeloan": (6, 120),  # 6ヶ月〜10年
         }
         return terms.get(self.product_type, (12, 84))
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/base_scraper.py
+# 共通スクレイパー基底（セッション/標準I/F）
+# なぜ: 銀行/金庫間での再利用性と整合性の確保のため
+# 関連: product_scraper.py, http_client.py, html_parser.py

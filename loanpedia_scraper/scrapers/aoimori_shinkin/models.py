@@ -21,3 +21,8 @@ def merge_product_fields(item: Dict[str, Any], extra: Optional[Dict[str, Any]] =
     if extra:
         out.update(extra)
     return out
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/models.py
+# スクレイピング結果のデータモデル
+# なぜ: 各層でのデータ受け渡しを安定化するため
+# 関連: product_scraper.py, ../../schemas.py, ../../database/loan_database.py

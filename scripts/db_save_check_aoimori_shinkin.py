@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /scripts/db_save_check_aoimori_shinkin.py
+# 青い森信用金庫スクレイパーのDB保存動作をモックHTTPで検証
+# なぜ: ネットワーク非依存で raw_loan_data への保存可否を確認するため
+# 関連: loanpedia_scraper/scrapers/aoimori_shinkin/*, loanpedia_scraper/database/loan_database.py, docker-compose.yml
 """
 Aoimori Shinkin のDB保存動作確認スクリプト
 

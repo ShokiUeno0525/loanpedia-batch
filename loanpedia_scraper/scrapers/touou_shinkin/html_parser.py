@@ -91,3 +91,8 @@ def extract_interest_range_from_html(
     if nums:
         return (min(nums), max(nums))
     return (None, None)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/touou_shinkin/html_parser.py
+# HTML解析ロジック（情報抽出と正規化）
+# なぜ: 画面構造変化に耐える抽出の分離のため
+# 関連: web_parser.py, product_scraper.py, extractors.py
