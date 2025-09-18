@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# /loanpedia_scraper/app.py
+# AWS Lambdaメインハンドラー（全スクレイパーの統合実行）
+# なぜ: 金融機関ごとのスクレイピングを一括起動・制御するため
+# 関連: loanpedia_scraper/scrapers/main.py, template.yaml, docker-compose.yml, database/loan_database.py
 """
 AWS Lambda メインハンドラー
 全金融機関のローン情報スクレイピングを統合実行

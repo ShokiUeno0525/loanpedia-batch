@@ -146,3 +146,8 @@ def interest_type_from_hints(text: str, hints: list[str]):
         if "変動" in h:
             return "変動金利"
     return None
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/extractors.py
+# 値抽出ユーティリティ（正規表現/パターン）
+# なぜ: 抽出ロジックの共通化とテスト容易性向上のため
+# 関連: html_parser.py, product_scraper.py, models.py

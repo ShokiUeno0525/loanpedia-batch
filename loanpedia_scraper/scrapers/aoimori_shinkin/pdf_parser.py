@@ -207,3 +207,8 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
             seen.add(key)
             dedup.append(r)
     return dedup
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/pdf_parser.py
+# 金利表などPDFからの情報抽出
+# なぜ: HTMLに無い公式金利/条件を補完するため
+# 関連: product_scraper.py, rate_pages.py, html_parser.py

@@ -107,3 +107,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'timestamp': datetime.now().isoformat()
             }
         }
+#!/usr/bin/env python3
+# /loanpedia_scraper/src/handlers/aoimori_shinkin.py
+# 青い森信用金庫スクレイピング用のLambdaハンドラー
+# なぜ: 金庫別スクレイパーの独立実行・監視を容易にするため
+# 関連: ../../scrapers/aoimori_shinkin/*, ../services/*, ../../database/loan_database.py

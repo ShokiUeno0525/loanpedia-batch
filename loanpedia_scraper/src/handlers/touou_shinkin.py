@@ -94,3 +94,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'timestamp': datetime.now().isoformat()
             }
         }
+#!/usr/bin/env python3
+# /loanpedia_scraper/src/handlers/touou_shinkin.py
+# 東奥信用金庫スクレイピング用のLambdaハンドラー
+# なぜ: 機能分離して関数単位での実行/運用を可能にするため
+# 関連: ../../scrapers/touou_shinkin/*, ../services/*, ../../database/loan_database.py

@@ -183,3 +183,8 @@ def main():
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
+#!/usr/bin/env python3
+# /loanpedia_scraper/database/init_database.py
+# DB初期化ユーティリティ（テーブル作成/準備）
+# なぜ: ローカル検証や初回セットアップを簡便にするため
+# 関連: create_tables.sql, loan_database.py, ../../docker-compose.yml

@@ -94,3 +94,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'timestamp': datetime.now().isoformat()
             }
         }
+#!/usr/bin/env python3
+# /loanpedia_scraper/src/handlers/aomoriken_shinyoukumiai.py
+# 青森県信用組合スクレイピング用のLambdaハンドラー
+# なぜ: 機関ごとに責務を分離し変更影響範囲を限定するため
+# 関連: ../../scrapers/*, ../services/*, ../../database/loan_database.py

@@ -1,0 +1,37 @@
+{
+  "scraping_status": "completed",
+  "institution_name": "東奥信用金庫",
+  "products": [],
+  "errors": [
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/carlife_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/kyoiku_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/newkyoiku_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/kyoikucl_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/free_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/silverlife_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    },
+    {
+      "url": "https://www.shinkin.co.jp/toshin/jyoho/loan/toshincl_s.pdf",
+      "error": "scrape_product() got an unexpected keyword argument 'financial_institution_id'"
+    }
+  ],
+  "total_products": 0,
+  "total_errors": 7
+}

@@ -30,3 +30,8 @@ def clean_rate_cell(text: Optional[str]) -> Optional[Decimal]:
         return Decimal(number_str).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
     except (InvalidOperation, ValueError):
         return None
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/extractors.py
+# セレクタや正規表現に基づく値抽出ユーティリティ
+# なぜ: 解析ロジックの再利用性とテスト容易性を上げるため
+# 関連: html_parser.py, product_scraper.py, models.py

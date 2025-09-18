@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /scripts/run_aoimori_shinkin.py
+# 青い森信用金庫スクレイパーの実行（URL/PDF/OCR/DB保存を制御）
+# なぜ: 実URL/環境変数ベースでの検証とDB保存動作の確認のため
+# 関連: loanpedia_scraper/scrapers/aoimori_shinkin/*, template.yaml, docker-compose.yml, ai_processing_batch.py
 """
 青い森信用金庫スクレイパー 実行スクリプト
 
@@ -118,4 +122,3 @@ def run() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(run())
-

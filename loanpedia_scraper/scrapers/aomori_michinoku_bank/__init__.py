@@ -10,3 +10,8 @@ __all__ = [
     'AomorimichinokuBankScraper',
     'BaseLoanScraper',
 ]
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/__init__.py
+# 青森みちのく銀行スクレイパーパッケージ初期化
+# なぜ: 構成モジュールの集約と公開のため
+# 関連: product_scraper.py, html_parser.py, pdf_parser.py, config.py

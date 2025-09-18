@@ -624,3 +624,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+#!/usr/bin/env python3
+# /loanpedia_scraper/src/handlers/aomori_michinoku_bank.py
+# 青森みちのく銀行スクレイピング用のLambdaハンドラー
+# なぜ: 銀行別に関数を分離し運用性を高めるため
+# 関連: ../../scrapers/aomori_michinoku_bank/*, ../services/*, ../../database/loan_database.py

@@ -117,3 +117,8 @@ def fetch_interest_range_from_rate_page(slug: str, variant: str | None = None) -
             return r
     # 見つからなければ代表値
     return extract_interest_from_rate_text(html)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/rate_pages.py
+# 金利ページのURL/抽出設定
+# なぜ: ページ構成変化への追従と責務分離のため
+# 関連: html_parser.py, product_scraper.py, config.py

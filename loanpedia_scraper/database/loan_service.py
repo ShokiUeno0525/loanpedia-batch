@@ -164,3 +164,8 @@ def save_scraped_product(
 
     logger.error("All database save attempts failed")
     return False
+#!/usr/bin/env python3
+# /loanpedia_scraper/database/loan_service.py
+# スクレイパー向けの高レベルDB操作サービス
+# なぜ: 生SQLの重複を避け、扱いやすいI/Fを提供するため
+# 関連: loan_database.py, ../../ai_processing_batch.py, ../../product_integration_batch.py

@@ -91,3 +91,8 @@ def extract_interest_range_from_html(
     if nums:
         return (min(nums), max(nums))
     return (None, None)
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aomori_michinoku_bank/html_parser.py
+# HTML解析ロジック（金利/条件/メタ抽出）
+# なぜ: 解析責務の分離で保守性/テスト容易性を向上するため
+# 関連: product_scraper.py, extractors.py, rate_pages.py

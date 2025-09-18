@@ -171,3 +171,8 @@ class AoimoriShinkinScraper:
             # 空のproductsでも成功とみなす
             return {**item, "products": [], "scraping_status": "success", "db_saved_ids": db_saved_ids if self.save_to_db else None}
         return {**item, "products": results, "scraping_status": "success", "db_saved_ids": db_saved_ids if self.save_to_db else None}
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/product_scraper.py
+# 青い森信用金庫のメインスクレイパー（製品抽出）
+# なぜ: 金利/条件/メタ情報を統合し標準構造化データを生成するため
+# 関連: http_client.py, html_parser.py, pdf_parser.py, ../../database/loan_database.py

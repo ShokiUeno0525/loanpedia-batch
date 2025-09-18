@@ -29,3 +29,8 @@ def get(session: requests.Session, url: str, timeout: int = 15) -> requests.Resp
     resp = session.get(url, timeout=timeout)
     resp.raise_for_status()
     return resp
+#!/usr/bin/env python3
+# /loanpedia_scraper/scrapers/aoimori_shinkin/http_client.py
+# HTTP取得層（タイムアウト/UA/リトライは必要最小限）
+# なぜ: 取得責務を分離しテスト容易性を高めるため
+# 関連: product_scraper.py, html_parser.py, rate_pages.py

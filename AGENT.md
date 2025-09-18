@@ -1,152 +1,91 @@
-##　目的
-Codex エージェント（CLI）用の運用ガイド。安全・確実にスクレイピング/バッチ処理コードの開発・検証を進めるための共通ルールと手順をまとめる。
+<!--
+/AGENT.md
+Codex CLI向け運用ガイドと作業規約
+なぜ: 安全・確実・最小コストで開発/検証するため
+関連: README_ARCHITECTURE.md, docs/requirements.md, docker-compose.yml, template.yaml
+-->
 
-## プロジェクト概要
+# AGENT 運用ガイド（Vectal適用・最小版）
 
-金融機関からローン情報を自動収集し、AI で処理してエンドユーザーに提供するローン情報集約システムです。月次データ収集サイクルでバッチ処理アーキテクチャを採用しています。
+## 目的と原則
+- シンプル・モジュール化・十分なコメント。要求内のみ実装（過剰設計禁止）。
+- 80/20で最短ルート。命名と分割を丁寧に。迷ったらデータ鮮度と処理成功率を優先。
 
-## システムアーキテクチャ
-
-システムは線形パイプラインの 4 つの主要コンポーネントで構成されています：
-
-1. **データ収集 (Python)**: 金融機関の Web サイトからローン情報を抽出する Web スクレイピングバッチジョブ
-2. **データ処理 (AI)**: BedRock API を使用してローンデータを要約・構造化
-3. **データ保存 (MySQL)**: 元データ、処理済み要約、タイムスタンプ、ソース情報を保存
-4. **ユーザーインターフェース (PHP Laravel + React)**: エンドユーザーがローンデータにアクセスするための API と Web インターフェース
-
-## 主要コンポーネント
-
-### バッチ処理レイヤー
-
-- データ収集の月次スケジュール実行
-- 金融機関 Web サイトの Web スクレイピング
-- エラーハンドリングとリトライメカニズム
-- データ検証とクリーニング
-
-### AI 処理レイヤー
-
-- ローンデータ要約のための BedRock API 統合
-- 非構造化 Web コンテンツからの構造化データ生成
-- 一貫したデータ表示のための標準化フォーマット変換
-
-### データレイヤー
-
-- 永続化ストレージのための MySQL データベース
-- 生のスクレイピングデータと処理済み要約の分離保存
-- メタデータトラッキング（更新タイムスタンプ、データソース）
-- エンドユーザーアクセスのための効率的なクエリ
-
-### API レイヤー
-
-- データアクセスのための Laravel ベース REST API
-- ユーザーインターフェースのための React フロントエンド
-- アクセス制御とデータセキュリティ対策
-
-## 開発環境
-
-このプロジェクトは、標準的な Python .gitignore 設定でバッチ処理に Python を使用しています。コードベースは現在、最小限のファイルで初期セットアップ段階にあります。
-
-## プロジェクト構造
-
-```
-loanpedia-batch/
-├── docs/requirements.md    # 詳細な要件仕様書
-├── README.md              # 基本的なプロジェクト情報
-└── .gitignore            # Python フォーカスの ignore パターン
-```
-
-## 要件ドキュメント
-
-完全なシステム要件は `docs/requirements.md` に文書化されており、以下を含みます：
-
-- 各システムコンポーネントの機能要件
-- 非機能要件（パフォーマンス、可用性、セキュリティ）
-- 各レイヤーの技術仕様
-- システム統合フロー
+## プロジェクト概要（このリポジトリ）
+- バッチ/スクレイピング/AI要約/統合を担う Lambda/Python リポジトリ。
+- 全体像は `README_ARCHITECTURE.md` と `docs/requirements.md` を参照。
 
 ## 技術スタック
+- バッチ/関数: Python 3.12 + AWS Lambda (SAM)
+- スクレイピング: requests, BeautifulSoup4
+- AI処理: Amazon Bedrock + boto3
+- DB: MySQL 8.0 (pymysql)
+- 補助: Docker Compose, LocalStack, SAM Local
+- テスト: pytest
 
-- **バックエンド**: Python（バッチ処理）、PHP Laravel（API）
-- **フロントエンド**: React
-- **データベース**: MySQL
-- **AI**: BedRock API
-- **インフラ**: Web スクレイピングツール、スケジューリングシステム
+## 実行/開発コマンド
+- 起動: `docker-compose up -d`
+- テスト: `pytest -q`
+- AI処理: `python ai_processing_batch.py --batch-size 5`
+- 統合処理: `python product_integration_batch.py --batch-size 10`
+- SAMビルド: `sam build --use-container`
+- SAMローカル実行: `sam local invoke AoimoriShinkinScraperFunction --event events/aoimori_shinkin_test.json`
+- Lambdaローカル一括: `./test-lambda.sh`
+- デプロイ（確認付き）: `./deploy.sh`
+- 参考: `setup_instructions.md`, `template.yaml`, `docker-compose.yml`
 
-## 注意事項
+## データベース方針
+- 段階保存（raw → processed → products）。重複はハッシュで排除。
+- 主要テーブル: `raw_loan_data`, `processed_loan_data`, `loan_products`。
+- スキーマ/初期化: `loanpedia_scraper/database/create_tables.sql`, `init_database.py`。
+- 注意: DB変更はユーザーのみ実行可（提案OK・実行NG）。
 
-- ユーザーとは日本語でやり取りすること
-- コミットメッセージは日本語で作成
+## コメントとファイル分割
+- 各ファイル冒頭に4行ヘッダー（必須/削除禁止）。
+  1. ファイルの場所  2. 何をするか  3. なぜ存在するか  4. 関連2〜4ファイル
+- 単一責務・300行以下/ファイル。大きくなったら `handlers / services / scrapers / database` に分割。
 
-## Git 運用ルール
+## KPI（このリポジトリで重視）
+- Data Freshness（収集→反映の遅延）
+- Coverage（対象機関/商品のカバー率）
+- Processing Success Rate（各ステップの成功率）
 
-### ブランチ戦略
+## クイック＆ダーティー
+- まず動く最小実装→学びを得る→必要箇所のみ強化。
+- リスク/仮説はコメントで明文化。TODOで可視化。
 
-- **main**: プロダクション用の安定したブランチ
-- **develop**: 開発用の統合ブランチ
-- **feature/\***: 機能開発用ブランチ（例：feature/loan-scraper）
-- **bugfix/\***: バグ修正用ブランチ（例：bugfix/scraper-timeout）
-- **hotfix/\***: 緊急修正用ブランチ（例：hotfix/api-security）
+## ユーザーの学び支援
+- なぜこの設計/実装かを短く併記（入出力・前提・失敗時挙動）。
 
-### コミットメッセージ規約
+## Git 運用（簡潔版）
+- ブランチ: `main`（安定）/ `feature/*`（開発）/ `hotfix/*`（緊急）。
+- コミット: 小さく頻繁に。日本語OK。機密はコミット禁止。
+- PR: 変更概要/理由/テスト方法/影響範囲を記載。テストが通ってから作成。
+- 禁止: `main`直push、強制push、機密コミット、大量変更の単一コミット。
 
+コミットメッセージ例:
 ```
-種別: 概要（50文字以内）
+feat: 東奥信用金庫のPDF抽出を追加
 
-詳細説明（必要に応じて）
-- 変更内容の詳細
-- 変更理由
-- 影響範囲
+・金利表の表構造ゆらぎに対応（colspan補正）
+・既存HTMLパーサーとI/Fを統一
+テスト: 単体/ローカルLambdaでOK
+影響: touou_shinkin系スクレイパーのみ
 ```
 
-**種別例:**
+## セキュリティ/運用上の注意
+- `.env` や資格情報はコミット禁止。LocalStackと実本番を混同しない。
+- 依存は定期更新。失敗時は安全側に倒す（ロールバック/早期return）。
 
-- feat: 新機能
-- fix: バグ修正
-- docs: ドキュメント更新
-- refactor: リファクタリング
-- test: テスト追加・修正
+## 参照ファイル
+- アーキ: `README_ARCHITECTURE.md`
+- 要件: `docs/requirements.md`
+- インフラ: `docker-compose.yml`, `template.yaml`, `deploy.sh`, `setup_instructions.md`, `test-lambda.sh`
 
-### プルリクエスト運用
+## FAQ（抜粋）
+- SAMが動かない: `setup_instructions.md` の手順とDocker起動を確認。
+- DB接続失敗: `docker-compose.yml` の環境変数と `DB_HOST` の到達性を確認。
+- Bedrock失敗: AWS認証/リージョン/レート制限。リトライは指数バックオフ。
 
-1. **作成前チェック**
-
-   - テストが通ることを確認
-   - コードレビューの観点を考慮
-   - 関連するドキュメントの更新
-
-2. **PR 説明**
-   - 変更概要
-   - 変更理由
-   - テスト方法
-   - 影響範囲
-
-### 開発フロー
-
-1. `main` から `feature/*` ブランチを作成
-2. 機能開発・テスト実装
-3. プルリクエスト作成
-4. コードレビュー
-5. `main` へマージ
-6. 不要なブランチの削除
-
-### 禁止事項
-
-- `main` ブランチへの直接プッシュ
-- 強制プッシュ（`git push --force`）
-- 機密情報（API キー、パスワード等）のコミット
-- 大量のファイル変更を含む単一コミット
-
-### 推奨事項
-
-- 小さく頻繁なコミット
-- わかりやすいコミットメッセージ
-- 定期的なリベース（`git rebase`）
-- `.gitignore` の適切な管理
-- タグを使用したリリース管理
-
-### セキュリティ対策
-
-- `.env` ファイルの除外
-- 機密情報の分離管理
-- 依存関係の定期的な更新
-- セキュリティアラートへの迅速な対応
+---
+本ガイドはVectalの方針（シンプル・最小・十分なコメント）を反映。範囲外の追加や重い処理はユーザー指示がある場合のみ実施。

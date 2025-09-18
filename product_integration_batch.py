@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /product_integration_batch.py
+# AI処理済みデータを統合し loan_products を構築
+# なぜ: 検索・比較に使える商品マスターを生成するため
+# 関連: ai_processing_batch.py, loanpedia_scraper/database/loan_database.py, template.yaml, docker-compose.yml
 """
 統合処理バッチ: AI処理済みデータから loan_products テーブルを構築
 """
