@@ -170,22 +170,35 @@ class BaseLoanScraper(ABC):
     def _extract_interest_rates(self, soup: BeautifulSoup, item: Dict[str, Any]) -> None:
         """金利情報を抽出（card.pyの改良版を基準）"""
         full_text = soup.get_text()
+        html_content = str(soup)  # HTMLタグ付きで検索するため
         
-        # 共通金利パターン（優先順位順）
+        # 改良された金利パターン（実際の金利のみを抽出）
         rate_patterns = [
-            (r"年\s*(\d+\.\d+)\s*[%％]\s*[〜～]\s*年\s*(\d+\.\d+)\s*[%％]", "基本金利範囲"),
-            (r"(\d+\.\d+)\s*[%％]\s*[〜～]\s*(\d+\.\d+)\s*[%％]", "金利範囲"),
-            (r"金利.*?(\d+\.\d+)\s*[%％].*?(\d+\.\d+)\s*[%％]", "金利テーブル"),
-            (r"変動金利.*?(\d+\.\d+)\s*[%％]\s*[〜～]\s*(\d+\.\d+)\s*[%％]", "変動金利"),
+            # HTMLの<b>タグ内の金利範囲（確実に金利）
+            (r"<b>(\d+\.\d+)(?:&nbsp;)?</b>\s*[%％]\s*[〜～]\s*(?:<b>)?(\d+\.\d+)(?:&nbsp;)?(?:</b>)?\s*[%％]", "強調金利範囲"),
+            # 「年X.X％〜年Y.Y％」の高い金利（2%以上）
+            (r"年\s*([2-9]\d*\.\d+)\s*[%％]\s*[〜～]\s*年\s*([2-9]\d*\.\d+)\s*[%％]", "年利範囲（高金利）"),
+            # 固定金利・変動金利の表記
+            (r"(?:固定|変動)金利.*?(\d+\.\d+)\s*[%％]\s*[〜～]\s*(\d+\.\d+)\s*[%％]", "金利種別"),
         ]
         
         for pattern, description in rate_patterns:
-            match = re.search(pattern, full_text)
+            # HTMLタグ内パターンはhtml_contentで、それ以外はfull_textで検索
+            search_text = html_content if '<b>' in pattern else full_text
+            match = re.search(pattern, search_text)
             if match:
                 groups = match.groups()
                 if len(groups) >= 2:
-                    item["min_interest_rate"] = float(groups[0])
-                    item["max_interest_rate"] = float(groups[1])
+                    rate1 = float(groups[0])
+                    rate2 = float(groups[1])
+
+                    # 引下げ率を除外（1.5%未満は引下げ率の可能性が高い）
+                    if rate1 < 1.5 and rate2 < 1.5:
+                        logger.info(f"⚠️ 引下げ率と判断してスキップ: {rate1}% - {rate2}%")
+                        continue
+
+                    item["min_interest_rate"] = rate1
+                    item["max_interest_rate"] = rate2
                     logger.info(
                         f"✅ {description}: {item['min_interest_rate']}% - {item['max_interest_rate']}%"
                     )
@@ -231,16 +244,16 @@ class BaseLoanScraper(ABC):
         full_text = soup.get_text()
         logger.info(f"🔍 融資金額抽出開始 - テキストサンプル: {full_text[:200]}...")
         
-        # 改善された正規表現パターン（優先順位順）
+        # 改善された正規表現パターン（融資額を優先、返済額を除外）
         amount_patterns = [
-            # 「10万円～1,000万円」「10万～1000万円」形式
+            # 「最高1,000万円」「限度額1000万円」形式（融資額）を最優先
+            (r"(?:最高|限度額|上限|最大|ご融資金額).*?(\d+(?:,\d{3})*)\s*万円", "上限のみ（万円単位）"),
+            # 「最高10,000,000円」形式（融資額）
+            (r"(?:最高|限度額|上限|最大|ご融資金額).*?(\d+(?:,\d{3})*)\s*円", "上限のみ（円単位）"),
+            # 「10万円～1,000万円」「10万～1000万円」形式（大きな数値の範囲のみ）
             (r"(\d+(?:,\d{3})*)\s*万円?\s*[〜～から]\s*(\d+(?:,\d{3})*)\s*万円", "範囲指定（万円単位）"),
-            # 「100,000円～10,000,000円」形式 
+            # 「100,000円～10,000,000円」形式（大きな数値の範囲のみ）
             (r"(\d+(?:,\d{3})*)\s*円\s*[〜～から]\s*(\d+(?:,\d{3})*)\s*円", "範囲指定（円単位）"),
-            # 「最高1,000万円」「限度額1000万円」形式
-            (r"(?:最高|限度額|上限|最大)\s*(\d+(?:,\d{3})*)\s*万円", "上限のみ（万円単位）"),
-            # 「最高10,000,000円」形式
-            (r"(?:最高|限度額|上限|最大)\s*(\d+(?:,\d{3})*)\s*円", "上限のみ（円単位）"),
         ]
         
         for pattern, pattern_type in amount_patterns:
@@ -253,14 +266,22 @@ class BaseLoanScraper(ABC):
                     # 範囲指定の場合
                     min_amount = int(groups[0].replace(",", ""))
                     max_amount = int(groups[1].replace(",", ""))
-                    
+
                     # 万円単位か円単位かで調整
                     if "万円" in pattern:
-                        item["min_loan_amount"] = min_amount * 10000
-                        item["max_loan_amount"] = max_amount * 10000
+                        final_min = min_amount * 10000
+                        final_max = max_amount * 10000
                     else:
-                        item["min_loan_amount"] = min_amount
-                        item["max_loan_amount"] = max_amount
+                        final_min = min_amount
+                        final_max = max_amount
+
+                    # 返済額の除外（融資額は通常50万円以上）
+                    if final_max < 500000:  # 50万円未満は返済額の可能性が高い
+                        logger.info(f"⚠️ 小額のため返済額と判断してスキップ: {final_min:,}円 - {final_max:,}円")
+                        continue
+
+                    item["min_loan_amount"] = final_min
+                    item["max_loan_amount"] = final_max
                         
                 elif len(groups) == 1:
                     # 上限のみの場合
@@ -291,29 +312,60 @@ class BaseLoanScraper(ABC):
         """融資期間を抽出"""
         full_text = soup.get_text()
         
-        # 共通期間パターン
+        # 共通期間パターン（より幅広いパターンに対応）
         period_patterns = [
+            # 年月パターン
+            (r"(\d+)\s*年\s*(\d+)\s*[ヵヶ]月以内", "年月以内"),
+            (r"最大\s*(\d+)\s*年\s*(\d+)\s*[ヵヶ]月", "年月形式"),
+            (r"(\d+)\s*年\s*(\d+)\s*[ヵヶ]月まで", "年月まで"),
+            # 年数パターン
             (r"(\d+)\s*年.*?自動更新", "自動更新期間"),
             (r"契約期間.*?(\d+)\s*年", "契約期間"),
-            (r"最大\s*(\d+)\s*年\s*(\d+)\s*[ヵヶ]月", "年月形式"),
-            (r"最大\s*(\d+)\s*年", "最長年数"),
+            (r"最長\s*(\d+)\s*年", "最長年数"),
+            (r"最大\s*(\d+)\s*年", "最大年数"),
             (r"(\d+)\s*年間", "年間契約"),
+            (r"(\d+)\s*年以内", "年以内"),
+            # 月数パターン
+            (r"(\d+)\s*[ヵヶ]月以内", "月以内"),
+            (r"最長\s*(\d+)\s*[ヵヶ]月", "最長月数"),
+            (r"最大\s*(\d+)\s*[ヵヶ]月", "最大月数"),
+            # 範囲パターン
+            (r"(\d+)\s*[ヵヶ]月\s*[～〜]\s*(\d+)\s*年", "月年範囲"),
+            (r"(\d+)\s*[ヵヶ]月\s*[～〜]\s*(\d+)\s*[ヵヶ]月", "月月範囲"),
         ]
         
         for pattern, pattern_type in period_patterns:
             match = re.search(pattern, full_text)
             if match:
-                if pattern_type == "年月形式" and len(match.groups()) >= 2:
+                # 年月パターンの処理
+                if pattern_type in ["年月形式", "年月以内", "年月まで"] and len(match.groups()) >= 2:
                     years = int(match.group(1))
                     months = int(match.group(2))
                     max_months = years * 12 + months
                     item["min_loan_term_months"] = self._get_default_min_loan_term()
                     item["max_loan_term_months"] = max_months
+                # 月数パターンの処理
+                elif pattern_type in ["月以内", "最長月数", "最大月数"]:
+                    months = int(match.group(1))
+                    item["min_loan_term_months"] = self._get_default_min_loan_term()
+                    item["max_loan_term_months"] = months
+                # 範囲パターンの処理
+                elif pattern_type == "月年範囲" and len(match.groups()) >= 2:
+                    min_months = int(match.group(1))
+                    max_years = int(match.group(2))
+                    item["min_loan_term_months"] = min_months
+                    item["max_loan_term_months"] = max_years * 12
+                elif pattern_type == "月月範囲" and len(match.groups()) >= 2:
+                    min_months = int(match.group(1))
+                    max_months = int(match.group(2))
+                    item["min_loan_term_months"] = min_months
+                    item["max_loan_term_months"] = max_months
+                # 年数パターンの処理（従来通り）
                 else:
                     years = int(match.group(1))
                     item["min_loan_term_months"] = self._get_default_min_loan_term()
                     item["max_loan_term_months"] = years * 12
-                
+
                 logger.info(
                     f"✅ 融資期間: {item.get('min_loan_term_months', 0)}ヶ月 - {item.get('max_loan_term_months', 0)}ヶ月 ({pattern_type})"
                 )
@@ -547,11 +599,16 @@ class BaseLoanScraper(ABC):
                 
                 for cell in cells:
                     cell_text = cell.get_text().strip()
+
+                    # 引下げ関連のセルは除外
+                    if any(word in cell_text for word in ['引下げ', '引下', '割引', '優遇', '最大', 'まで']):
+                        continue
+
                     rate_match = re.search(r"(\d+\.\d+)\s*[%％]", cell_text)
                     if rate_match:
                         rate = float(rate_match.group(1))
-                        # 合理的な金利範囲内かチェック (0.1% - 20%)
-                        if 0.1 <= rate <= 20.0:
+                        # 引下げ率を除外（1.5%未満は除外）& 合理的な金利範囲内かチェック (1.5% - 20%)
+                        if 1.5 <= rate <= 20.0:
                             rates.append(rate)
         
         if rates:
@@ -658,8 +715,15 @@ class AomorimichinokuBankScraper(BaseLoanScraper):
         urls = {
             "mycar": "https://www.am-bk.co.jp/kojin/loan/mycarloan/",
             "education": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan_hanpuku/",
+            "education_card": "https://www.am-bk.co.jp/kojin/loan/kyouikuloan/",
+            "cardloan": "https://www.am-bk.co.jp/kojin/loan/cardloan/",
             "freeloan": "https://www.am-bk.co.jp/kojin/loan/freeloan/",
+            "reform": "https://www.am-bk.co.jp/kojin/loan/reform/",
+            "housing": "https://www.am-bk.co.jp/kojin/loan/jutakuloan/",
+            "housing_support": "https://www.am-bk.co.jp/kojin/loan/freeloan/support/",
             "omatomeloan": "https://www.am-bk.co.jp/kojin/loan/omatomeloan/",
+            "silver": "https://www.am-bk.co.jp/kojin/loan/freeloan/silverloan/",
+            "akiya": "https://www.am-bk.co.jp/kojin/loan/akiyarikatsuyouloan/",
         }
         return urls.get(self.product_type, "https://www.am-bk.co.jp/kojin/loan/")
     
@@ -670,20 +734,32 @@ class AomorimichinokuBankScraper(BaseLoanScraper):
             "education": "教育ローン",
             "education_deed": "教育ローン",
             "education_card": "教育カードローン",
+            "cardloan": "カードローン",
             "freeloan": "フリーローン",
+            "reform": "リフォームローン",
+            "housing": "住宅ローン",
+            "housing_support": "住宅サポートローン",
             "omatomeloan": "おまとめローン",
+            "silver": "シルバーローン",
+            "akiya": "空き家利活用ローン",
         }
         return types.get(self.product_type, "ローン")
     
     def get_loan_category(self) -> str:
         """商品タイプに応じたカテゴリ"""
         categories = {
-            "mycar": "目的別ローン",
-            "education": "目的別ローン", 
-            "education_deed": "目的別ローン",
-            "education_card": "カードローン",
-            "freeloan": "多目的ローン",
-            "omatomeloan": "おまとめローン",
+            "mycar": "自動車",
+            "education": "教育",
+            "education_deed": "教育",
+            "education_card": "教育",
+            "cardloan": "多目的",
+            "freeloan": "多目的",
+            "reform": "住宅関連",
+            "housing": "住宅",
+            "housing_support": "住宅関連",
+            "omatomeloan": "多目的",
+            "silver": "多目的",
+            "akiya": "住宅関連",
         }
         return categories.get(self.product_type, "その他ローン")
     
@@ -694,8 +770,14 @@ class AomorimichinokuBankScraper(BaseLoanScraper):
             "education": (2.3, 3.8),
             "education_deed": (2.3, 3.8),
             "education_card": (3.5, 5.5),
+            "cardloan": (4.5, 14.5),
             "freeloan": (6.8, 14.5),
+            "reform": (2.5, 4.5),
+            "housing": (0.5, 2.5),
+            "housing_support": (3.0, 6.0),
             "omatomeloan": (6.8, 12.5),
+            "silver": (8.0, 14.5),
+            "akiya": (2.0, 4.0),
         }
         return rates.get(self.product_type, (2.0, 14.5))
     

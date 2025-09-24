@@ -4,6 +4,17 @@ import json
 from urllib.parse import urlparse
 
 BASE = "https://www.aoimorishinkin.co.jp"
+START = f"{BASE}/loan/"
+
+# HTTPヘッダー設定
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
+    "Accept-Encoding": "gzip, deflate",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1"
+}
 
 # デフォルト値（マッチしなかった時）
 _DEFAULT_PROFILE: Dict[str, Any] = {
@@ -37,11 +48,18 @@ def pick_profile(url: str) -> Dict[str, Any]:
     return profiles.get(path, _DEFAULT_PROFILE)
 
 
-def get_product_urls() -> List[str]:
+def get_product_urls() -> List[Dict[str, str]]:
     """環境変数から商品URL一覧を取得（JSON配列）"""
     data = os.getenv("AOIMORI_SHINKIN_PRODUCT_URLS")
     if not data:
-        return []
+        # デフォルトの商品URLリスト
+        return [
+            {"url": f"{BASE}/loan/car/", "name": "マイカーローン"},
+            {"url": f"{BASE}/loan/housing/", "name": "住宅ローン"},
+            {"url": f"{BASE}/loan/education/", "name": "教育ローン"},
+            {"url": f"{BASE}/loan/freeloan/", "name": "フリーローン"},
+            {"url": f"{BASE}/loan/card/", "name": "カードローン"},
+        ]
     return json.loads(data)
 
 

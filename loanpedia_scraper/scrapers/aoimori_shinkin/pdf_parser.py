@@ -12,7 +12,7 @@ import os
 import requests
 import pdfplumber
 
-from .extractors import z2h, clean_rate_cell
+from .extractors import zenkaku_to_hankaku as z2h, clean_rate_cell
 
 # 任意のOCRスタック（環境変数で有効化した場合のみ使用）
 try:
