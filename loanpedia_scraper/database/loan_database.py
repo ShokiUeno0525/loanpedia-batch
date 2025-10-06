@@ -301,11 +301,12 @@ class LoanDatabase:
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
-    def save_structured_loan_data(self, scraper_result: Dict[str, Any]) -> Dict[str, int]:
+    def save_structured_loan_data(self, scraper_result: Dict[str, Any]) -> Dict[str, Any]:
         """新しいテーブル構造に対応したローンデータ保存"""
         assert self.cursor is not None
         
-        saved_ids = {
+        from typing import List as ListType
+        saved_ids: Dict[str, ListType[int]] = {
             'raw_data_ids': [],
             'processed_data_ids': [],
             'loan_product_ids': []
@@ -313,25 +314,31 @@ class LoanDatabase:
         
         try:
             # 1. 金融機関の取得/作成
-            institution_id = self.get_or_create_institution(
+            institution_id_nullable = self.get_or_create_institution(
                 scraper_result['institution_code'],
                 scraper_result['institution_name'],
                 scraper_result.get('institution_name_kana', '')
             )
-            
+            if not institution_id_nullable:
+                raise ValueError("Failed to get or create institution")
+            institution_id = institution_id_nullable
+
             # 2. 各商品の処理
             for product in scraper_result.get('products', []):
                 # 生データ保存 (raw_loan_data)
                 raw_data_id = self._save_raw_loan_data_new(product, institution_id)
-                saved_ids['raw_data_ids'].append(raw_data_id)
-                
-                # AI処理済みデータ保存 (processed_loan_data)
-                processed_data_id = self._save_processed_loan_data(product, raw_data_id, institution_id)
-                saved_ids['processed_data_ids'].append(processed_data_id)
-                
-                # ローン商品保存 (loan_products)
-                loan_product_id = self._save_loan_product(product, processed_data_id, institution_id)
-                saved_ids['loan_product_ids'].append(loan_product_id)
+                if raw_data_id:
+                    saved_ids['raw_data_ids'].append(raw_data_id)
+
+                    # AI処理済みデータ保存 (processed_loan_data)
+                    processed_data_id = self._save_processed_loan_data(product, raw_data_id, institution_id)
+                    if processed_data_id:
+                        saved_ids['processed_data_ids'].append(processed_data_id)
+
+                        # ローン商品保存 (loan_products)
+                        loan_product_id = self._save_loan_product(product, processed_data_id, institution_id)
+                        if loan_product_id:
+                            saved_ids['loan_product_ids'].append(loan_product_id)
             
             # コミット
             if self.connection:
@@ -346,7 +353,7 @@ class LoanDatabase:
         
         return saved_ids
     
-    def _save_raw_loan_data_new(self, product_data: Dict[str, Any], institution_id: int) -> int:
+    def _save_raw_loan_data_new(self, product_data: Dict[str, Any], institution_id: int) -> int | None:
         """新テーブル構造での生データ保存"""
         assert self.cursor is not None
         
@@ -405,7 +412,7 @@ class LoanDatabase:
         
         return int(self.cursor.lastrowid)
     
-    def _save_processed_loan_data(self, product_data: Dict[str, Any], raw_data_id: int, institution_id: int) -> int:
+    def _save_processed_loan_data(self, product_data: Dict[str, Any], raw_data_id: int, institution_id: int) -> int | None:
         """AI処理済みデータ保存"""
         assert self.cursor is not None
         
@@ -446,7 +453,7 @@ class LoanDatabase:
         
         return int(self.cursor.lastrowid)
     
-    def _save_loan_product(self, product_data: Dict[str, Any], processed_data_id: int, institution_id: int) -> int:
+    def _save_loan_product(self, product_data: Dict[str, Any], processed_data_id: int, institution_id: int) -> int | None:
         """ローン商品保存"""
         assert self.cursor is not None
         

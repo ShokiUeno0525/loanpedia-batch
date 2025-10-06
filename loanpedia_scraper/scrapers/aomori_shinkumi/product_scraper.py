@@ -37,10 +37,15 @@ class AomoriShinkumiScraper:
     def _create_session(self) -> requests.Session:
         """HTTPセッションを作成"""
         session = requests.Session()
-        session.verify = SCRAPING_CONFIG["verify_ssl"]
-        session.headers.update({
-            "User-Agent": SCRAPING_CONFIG["user_agent"]
-        })
+        verify_ssl = SCRAPING_CONFIG.get("verify_ssl", True)
+        if isinstance(verify_ssl, bool):
+            session.verify = verify_ssl
+
+        user_agent = SCRAPING_CONFIG.get("user_agent", "")
+        if isinstance(user_agent, (str, bytes)):
+            session.headers.update({
+                "User-Agent": user_agent
+            })
         return session
 
     def scrape_loan_info(self) -> Dict[str, Any]:
@@ -135,16 +140,27 @@ class AomoriShinkumiScraper:
 
     def _make_request_with_retry(self, url: str) -> Optional[requests.Response]:
         """リトライ機能付きHTTPリクエスト"""
-        for attempt in range(SCRAPING_CONFIG["retry_count"]):
+        retry_count = SCRAPING_CONFIG.get("retry_count", 3)
+        timeout = SCRAPING_CONFIG.get("timeout", 30)
+        retry_delay = SCRAPING_CONFIG.get("retry_delay", 1)
+
+        if not isinstance(retry_count, int):
+            retry_count = 3
+        if not isinstance(timeout, (int, float)):
+            timeout = 30
+        if not isinstance(retry_delay, (int, float)):
+            retry_delay = 1
+
+        for attempt in range(retry_count):
             try:
-                response = self.session.get(url, timeout=SCRAPING_CONFIG["timeout"])
+                response: requests.Response = self.session.get(url, timeout=timeout)
                 response.raise_for_status()
                 return response
 
             except requests.RequestException as e:
-                logger.warning(f"リクエスト失敗 (試行 {attempt + 1}/{SCRAPING_CONFIG['retry_count']}): {e}")
-                if attempt < SCRAPING_CONFIG["retry_count"] - 1:
-                    time.sleep(SCRAPING_CONFIG["retry_delay"])
+                logger.warning(f"リクエスト失敗 (試行 {attempt + 1}/{retry_count}): {e}")
+                if attempt < retry_count - 1:
+                    time.sleep(retry_delay)
 
         return None
 

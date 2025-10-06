@@ -45,7 +45,8 @@ def _normalize_path(url: str) -> str:
 def pick_profile(url: str) -> Dict[str, Any]:
     """URLに対応するprofileを返す（なければデフォルト）"""
     path = _normalize_path(url)
-    return profiles.get(path, _DEFAULT_PROFILE)
+    result: Dict[str, Any] = profiles.get(path, _DEFAULT_PROFILE)
+    return result
 
 
 def get_product_urls() -> List[Dict[str, str]]:
@@ -60,14 +61,16 @@ def get_product_urls() -> List[Dict[str, str]]:
             {"url": f"{BASE}/loan/freeloan/", "name": "フリーローン"},
             {"url": f"{BASE}/loan/card/", "name": "カードローン"},
         ]
-    return json.loads(data)
+    parsed: List[Dict[str, str]] = json.loads(data)
+    return parsed
 
 
 def get_pdf_urls() -> List[str]:
     """環境変数で指定がなければデフォルトのPDFリストを返す"""
     override = os.getenv("AOIMORI_SHINKIN_PDF_URLS")
     if override:
-        return json.loads(override)
+        parsed: List[str] = json.loads(override)
+        return parsed
     return [
         f"{BASE}/pdf/poster_mycarroan_241010.pdf",
         f"{BASE}/pdf/poster_myhomeroan_241010.pdf",

@@ -5,7 +5,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from bs4 import BeautifulSoup
 
-from .config import HEADERS, START, get_product_urls, get_pdf_urls
+from . import config
 from . import http_client
 from .html_parser import parse_html_document
 from .pdf_parser import extract_from_pdf_url
@@ -22,7 +22,7 @@ class AoimoriShinkinScraper:
     def __init__(self, save_to_db: bool = False, db_config: Optional[Dict[str, Any]] = None):
         self.save_to_db = save_to_db
         self.db_config = db_config
-        self.session = http_client.build_session(HEADERS)
+        self.session = http_client.build_session(config.HEADERS)
 
     def scrape_loan_info(self, url: Optional[str] = None) -> Dict[str, Any]:
         item = build_base_item()
@@ -102,18 +102,20 @@ class AoimoriShinkinScraper:
                 html_error = str(e)
                 logger.warning(f"HTML parse skipped/failed: {e}")
         else:
-            plist = get_product_urls()
+            plist = config.get_product_urls()
             if plist:
                 attempted = True
                 for p in plist:
-                    purl = str(p.get("url") or "")
+                    purl_raw = p.get("url") or ""
+                    purl = str(purl_raw)
                     try:
                         resp = http_client.get(self.session, purl, timeout=15)
                         soup = BeautifulSoup(resp.content, "html.parser")
                         html_part = parse_html_document(soup)
                         item_with_name = {**html_part}
-                        if p.get("name") and not item_with_name.get("product_name"):
-                            item_with_name["product_name"] = str(p["name"])
+                        p_name = p.get("name")
+                        if p_name and not item_with_name.get("product_name"):
+                            item_with_name["product_name"] = str(p_name)
                         # タイトルとHTML本文
                         page_title = None
                         try:
@@ -129,10 +131,10 @@ class AoimoriShinkinScraper:
                     except Exception as e:
                         html_error = str(e)
                         logger.warning(f"HTML parse skipped/failed for {purl}: {e}")
-            elif START:
+            elif config.START:
                 attempted = True
                 try:
-                    resp = http_client.get(self.session, START, timeout=15)
+                    resp = http_client.get(self.session, config.START, timeout=15)
                     soup = BeautifulSoup(resp.content, "html.parser")
                     html_part = parse_html_document(soup)
                     page_title = None
@@ -143,15 +145,15 @@ class AoimoriShinkinScraper:
                         page_title = None
                     html_text = getattr(resp, "text", None) or resp.content.decode("utf-8", errors="ignore")
 
-                    merged = merge_product_fields(item, {**html_part, "source_url": START})
+                    merged = merge_product_fields(item, {**html_part, "source_url": config.START})
                     results.append(merged)
-                    save_html_result_if_needed(item, html_part, START, page_title, html_text)
+                    save_html_result_if_needed(item, html_part, config.START, page_title, html_text)
                 except Exception as e:
                     html_error = str(e)
                     logger.warning(f"HTML parse skipped/failed: {e}")
 
         # 2) PDFテーブル（環境変数で有効化されている場合のみ）
-        for pdf_url in get_pdf_urls():
+        for pdf_url in config.get_pdf_urls():
             try:
                 pdf_rows = extract_from_pdf_url(pdf_url)
                 for r in pdf_rows:
