@@ -63,13 +63,13 @@ class TestAomorimichinokuBankScraper:
         """マイカーローンカテゴリ取得テスト"""
         scraper = AomorimichinokuBankScraper(product_type="mycar")
         category = scraper.get_loan_category()
-        assert category == "目的別ローン"
+        assert category == "自動車"
 
     def test_get_loan_category_freeloan(self):
         """フリーローンカテゴリ取得テスト"""
         scraper = AomorimichinokuBankScraper(product_type="freeloan")
         category = scraper.get_loan_category()
-        assert category == "多目的ローン"
+        assert category == "多目的"
 
     def test_get_default_interest_rates_mycar(self):
         """マイカーローン金利取得テスト"""
