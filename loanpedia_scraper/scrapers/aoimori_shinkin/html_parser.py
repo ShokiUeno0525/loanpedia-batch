@@ -82,9 +82,9 @@ def parse_interest_rates(text: str) -> Dict[str, Any]:
 
     # 金利種別
     if "変動金利" in text:
-        result["interest_rate_type"] = "変動金利"
+        result["interest_rate_type"] = "変動金利"  # type: ignore
     else:
-        result["interest_rate_type"] = "固定金利"
+        result["interest_rate_type"] = "固定金利"  # type: ignore
 
     return result
 

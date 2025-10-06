@@ -17,6 +17,11 @@ try:
 except Exception:
     AoimoriShinkinScraper = None  # type: ignore
 
+try:
+    from .aomori_shinkumi.product_scraper import AomoriShinkumiScraper
+except Exception:
+    AomoriShinkumiScraper = None  # type: ignore
+
 # データベースライブラリをインポート
 try:
     import sys
@@ -50,9 +55,9 @@ class LoanScrapingOrchestrator:
 
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),
-            'aoimori_shinkin': (AoimoriShinkinScraper() if AoimoriShinkinScraper else _DummyScraper()),
+            'aoimori_shinkin': (AoimoriShinkinScraper() if AoimoriShinkinScraper is not None else _DummyScraper()),
             'touou_shinkin': _DummyScraper(),
-            'aomoriken_shinyoukumiai': _DummyScraper(),
+            'aomori_shinkumi': (AomoriShinkumiScraper() if AomoriShinkumiScraper is not None else _DummyScraper()),
         }
         self.results = []
         self.errors = []

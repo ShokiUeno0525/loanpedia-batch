@@ -22,7 +22,7 @@ class TestLoanScrapingOrchestrator:
             assert 'aomori_michinoku' in orchestrator.scrapers
             assert 'aoimori_shinkin' in orchestrator.scrapers
             assert 'touou_shinkin' in orchestrator.scrapers
-            assert 'aomoriken_shinyoukumiai' in orchestrator.scrapers
+            assert 'aomori_shinkumi' in orchestrator.scrapers
 
     def test_init_without_database(self):
         """データベース無効でのオーケストレーター初期化テスト"""
@@ -38,7 +38,7 @@ class TestLoanScrapingOrchestrator:
         orchestrator = LoanScrapingOrchestrator()
         scrapers = orchestrator.get_available_scrapers()
         
-        expected_scrapers = ['aomori_michinoku', 'aoimori_shinkin', 'touou_shinkin', 'aomoriken_shinyoukumiai']
+        expected_scrapers = ['aomori_michinoku', 'aoimori_shinkin', 'touou_shinkin', 'aomori_shinkumi']
         assert sorted(scrapers) == sorted(expected_scrapers)
 
     @patch('loanpedia_scraper.scrapers.main.logger')

@@ -38,8 +38,11 @@ def test_pick_profile_unknown_returns_default():
 # get_product_urls のテスト
 # ------------------------------
 def test_get_product_urls_empty(monkeypatch):
+    """環境変数がない場合はデフォルトURLリストを返す"""
     monkeypatch.delenv("AOIMORI_SHINKIN_PRODUCT_URLS", raising=False)
-    assert get_product_urls() == []
+    result = get_product_urls()
+    assert len(result) == 5  # デフォルトで5つの商品URL
+    assert result[0]["name"] == "マイカーローン"
 
 
 def test_get_product_urls_valid(monkeypatch):

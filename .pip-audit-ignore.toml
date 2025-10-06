@@ -1,0 +1,10 @@
+# pip-audit ignore file
+# GHSA-4xh5-x5gv-qwph: pip 25.2の既知の脆弱性
+# 理由: pip 25.3のリリース待ち。Python 3.13のPEP 706で緩和済み
+# 影響: 信頼できるPyPIからのみインストールするため影響は限定的
+# 対応予定: pip 25.3リリース時に更新
+
+[[ignores]]
+id = "GHSA-4xh5-x5gv-qwph"
+reason = "Waiting for pip 25.3 release. Mitigated by Python 3.13 PEP 706."
+expires = "2025-12-31"
