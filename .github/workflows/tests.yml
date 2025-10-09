@@ -118,16 +118,17 @@ jobs:
           MYSQL_PASSWORD: test_password
           MYSQL_DATABASE: test_loanpedia
 
-      - name: Run integration tests
-        if: ${{ github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == '' }}
-        run: |
-          uv run pytest tests/integration/ -v
-        env:
-          MYSQL_HOST: 127.0.0.1
-          MYSQL_PORT: 3306
-          MYSQL_USER: test_user
-          MYSQL_PASSWORD: test_password
-          MYSQL_DATABASE: test_loanpedia
+      # インテグレーションテストは未実装のため一時的にコメントアウト
+      # - name: Run integration tests
+      #   if: ${{ github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == '' }}
+      #   run: |
+      #     uv run pytest tests/integration/ -v
+      #   env:
+      #     MYSQL_HOST: 127.0.0.1
+      #     MYSQL_PORT: 3306
+      #     MYSQL_USER: test_user
+      #     MYSQL_PASSWORD: test_password
+      #     MYSQL_DATABASE: test_loanpedia
 
       - name: Run scraping tests
         if: ${{ github.event.inputs.test_type == 'scraping' || github.event.inputs.test_type == 'all' || github.event_name == 'schedule' }}
