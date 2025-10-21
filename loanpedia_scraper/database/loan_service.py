@@ -100,7 +100,15 @@ def save_scraped_product(
                 logger.info(f"Waiting {delay} seconds before retry {attempt + 1}")
                 time.sleep(delay)
 
-            db = LoanDatabase(db_config)
+            # ファクトリーを使用してデータベースアダプターを取得
+            try:
+                from .db_factory import get_database_adapter
+            except ImportError:
+                # フォールバック: 既存のLoanDatabaseを直接使用
+                db = LoanDatabase(db_config)
+            else:
+                db = get_database_adapter()
+
             if not db.connect():
                 logger.warning(f"Database connection attempt {attempt + 1} failed (returned False)")
                 continue

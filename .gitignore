@@ -210,3 +210,10 @@ __marimo__/
 .aws-sam/
 # Serena cache files
 .serena/cache/
+
+# CDK artifacts
+cdk/node_modules/
+cdk/cdk.out/
+cdk/*.js
+cdk/*.d.ts
+cdk/.cdk.staging/
