@@ -10,21 +10,23 @@ Globals:
   Function:
     Timeout: 900 # スクレイピング処理のため15分に設定
     MemorySize: 512 # メモリサイズを512MBに設定
-    Runtime: python3.13
+    Runtime: python3.10
     Tracing: Active
     Environment:
       Variables:
         PYTHONPATH: /var/task
         SAVE_TO_DB: "true"
         LOG_LEVEL: "INFO"
-        # Aurora Serverless v2 Data API設定（CDKのOutputsから自動取得）
-        USE_DATA_API: "true"  # true にすると Data API を使用（PyMySQL不要）
-        DB_ARN:
-          Fn::ImportValue: LoanpediaDbClusterArn
-        DB_SECRET_ARN:
-          Fn::ImportValue: LoanpediaDbSecretArn
+        # RDS MySQL接続設定（CDKのOutputsから自動取得）
+        USE_DATA_API: "false"  # PyMySQL使用
+        DB_HOST:
+          Fn::ImportValue: LoanpediaDbEndpoint
+        DB_PORT:
+          Fn::ImportValue: LoanpediaDbPort
         DB_NAME:
           Fn::ImportValue: LoanpediaDbName
+        DB_SECRET_ARN:
+          Fn::ImportValue: LoanpediaDbSecretArn
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
@@ -41,14 +43,6 @@ Resources:
         - x86_64
       Policies:
         - Statement:
-            - Effect: Allow
-              Action:
-                - rds-data:ExecuteStatement
-                - rds-data:BatchExecuteStatement
-                - rds-data:BeginTransaction
-                - rds-data:CommitTransaction
-                - rds-data:RollbackTransaction
-              Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:*"
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
@@ -68,7 +62,7 @@ Resources:
     Properties:
       CodeUri: loanpedia_scraper/
       Handler: src.handlers.aomori_michinoku_bank.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.10
       Architectures:
         - x86_64
       Timeout: 900
@@ -87,14 +81,6 @@ Resources:
         - Statement:
             - Effect: Allow
               Action:
-                - rds-data:ExecuteStatement
-                - rds-data:BatchExecuteStatement
-                - rds-data:BeginTransaction
-                - rds-data:CommitTransaction
-                - rds-data:RollbackTransaction
-              Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:*"
-            - Effect: Allow
-              Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
       Events:
@@ -110,11 +96,11 @@ Resources:
   AoimoriShinkinScraperFunction:
     Type: AWS::Serverless::Function
     Metadata:
-      BuildMethod: python3.13
+      BuildMethod: python3.10
     Properties:
       CodeUri: loanpedia_scraper/
       Handler: src.handlers.aoimori_shinkin.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.10
       Architectures:
         - x86_64
       Timeout: 900
@@ -123,14 +109,6 @@ Resources:
           PYTHONPATH: /var/task
       Policies:
         - Statement:
-            - Effect: Allow
-              Action:
-                - rds-data:ExecuteStatement
-                - rds-data:BatchExecuteStatement
-                - rds-data:BeginTransaction
-                - rds-data:CommitTransaction
-                - rds-data:RollbackTransaction
-              Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:*"
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
@@ -150,20 +128,12 @@ Resources:
     Properties:
       CodeUri: loanpedia_scraper/
       Handler: src.handlers.touou_shinkin.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.10
       Architectures:
         - x86_64
       Timeout: 900
       Policies:
         - Statement:
-            - Effect: Allow
-              Action:
-                - rds-data:ExecuteStatement
-                - rds-data:BatchExecuteStatement
-                - rds-data:BeginTransaction
-                - rds-data:CommitTransaction
-                - rds-data:RollbackTransaction
-              Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:*"
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
@@ -183,20 +153,12 @@ Resources:
     Properties:
       CodeUri: loanpedia_scraper/
       Handler: src.handlers.aomoriken_shinyoukumiai.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.10
       Architectures:
         - x86_64
       Timeout: 900
       Policies:
         - Statement:
-            - Effect: Allow
-              Action:
-                - rds-data:ExecuteStatement
-                - rds-data:BatchExecuteStatement
-                - rds-data:BeginTransaction
-                - rds-data:CommitTransaction
-                - rds-data:RollbackTransaction
-              Resource: !Sub "arn:aws:rds:${AWS::Region}:${AWS::AccountId}:cluster:*"
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
