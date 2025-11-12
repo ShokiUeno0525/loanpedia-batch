@@ -4,11 +4,10 @@
 **プロジェクト**: Loanpedia Batch Processing System
 **作成日**: 2025-11-13
 **ステータス**: Draft
-**API基盤**: FastAPI + SQLAlchemy
 
 ## 概要
 
-本ドキュメントは、Loanpedia Batch Processing SystemのREST APIエンドポイント一覧です。
+本ドキュメントは、Loanpedia Batch Processing SystemのAPIエンドポイント一覧です。
 
 関連ドキュメント:
 - [要件定義書（機能概要）](features-overview.md)
@@ -16,68 +15,53 @@
 
 ---
 
-## 目次
+## F01: データ収集・処理機能
 
-- [F01: データ収集・処理API](#f01-データ収集処理api)
-- [F02: ユーザー管理API](#f02-ユーザー管理api)
-- [F03: 検索・閲覧API](#f03-検索閲覧api)
-- [F04: お気に入りAPI](#f04-お気に入りapi)
+バッチ処理機能のため、エンドユーザー向けAPIは提供しません。
 
 ---
 
-## F01: データ収集・処理API
+## F02: ユーザー管理機能
 
-F01はバッチ処理機能のため、**エンドユーザー向けAPIは提供しません**。
-
----
-
-## F02: ユーザー管理API
-
-| メソッド | エンドポイント | 説明 | 認証 |
-|---------|---------------|------|------|
-| POST | /auth/register | ユーザー登録 | 不要 |
-| POST | /auth/login | ログイン | 不要 |
-| POST | /auth/logout | ログアウト | 必須 |
-| POST | /auth/refresh | トークンリフレッシュ | 不要 |
-| PUT | /users/me/email | メールアドレス変更 | 必須 |
-| PUT | /users/me/password | パスワード変更 | 必須 |
-| POST | /auth/password-reset/request | パスワードリセット要求 | 不要 |
-| POST | /auth/password-reset/confirm | パスワードリセット確認 | 不要 |
+| 機能名 | 認証 |
+|--------|------|
+| ユーザー登録 | 不要 |
+| ログイン | 不要 |
+| ログアウト | 必須 |
+| トークンリフレッシュ | 不要 |
+| メールアドレス変更 | 必須 |
+| パスワード変更 | 必須 |
+| パスワードリセット要求 | 不要 |
+| パスワードリセット確認 | 不要 |
 
 ---
 
-## F03: 検索・閲覧API
+## F03: 検索・閲覧機能
 
-| メソッド | エンドポイント | 説明 | 認証 |
-|---------|---------------|------|------|
-| GET | /loan-products | ローン商品一覧取得 | 不要 |
-| GET | /loan-products/{id} | ローン商品詳細取得 | 不要 |
+| 機能名 | 認証 |
+|--------|------|
+| ローン商品一覧取得 | 必須 |
+| ローン商品詳細取得 | 必須 |
 
-### /loan-products のクエリパラメータ
+### ローン商品一覧取得の検索条件
 
-| パラメータ | 型 | 説明 |
-|-----------|-----|------|
-| page | integer | ページ番号（デフォルト: 1） |
-| per_page | integer | 1ページあたりの件数（デフォルト: 20, 最大: 100） |
-| q | string | 全文検索キーワード（商品名、概要） |
-| institution_code | string | 金融機関コード（例: 0117, 1250） |
-| loan_type | string | ローン種別（例: 住宅, 車, 教育） |
-| interest_rate_min | decimal | 最低金利（下限） |
-| interest_rate_max | decimal | 最高金利（上限） |
-| loan_amount_min | integer | 融資額（下限） |
-| loan_amount_max | integer | 融資額（上限） |
-| repayment_period_min | integer | 返済期間（下限、月単位） |
-| repayment_period_max | integer | 返済期間（上限、月単位） |
-| sort_by | string | ソート項目（interest_rate_min, loan_amount_max, updated_at） |
-| sort_order | string | ソート順（asc, desc） |
+| 項目 | 説明 |
+|------|------|
+| ページネーション | ページ番号、1ページあたりの件数 |
+| 全文検索 | 商品名、概要での検索 |
+| 金融機関絞り込み | 金融機関コード指定 |
+| ローン種別絞り込み | 住宅、車、教育等 |
+| 金利範囲絞り込み | 最低金利・最高金利の範囲指定 |
+| 融資額範囲絞り込み | 融資額の範囲指定 |
+| 返済期間範囲絞り込み | 返済期間の範囲指定（月単位） |
+| ソート | 金利順、融資額順、更新日順 |
 
 ---
 
-## F04: お気に入りAPI
+## F04: お気に入り機能
 
-| メソッド | エンドポイント | 説明 | 認証 |
-|---------|---------------|------|------|
-| GET | /favorites | お気に入り一覧取得 | 必須 |
-| POST | /favorites | お気に入り登録 | 必須 |
-| DELETE | /favorites/{id} | お気に入り削除（お気に入りID指定） | 必須 |
-| DELETE | /favorites/by-product/{loan_product_id} | お気に入り削除（商品ID指定） | 必須 |
+| 機能名 | 認証 |
+|--------|------|
+| お気に入り一覧取得 | 必須 |
+| お気に入り登録 | 必須 |
+| お気に入り削除 | 必須 |
