@@ -58,13 +58,13 @@ loan_products（統合データ）
 4. 青森県信用組合（2260）
 
 ### 技術要件
-- **言語**: Python 3.12+
+- **言語**: Python 3.13
 - **ライブラリ**: BeautifulSoup4, requests
 - **AI API**: Amazon BedRock API（Amazon Titan Text Lite）
   - 入力コスト: $0.0003/1K tokens
   - 出力コスト: $0.0004/1K tokens
   - 月間想定コスト: 約$0.10（120商品）
-- **データベース**: MySQL 8.0+
+- **データベース**: MySQL 8.0.39
 - **実行頻度**: 月次バッチ処理
 - **スクレイピングマナー**:
   - リクエスト間隔: 最低3秒
@@ -136,7 +136,7 @@ loan_products（統合データ）
   - メールアドレス検証
   - パスワードポリシー設定
   - MFA対応（将来的に）
-- **バックエンド**: Python 3.12+ FastAPI
+- **バックエンド**: Python 3.13 FastAPI
 - **認証**: AWS Cognito JWT トークン認証
 - **セキュリティ**:
   - Cognitoによるパスワードハッシュ化
