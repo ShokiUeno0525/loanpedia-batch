@@ -36,7 +36,6 @@ loan_products（統合データ）
 - **対象サイトのクロール**: robots.txtを遵守し、適切な間隔でアクセス
 - **HTMLデータの取得**: ローン商品ページのHTMLを取得
 - **構造化データの抽出**: 商品名、金利、融資額、返済期間などを抽出
-- **重複チェック**: content_hashによる重複データの検出
 - **エラーハンドリング**: リトライ機構、ログ記録
 
 #### 2. AI処理
@@ -70,7 +69,7 @@ loan_products（統合データ）
 #### `raw_loan_data`（生データ）
 - HTML全文
 - 抽出テキスト
-- メタデータ（URL、取得日時、content_hash）
+- メタデータ（URL、取得日時）
 - 処理状態（pending/processing/completed/failed）
 
 #### `processed_loan_data`（処理済みデータ）
