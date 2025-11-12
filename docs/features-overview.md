@@ -57,19 +57,13 @@ loan_products（統合データ）
 3. 東奥信用金庫（1251）
 4. 青森県信用組合（2260）
 
-### 技術要件
-- **言語**: Python 3.13
-- **ライブラリ**: BeautifulSoup4, requests
-- **AI API**: Amazon BedRock API（Amazon Titan Text Lite）
-  - 入力コスト: $0.0003/1K tokens
-  - 出力コスト: $0.0004/1K tokens
-  - 月間想定コスト: 約$0.10（120商品）
-- **データベース**: MySQL 8.0.39
-- **実行頻度**: 月次バッチ処理
-- **スクレイピングマナー**:
-  - リクエスト間隔: 最低3秒
-  - User-Agent: 連絡先情報を含む
-  - 同時接続数: 最大1接続
+### 実行頻度
+- 月次バッチ処理
+
+### スクレイピングマナー
+- リクエスト間隔: 最低3秒
+- User-Agent: 連絡先情報を含む
+- 同時接続数: 最大1接続
 
 ### データベーステーブル
 
@@ -130,23 +124,10 @@ loan_products（統合データ）
 - 確認コード送信
 - 新パスワードの設定
 
-### 技術要件
-- **ユーザー管理**: AWS Cognito
-  - ユーザープール管理
-  - メールアドレス検証
-  - パスワードポリシー設定
-  - MFA対応（将来的に）
-- **バックエンド**: Python 3.13 FastAPI
-- **認証**: AWS Cognito JWT トークン認証
-- **セキュリティ**:
-  - Cognitoによるパスワードハッシュ化
-  - CORS設定
-  - SQL injection対策（SQLAlchemy使用）
-
 ### データベーステーブル
 
-本機能ではユーザー情報をCognitoで管理するため、独自のusersテーブルは作成しません。
-ユーザーIDはCognitoのsub（UUID）を使用し、他のテーブル（お気に入り、履歴等）で外部キーとして参照します。
+本機能ではユーザー情報をAWS Cognitoで管理するため、独自のusersテーブルは作成しません。
+ユーザーIDはCognitoのsub（UUID）を使用し、他のテーブル（お気に入り等）で外部キーとして参照します。
 
 ### 非機能要件
 - ログイン処理は1秒以内
@@ -182,11 +163,6 @@ loan_products（統合データ）
 - AI要約の表示
 - 全ての項目の表示
 - 金融機関サイトへのリンク
-
-### 技術要件
-- **バックエンド**: FastAPI REST API
-- **フロントエンド**: React 18+ TypeScript
-- **検索**: MySQL全文検索 + インデックス活用
 
 ### 非機能要件
 - 検索APIは95パーセンタイルで500ms以内
@@ -224,13 +200,52 @@ loan_products（統合データ）
 - `loan_product_id`: 商品ID（loan_productsへの外部キー）
 - `created_at`: 登録日時
 
-### 技術要件
-- **バックエンド**: FastAPI
-- **フロントエンド**: React TypeScript
-
 ### 非機能要件
 - お気に入り登録・削除は即座に反映（1秒以内）
 - ユーザーあたりのお気に入り登録数制限: 100件
+
+---
+
+## 技術スタック
+
+### プログラミング言語
+- **Python 3.13**: バッチ処理、API
+
+### フロントエンド
+- **React 18+**: UIフレームワーク
+- **TypeScript**: 型安全な開発
+
+### バックエンド
+- **FastAPI**: REST API フレームワーク
+- **SQLAlchemy**: ORM（Object-Relational Mapping）
+
+### データベース
+- **MySQL 8.0.39**
+  - フルテキスト検索対応
+  - JSON カラム活用
+  - インデックス最適化
+
+### 認証
+- **AWS Cognito**
+  - ユーザープール管理
+  - JWT トークン認証
+  - メールアドレス検証
+  - パスワードポリシー設定
+
+### AI
+- **Amazon BedRock API（Amazon Titan Text Lite）**
+  - 入力コスト: $0.0003/1K tokens
+  - 出力コスト: $0.0004/1K tokens
+  - 月間想定コスト: 約$0.10（120商品）
+
+### Web スクレイピング
+- **BeautifulSoup4**: HTML パーサー
+- **requests**: HTTP クライアント
+
+### セキュリティ
+- CORS設定
+- SQL injection対策（SQLAlchemy使用）
+- パスワードハッシュ化（Cognito管理）
 
 ---
 
