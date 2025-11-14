@@ -27,12 +27,40 @@ Globals:
           Fn::ImportValue: LoanpediaDbName
         DB_SECRET_ARN:
           Fn::ImportValue: LoanpediaDbSecretArn
+    # VPC設定（RDS MySQL接続のため）
+    VpcConfig:
+      SecurityGroupIds:
+        - Ref: LambdaSecurityGroup
+      SubnetIds:
+        - subnet-0a84f75ab9fae7dc2
+        - subnet-06df17b764866008c
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
       LogFormat: JSON
   Api:
     TracingEnabled: true
 Resources:
+  # Lambda用セキュリティグループ
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda functions to access RDS
+      VpcId: vpc-06ba8a517f90b1b73
+      Tags:
+        - Key: Name
+          Value: LoanpediaLambdaSecurityGroup
+
+  # RDSセキュリティグループへのインバウンドルール追加
+  RDSIngressFromLambda:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: sg-07bd240eeb784815a  # RDS SecurityGroup
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      Description: Allow MySQL access from Lambda functions
+
   LoanpediaScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -42,11 +70,26 @@ Resources:
       Architectures:
         - x86_64
       Policies:
+        - VPCAccessPolicy: {}
         - Statement:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - ec2:AssignPrivateIpAddresses
+                - ec2:UnassignPrivateIpAddresses
+              Resource: "*"
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -66,23 +109,27 @@ Resources:
       Architectures:
         - x86_64
       Timeout: 900
-      Environment:
-        Variables:
-          PYTHONPATH: /var/task
-          LOG_LEVEL: "INFO"
-          # DB接続（SAMローカル: docker-composeのMySQLに接続）
-          # SAMのコンテナはcomposeネットワーク外なので、ホスト経由で接続する
-          DB_HOST: host.docker.internal
-          DB_PORT: 3307
-          DB_USER: app_user
-          DB_PASSWORD: app_password
-          DB_NAME: app_db
       Policies:
+        - VPCAccessPolicy: {}
         - Statement:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - ec2:AssignPrivateIpAddresses
+                - ec2:UnassignPrivateIpAddresses
+              Resource: "*"
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -104,15 +151,27 @@ Resources:
       Architectures:
         - x86_64
       Timeout: 900
-      Environment:
-        Variables:
-          PYTHONPATH: /var/task
       Policies:
+        - VPCAccessPolicy: {}
         - Statement:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - ec2:AssignPrivateIpAddresses
+                - ec2:UnassignPrivateIpAddresses
+              Resource: "*"
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -133,11 +192,26 @@ Resources:
         - x86_64
       Timeout: 900
       Policies:
+        - VPCAccessPolicy: {}
         - Statement:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - ec2:AssignPrivateIpAddresses
+                - ec2:UnassignPrivateIpAddresses
+              Resource: "*"
       Events:
         MonthlySchedule:
           Type: Schedule
@@ -158,11 +232,26 @@ Resources:
         - x86_64
       Timeout: 900
       Policies:
+        - VPCAccessPolicy: {}
         - Statement:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
               Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+                - ec2:AssignPrivateIpAddresses
+                - ec2:UnassignPrivateIpAddresses
+              Resource: "*"
       Events:
         MonthlySchedule:
           Type: Schedule

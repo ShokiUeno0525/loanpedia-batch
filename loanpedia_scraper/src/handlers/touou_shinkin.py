@@ -17,27 +17,73 @@ sys.path.append('/var/task/database')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+def get_db_config_from_secrets() -> Dict[str, Any]:
+    """Secrets Managerからデータベース認証情報を取得"""
+    import boto3
+
+    secret_arn = os.getenv('DB_SECRET_ARN')
+    if not secret_arn:
+        logger.warning("DB_SECRET_ARN not set, using environment variables")
+        return {
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'port': int(os.getenv('DB_PORT', 3306)),
+            'user': os.getenv('DB_USER', 'root'),
+            'password': os.getenv('DB_PASSWORD', ''),
+            'database': os.getenv('DB_NAME', 'loanpedia'),
+            'charset': 'utf8mb4'
+        }
+
+    try:
+        client = boto3.client('secretsmanager')
+        response = client.get_secret_value(SecretId=secret_arn)
+        secret = json.loads(response['SecretString'])
+
+        return {
+            'host': os.getenv('DB_HOST'),
+            'port': int(os.getenv('DB_PORT', 3306)),
+            'user': secret.get('username'),
+            'password': secret.get('password'),
+            'database': os.getenv('DB_NAME', 'loanpedia'),
+            'charset': 'utf8mb4'
+        }
+    except Exception as e:
+        logger.error(f"Failed to get secrets: {e}")
+        raise
+
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     東奥信用金庫専用 Lambda ハンドラー関数
-    
+
     Args:
         event: Lambda イベントデータ
         context: Lambda コンテキスト
-        
+
     Returns:
         Dict[str, Any]: 実行結果
     """
     logger.info("東奥信用金庫のスクレイピングを開始")
     logger.info(f"Event: {json.dumps(event, ensure_ascii=False)}")
-    
+
     try:
         # 東奥信用金庫スクレイパーをインポート
         from scrapers.touou_shinkin import TououShinkinScraper
-        
+
+        # データベース保存フラグを環境変数から取得
+        save_to_db = os.getenv('SAVE_TO_DB', 'false').lower() == 'true'
+
+        # データベース設定を取得
+        db_config = None
+        if save_to_db:
+            try:
+                db_config = get_db_config_from_secrets()
+                logger.info(f"Database config loaded: {db_config['host']}:{db_config['port']}/{db_config['database']}")
+            except Exception as e:
+                logger.error(f"Failed to load database config: {e}")
+                save_to_db = False
+
         # スクレイパーを初期化
-        scraper = TououShinkinScraper()
-        
+        scraper = TououShinkinScraper(save_to_db=save_to_db, db_config=db_config)
+
         # スクレイピング実行
         result = scraper.scrape_loan_info()
         
