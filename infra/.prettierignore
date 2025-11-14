@@ -1,0 +1,9 @@
+# CDK
+cdk.out/
+
+# dependencies
+node_modules/
+
+# misc
+*.d.ts
+.DS_Store
