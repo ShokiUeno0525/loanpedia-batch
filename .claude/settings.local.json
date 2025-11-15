@@ -7,7 +7,12 @@
       "Bash(git add:*)",
       "Bash(git rebase:*)",
       "Bash(python3:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(aws configure:*)"
     ],
     "deny": []
   }
