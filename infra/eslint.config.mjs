@@ -9,6 +9,6 @@ export default defineConfig(
   tseslint.configs.stylistic,
   eslintConfigPrettier,
   {
-    ignores: ['cdk.out/', '*.js', '*.d.ts', 'node_modules/'],
+    ignores: ['cdk.out/', 'dist/', '*.js', '*.d.ts', 'node_modules/'],
   }
 );
