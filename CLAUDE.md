@@ -152,3 +152,10 @@ loanpedia-batch/
 - 依存関係の定期的な更新
 - セキュリティアラートへの迅速な対応
 
+
+## Active Technologies
+- TypeScript 5.6.3 + aws-cdk-lib 2.215.0, aws-cdk/aws-route53 (001-route53-hosted-zone)
+- N/A（インフラ定義のみ） (001-route53-hosted-zone)
+
+## Recent Changes
+- 001-route53-hosted-zone: Added TypeScript 5.6.3 + aws-cdk-lib 2.215.0, aws-cdk/aws-route53

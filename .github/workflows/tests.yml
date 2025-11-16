@@ -6,11 +6,13 @@ on:
     paths-ignore:
       - 'infra/**'
       - '.github/workflows/infra_*.yml'
+      - '.claude/**'
   pull_request:
     branches: [ main, develop ]
     paths-ignore:
       - 'infra/**'
       - '.github/workflows/infra_*.yml'
+      - '.claude/**'
   schedule:
     # 毎日午前2時（JST 11時）にスクレイピングテスト実行
     - cron: '0 2 * * *'
