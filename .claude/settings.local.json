@@ -12,7 +12,13 @@
       "Bash(mv:*)",
       "Bash(echo:*)",
       "Bash(cat:*)",
-      "Bash(aws configure:*)"
+      "Bash(aws configure:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(test:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }
