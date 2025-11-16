@@ -29,9 +29,10 @@ export class Route53Stack extends cdk.Stack {
     // ネームサーバー情報を個別に出力（お名前.comでの設定用）
     // AWS Route53は自動的に4つのネームサーバーを割り当てる
     // Fn.select を使用してトークンリストから各要素を取得
+    const nameServers = hostedZone.hostedZoneNameServers || [];
     for (let i = 0; i < 4; i++) {
       new cdk.CfnOutput(this, `NameServer${i + 1}`, {
-        value: cdk.Fn.select(i, hostedZone.hostedZoneNameServers!),
+        value: cdk.Fn.select(i, nameServers),
         description: `ネームサーバー ${i + 1}（お名前.comで設定）`,
       });
     }
