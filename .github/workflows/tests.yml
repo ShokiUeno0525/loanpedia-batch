@@ -3,8 +3,14 @@ name: Scraping Tests CI
 on:
   push:
     branches: [ main, develop, 'feature/**', 'fix/**', 'bugfix/**' ]
+    paths-ignore:
+      - 'infra/**'
+      - '.github/workflows/infra_*.yml'
   pull_request:
     branches: [ main, develop ]
+    paths-ignore:
+      - 'infra/**'
+      - '.github/workflows/infra_*.yml'
   schedule:
     # 毎日午前2時（JST 11時）にスクレイピングテスト実行
     - cron: '0 2 * * *'
