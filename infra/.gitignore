@@ -3,6 +3,9 @@
 *.d.ts
 node_modules
 
+# Build output
+dist
+
 # CDK asset staging directory
 .cdk.staging
 cdk.out
