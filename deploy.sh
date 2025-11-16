@@ -44,15 +44,9 @@ echo -e "${GREEN}✅ AWS認証確認完了${NC}"
 
 # Lambda用ディレクトリにscrapersとdatabaseをコピー
 echo "📦 依存関係のコピー中..."
-if [ -d "scrapers" ]; then
-    cp -r scrapers loanpedia_scraper/
-    echo -e "${GREEN}✅ scrapers ディレクトリをコピーしました${NC}"
-fi
-
-if [ -d "database" ]; then
-    cp -r database loanpedia_scraper/
-    echo -e "${GREEN}✅ database ディレクトリをコピーしました${NC}"
-fi
+# 注意: scrapers と database は backend/batch/loanpedia_scraper/ と backend/batch/database/ にあります
+# 既にディレクトリ構造内に含まれているため、コピー不要
+echo -e "${GREEN}✅ 依存関係は既にディレクトリ構造内に含まれています${NC}"
 
 # SAM build
 echo "🔨 SAM ビルド中..."
