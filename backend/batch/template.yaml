@@ -64,7 +64,7 @@ Resources:
   LoanpediaScraperFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: loanpedia_scraper/
+      CodeUri: backend/batch/loanpedia_scraper/
       Handler: app.lambda_handler
       Description: 全金融機関のローン情報スクレイピング統合実行
       Architectures:

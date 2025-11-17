@@ -42,13 +42,9 @@ fi
 
 # 依存関係のコピー
 echo "📦 依存関係のコピー中..."
-if [ -d "scrapers" ]; then
-    cp -r scrapers loanpedia_scraper/ 2>/dev/null || true
-fi
-
-if [ -d "database" ]; then
-    cp -r database loanpedia_scraper/ 2>/dev/null || true
-fi
+# 注意: scrapers と database は backend/batch/loanpedia_scraper/ と backend/batch/database/ にあります
+# 既にディレクトリ構造内に含まれているため、コピー不要
+echo "✅ 依存関係は既にディレクトリ構造内に含まれています"
 
 # SAM build
 echo "🔨 SAM ローカルビルド中..."
