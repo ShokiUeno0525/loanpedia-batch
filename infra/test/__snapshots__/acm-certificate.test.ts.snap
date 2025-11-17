@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AcmCertificateStack スナップショットテスト: スタック全体の構造が期待通りであること 1`] = `
+{
+  "Outputs": {
+    "CertificateArn": {
+      "Description": "ACM Certificate ARN for loanpedia.jp",
+      "Export": {
+        "Name": "LoanpediaCertificateArn",
+      },
+      "Value": {
+        "Ref": "Certificate4E7ABB08",
+      },
+    },
+    "DomainName": {
+      "Description": "Domain name for the certificate",
+      "Export": {
+        "Name": "LoanpediaDomainName",
+      },
+      "Value": "loanpedia.jp",
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Certificate4E7ABB08": {
+      "Properties": {
+        "DomainName": "loanpedia.jp",
+        "DomainValidationOptions": [
+          {
+            "DomainName": "loanpedia.jp",
+            "HostedZoneId": "DUMMY",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "Production",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestAcmCertificateStack/Certificate",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
