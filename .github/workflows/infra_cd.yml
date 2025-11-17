@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'infra/**'
-      - '.github/workflows/infra_cd.yml'
 
 permissions:
   id-token: write
