@@ -178,6 +178,48 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
       },
       "Type": "AWS::Route53::RecordSet",
     },
+    "BasicAuthFunctionD133F966": {
+      "Properties": {
+        "AutoPublish": true,
+        "FunctionCode": "function handler(event) {
+  var request = event.request;
+  var headers = request.headers;
+
+  // 期待される認証情報（b4KxsVaR:etg5rqKSXU4W をBase64エンコード）
+  var expectedAuth = 'Basic YjRLeHNWYVI6ZXRnNXJxS1NYVTRX';
+
+  // Authorizationヘッダーの確認
+  if (headers.authorization && headers.authorization.value === expectedAuth) {
+    // 認証成功 - リクエストを許可
+    return request;
+  }
+
+  // 認証失敗 - 401レスポンスを返す
+  return {
+    statusCode: 401,
+    statusDescription: 'Unauthorized',
+    headers: {
+      'www-authenticate': {
+        value: 'Basic realm="Loanpedia Development Environment"'
+      },
+      'content-type': {
+        value: 'text/html; charset=utf-8'
+      }
+    },
+    body: {
+      encoding: 'text',
+      data: '<!DOCTYPE html><html><head><meta charset="utf-8"><title>401 Unauthorized</title></head><body><h1>401 Unauthorized</h1><p>認証が必要です。</p></body></html>'
+    }
+  };
+}",
+        "FunctionConfig": {
+          "Comment": "Loanpedia Basic認証用CloudFront Function",
+          "Runtime": "cloudfront-js-2.0",
+        },
+        "Name": "loanpedia-basic-auth",
+      },
+      "Type": "AWS::CloudFront::Function",
+    },
     "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
       "DependsOn": [
         "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
@@ -514,6 +556,14 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
               "HEAD",
             ],
             "Compress": true,
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Ref": "BasicAuthFunctionD133F966",
+                },
+              },
+            ],
             "TargetOriginId": "TestFrontendStackFrontendDistributionOrigin140DFC356",
             "ViewerProtocolPolicy": "redirect-to-https",
           },
