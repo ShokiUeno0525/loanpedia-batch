@@ -1,0 +1,195 @@
+# CloudFormation Outputs Contract
+# CloudFrontフロントエンド配信基盤スタックが提供するOutputs定義
+
+version: "1.0"
+stack_name: CloudFrontFrontendStack
+description: |
+  CloudFrontディストリビューション、S3バケット、WAF、Route53レコードを含む
+  フロントエンド配信基盤のCloudFormation Outputs定義。
+  これらのOutputsは他のスタックやCI/CDパイプラインから参照可能。
+
+outputs:
+  # CloudFrontディストリビューション関連
+  DistributionId:
+    description: CloudFrontディストリビューションID
+    export_name: LoanpediaCloudFrontDistributionId
+    value_type: string
+    example: "E1234567890ABC"
+    usage: |
+      CloudFrontのキャッシュ無効化やデプロイメント操作に使用。
+      CI/CDパイプラインでキャッシュクリアを実行する際に参照。
+
+  DistributionDomainName:
+    description: CloudFrontのデフォルトドメイン名
+    export_name: LoanpediaCloudFrontDomainName
+    value_type: string
+    example: "d111111abcdef8.cloudfront.net"
+    usage: |
+      DNSテストやトラブルシューティング時に使用。
+      Route53設定前の動作確認に利用可能。
+
+  DistributionArn:
+    description: CloudFrontディストリビューションARN
+    export_name: LoanpediaCloudFrontDistributionArn
+    value_type: string
+    example: "arn:aws:cloudfront::123456789012:distribution/E1234567890ABC"
+    usage: |
+      IAMポリシーやCloudWatch Alarmsの設定に使用。
+
+  # S3バケット関連
+  FrontendBucketName:
+    description: フロントエンド用S3バケット名
+    export_name: LoanpediaFrontendBucketName
+    value_type: string
+    example: "loanpedia-frontend-123456789012"
+    usage: |
+      CI/CDパイプラインでフロントエンドアセットをデプロイする際に使用。
+      aws s3 sync コマンドのターゲットバケットとして指定。
+
+  FrontendBucketArn:
+    description: フロントエンド用S3バケットARN
+    export_name: LoanpediaFrontendBucketArn
+    value_type: string
+    example: "arn:aws:s3:::loanpedia-frontend-123456789012"
+    usage: |
+      IAMポリシーでバケットへのアクセス権限を定義する際に使用。
+
+  FrontendBucketDomainName:
+    description: フロントエンド用S3バケットのドメイン名
+    export_name: LoanpediaFrontendBucketDomainName
+    value_type: string
+    example: "loanpedia-frontend-123456789012.s3.ap-northeast-1.amazonaws.com"
+    usage: |
+      直接アクセステスト（アクセス拒否の確認）に使用。
+
+  # WAF関連
+  WebAclId:
+    description: WAF WebACL ID
+    export_name: LoanpediaCloudFrontWebAclId
+    value_type: string
+    example: "a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
+    usage: |
+      WAFルールの追加・変更時に参照。
+      CloudWatchメトリクスの取得に使用。
+
+  WebAclArn:
+    description: WAF WebACL ARN
+    export_name: LoanpediaCloudFrontWebAclArn
+    value_type: string
+    example: "arn:aws:wafv2:us-east-1:123456789012:global/webacl/loanpedia-cloudfront-waf/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
+    usage: |
+      WAFのログ設定やモニタリング設定に使用。
+      他のCloudFrontディストリビューションに同じWAFを適用する場合に参照。
+
+  # ログ関連
+  LogBucketName:
+    description: CloudFrontログ用S3バケット名
+    export_name: LoanpediaCloudFrontLogBucketName
+    value_type: string
+    example: "loanpedia-cloudfront-logs-123456789012"
+    usage: |
+      ログ分析ツールやAthenaクエリでログファイルを参照する際に使用。
+
+  LogBucketArn:
+    description: CloudFrontログ用S3バケットARN
+    export_name: LoanpediaCloudFrontLogBucketArn
+    value_type: string
+    example: "arn:aws:s3:::loanpedia-cloudfront-logs-123456789012"
+    usage: |
+      ログ分析用Lambda関数のIAMロールに読み取り権限を付与する際に使用。
+
+  # DNS関連（情報提供用）
+  CustomDomainName:
+    description: CloudFrontに設定されたカスタムドメイン名
+    export_name: LoanpediaCloudFrontCustomDomain
+    value_type: string
+    example: "loanpedia.jp"
+    usage: |
+      ドキュメントやモニタリングダッシュボードでの表示に使用。
+
+  Route53RecordName:
+    description: 作成されたRoute53 Aレコード名
+    export_name: LoanpediaCloudFrontRoute53RecordName
+    value_type: string
+    example: "loanpedia.jp"
+    usage: |
+      DNS設定の確認やトラブルシューティングに使用。
+
+# 依存関係
+dependencies:
+  imports:
+    - export_name: LoanpediaHostedZoneId
+      source_stack: Route53Stack
+      description: Route53ホストゾーンID
+
+    - export_name: LoanpediaCertificateArn
+      source_stack: AcmCertificateStack
+      description: ACM証明書ARN（us-east-1リージョン）
+
+# 使用例
+usage_examples:
+  # CI/CDパイプラインでのフロントエンドデプロイ
+  frontend_deployment:
+    description: GitHub Actionsでフロントエンドをデプロイ
+    code: |
+      # CloudFormation OutputsからS3バケット名を取得
+      BUCKET_NAME=$(aws cloudformation describe-stacks \
+        --stack-name CloudFrontFrontendStack \
+        --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
+        --output text)
+
+      # フロントエンドアセットをS3にデプロイ
+      aws s3 sync ./dist s3://$BUCKET_NAME/ --delete
+
+      # CloudFrontのキャッシュを無効化
+      DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+        --stack-name CloudFrontFrontendStack \
+        --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' \
+        --output text)
+
+      aws cloudfront create-invalidation \
+        --distribution-id $DISTRIBUTION_ID \
+        --paths "/*"
+
+  # WAFログの有効化
+  waf_logging:
+    description: WAFログをKinesis Data Firehoseに送信
+    code: |
+      # WAF WebACL ARNを取得
+      WEB_ACL_ARN=$(aws cloudformation describe-stacks \
+        --stack-name CloudFrontFrontendStack \
+        --query 'Stacks[0].Outputs[?OutputKey==`WebAclArn`].OutputValue' \
+        --output text)
+
+      # WAFログ設定
+      aws wafv2 put-logging-configuration \
+        --logging-configuration ResourceArn=$WEB_ACL_ARN,LogDestinationConfigs=arn:aws:firehose:...
+
+  # Athenaでログ分析
+  athena_log_analysis:
+    description: CloudFrontログをAthenaで分析
+    code: |
+      # ログバケット名を取得
+      LOG_BUCKET=$(aws cloudformation describe-stacks \
+        --stack-name CloudFrontFrontendStack \
+        --query 'Stacks[0].Outputs[?OutputKey==`LogBucketName`].OutputValue' \
+        --output text)
+
+      # Athenaテーブル作成（例）
+      CREATE EXTERNAL TABLE cloudfront_logs (
+        date_time STRING,
+        x_edge_location STRING,
+        sc_bytes BIGINT,
+        ...
+      )
+      LOCATION 's3://${LOG_BUCKET}/cloudfront/';
+
+# バージョン管理
+versioning:
+  current_version: "1.0.0"
+  changelog:
+    - version: "1.0.0"
+      date: "2025-11-18"
+      changes:
+        - 初期バージョン作成
+        - CloudFront、S3、WAF、Route53のOutputs定義

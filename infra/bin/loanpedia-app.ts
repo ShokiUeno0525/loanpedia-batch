@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib/core';
 import { GitHubOidcStack } from '../lib/github-oidc-stack';
 import { Route53Stack } from '../lib/route53-stack';
 import { AcmCertificateStack } from '../lib/acm-certificate-stack';
+import { FrontendStack } from '../lib/frontend-stack';
 
 const app = new cdk.App();
 
@@ -31,6 +32,16 @@ new AcmCertificateStack(app, 'AcmCertificateStack', {
     region: 'us-east-1', // CloudFront用証明書は必ずus-east-1
   },
   description: 'Loanpedia ACM Certificate Stack for CloudFront (us-east-1)',
+});
+
+// T030: CloudFrontフロントエンド配信基盤スタック
+// CloudFront用WAFは必ずus-east-1リージョンで作成する必要がある
+new FrontendStack(app, 'FrontendStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'us-east-1', // CloudFront用WAFは必ずus-east-1
+  },
+  description: 'Loanpedia CloudFront Frontend Distribution Stack (us-east-1)',
 });
 
 app.synth();
