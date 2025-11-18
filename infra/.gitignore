@@ -12,3 +12,6 @@ cdk.out
 
 # direnv
 .envrc
+
+# CDK context (contains AWS account IDs)
+cdk.context.json

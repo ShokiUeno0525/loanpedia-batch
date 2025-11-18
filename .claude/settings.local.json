@@ -6,6 +6,7 @@
       "Bash(git push:*)",
       "Bash(git add:*)",
       "Bash(git rebase:*)",
+      "Bash(git fetch:*)",
       "Bash(python3:*)",
       "Bash(ls:*)",
       "Bash(mkdir:*)",
@@ -13,16 +14,17 @@
       "Bash(echo:*)",
       "Bash(cat:*)",
       "Bash(aws configure:*)",
-      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
-      "Bash(.specify/scripts/bash/update-agent-context.sh:*)",
-      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
       "Bash(git rev-parse:*)",
       "Bash(test:*)",
       "Bash(npm test:*)",
       "Bash(npm run format:*)",
       "Bash(npm run lint:fix:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(.specify/scripts/bash/:*)",
+      "Bash(gh issue create:*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(rm:*)"
+    ]
   }
 }
