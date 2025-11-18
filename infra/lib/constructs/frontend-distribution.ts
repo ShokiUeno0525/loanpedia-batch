@@ -45,6 +45,11 @@ export interface FrontendDistributionProps {
    * @default PRICE_CLASS_200
    */
   readonly priceClass?: cloudfront.PriceClass;
+
+  /**
+   * Basic認証用のCloudFront Function（オプション）
+   */
+  readonly basicAuthFunction?: cloudfront.IFunction;
 }
 
 /**
@@ -113,6 +118,15 @@ export class FrontendDistribution extends Construct {
         compress: true,
         // キャッシュポリシー: CachingOptimized
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        // Basic認証Functionを追加（オプション）
+        functionAssociations: props.basicAuthFunction
+          ? [
+              {
+                function: props.basicAuthFunction,
+                eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+              },
+            ]
+          : undefined,
       },
 
       // エラーレスポンス設定
