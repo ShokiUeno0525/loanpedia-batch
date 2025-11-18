@@ -156,6 +156,8 @@ loanpedia-batch/
 ## Active Technologies
 - TypeScript 5.6.3 + aws-cdk-lib 2.215.0, aws-cdk/aws-route53 (001-route53-hosted-zone)
 - N/A（インフラ定義のみ） (001-route53-hosted-zone)
+- TypeScript 5.6.3 (AWS CDKによるインフラ定義) + aws-cdk-lib 2.215.0, aws-cdk/aws-cloudfront, aws-cdk/aws-s3, aws-cdk/aws-wafv2, aws-cdk/aws-route53, aws-cdk/aws-logs (001-cloudfront-frontend-setup)
+- Amazon S3 (静的コンテンツ), CloudWatch Logs (アクセスログ) (001-cloudfront-frontend-setup)
 
 ## Recent Changes
 - 001-route53-hosted-zone: Added TypeScript 5.6.3 + aws-cdk-lib 2.215.0, aws-cdk/aws-route53

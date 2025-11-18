@@ -1,0 +1,691 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FrontendStack スタック全体の検証 スナップショットテスト 1`] = `
+{
+  "Mappings": {
+    "AWSCloudFrontPartitionHostedZoneIdMap": {
+      "aws": {
+        "zoneId": "Z2FDTNDATAQYW2",
+      },
+      "aws-cn": {
+        "zoneId": "Z3RFFRIM2A3IF5",
+      },
+    },
+  },
+  "Outputs": {
+    "CustomDomainName": {
+      "Description": "CloudFrontに設定されたカスタムドメイン名",
+      "Export": {
+        "Name": "LoanpediaCloudFrontCustomDomain",
+      },
+      "Value": "loanpedia.jp",
+    },
+    "DistributionArn": {
+      "Description": "CloudFrontディストリビューションARN",
+      "Export": {
+        "Name": "LoanpediaCloudFrontDistributionArn",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "arn:aws:cloudfront::test-account:distribution/",
+            {
+              "Ref": "FrontendDistributionBE88BC73",
+            },
+          ],
+        ],
+      },
+    },
+    "DistributionDomainName": {
+      "Description": "CloudFrontのデフォルトドメイン名",
+      "Export": {
+        "Name": "LoanpediaCloudFrontDomainName",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "FrontendDistributionBE88BC73",
+          "DomainName",
+        ],
+      },
+    },
+    "DistributionId": {
+      "Description": "CloudFrontディストリビューションID",
+      "Export": {
+        "Name": "LoanpediaCloudFrontDistributionId",
+      },
+      "Value": {
+        "Ref": "FrontendDistributionBE88BC73",
+      },
+    },
+    "FrontendBucketArn": {
+      "Description": "フロントエンド用S3バケットARN",
+      "Export": {
+        "Name": "LoanpediaFrontendBucketArn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "FrontendBucket5B7E4E1D",
+          "Arn",
+        ],
+      },
+    },
+    "FrontendBucketDomainName": {
+      "Description": "フロントエンド用S3バケットのドメイン名",
+      "Export": {
+        "Name": "LoanpediaFrontendBucketDomainName",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "FrontendBucket5B7E4E1D",
+          "RegionalDomainName",
+        ],
+      },
+    },
+    "FrontendBucketName": {
+      "Description": "フロントエンド用S3バケット名",
+      "Export": {
+        "Name": "LoanpediaFrontendBucketName",
+      },
+      "Value": {
+        "Ref": "FrontendBucket5B7E4E1D",
+      },
+    },
+    "LogBucketArn": {
+      "Description": "CloudFrontログ用S3バケットARN",
+      "Export": {
+        "Name": "LoanpediaCloudFrontLogBucketArn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "FrontendBucketLogBucketA4B64359",
+          "Arn",
+        ],
+      },
+    },
+    "LogBucketName": {
+      "Description": "CloudFrontログ用S3バケット名",
+      "Export": {
+        "Name": "LoanpediaCloudFrontLogBucketName",
+      },
+      "Value": {
+        "Ref": "FrontendBucketLogBucketA4B64359",
+      },
+    },
+    "Route53RecordName": {
+      "Description": "作成されたRoute53 Aレコード名",
+      "Export": {
+        "Name": "LoanpediaCloudFrontRoute53RecordName",
+      },
+      "Value": "loanpedia.jp",
+    },
+    "WebAclArn": {
+      "Description": "WAF WebACL ARN",
+      "Export": {
+        "Name": "LoanpediaCloudFrontWebAclArn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "WafCloudFrontWebACL549CAF36",
+          "Arn",
+        ],
+      },
+    },
+    "WebAclId": {
+      "Description": "WAF WebACL ID",
+      "Export": {
+        "Name": "LoanpediaCloudFrontWebAclId",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "WafCloudFrontWebACL549CAF36",
+          "Id",
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "AliasRecord851000D2": {
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::GetAtt": [
+              "FrontendDistributionBE88BC73",
+              "DomainName",
+            ],
+          },
+          "HostedZoneId": {
+            "Fn::FindInMap": [
+              "AWSCloudFrontPartitionHostedZoneIdMap",
+              {
+                "Ref": "AWS::Partition",
+              },
+              "zoneId",
+            ],
+          },
+        },
+        "Comment": "Loanpediaフロントエンド用CloudFrontディストリビューション",
+        "HostedZoneId": "Z1234567890ABC",
+        "Name": "loanpedia.jp.",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+      "DependsOn": [
+        "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-test-account-us-east-1",
+          "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+        },
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Lambda function for auto-deleting objects in ",
+              {
+                "Ref": "FrontendBucketLogBucketA4B64359",
+              },
+              " S3 bucket.",
+            ],
+          ],
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Sub": "arn:\${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "FrontendBucket5B7E4E1D": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "loanpedia-frontend",
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "FrontendBucketLogBucketA4B64359",
+          },
+          "LogFilePrefix": "s3-access/",
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "Component",
+            "Value": "Frontend",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Production",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+          {
+            "Key": "Purpose",
+            "Value": "StaticContent",
+          },
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled",
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "FrontendBucketLogBucketA4B64359": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "AccessControl": "LogDeliveryWrite",
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+        "BucketName": "loanpedia-cloudfront-logs",
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 30,
+              "Id": "DeleteOldLogs",
+              "Status": "Enabled",
+            },
+          ],
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "ObjectWriter",
+            },
+          ],
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true,
+        },
+        "Tags": [
+          {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          {
+            "Key": "Component",
+            "Value": "Frontend",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Production",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+          {
+            "Key": "Purpose",
+            "Value": "StaticContent",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FrontendBucketLogBucketAutoDeleteObjectsCustomResource3D148190": {
+      "DeletionPolicy": "Delete",
+      "DependsOn": [
+        "FrontendBucketLogBucketPolicy002C3910",
+      ],
+      "Properties": {
+        "BucketName": {
+          "Ref": "FrontendBucketLogBucketA4B64359",
+        },
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::S3AutoDeleteObjects",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "FrontendBucketLogBucketPolicy002C3910": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FrontendBucketLogBucketA4B64359",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:PutBucketPolicy",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::GetAtt": [
+                    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+                    "Arn",
+                  ],
+                },
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FrontendBucketLogBucketA4B64359",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "FrontendBucketLogBucketA4B64359",
+                          "Arn",
+                        ],
+                      },
+                      "/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FrontendBucketPolicy861D070F": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FrontendBucket5B7E4E1D",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudfront::",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":distribution/",
+                        {
+                          "Ref": "FrontendDistributionBE88BC73",
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FrontendBucket5B7E4E1D",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FrontendDistributionBE88BC73": {
+      "Properties": {
+        "DistributionConfig": {
+          "Aliases": [
+            "loanpedia.jp",
+          ],
+          "Comment": "Loanpedia フロントエンド配信用CloudFrontディストリビューション",
+          "CustomErrorResponses": [
+            {
+              "ErrorCachingMinTTL": 300,
+              "ErrorCode": 403,
+              "ResponseCode": 404,
+              "ResponsePagePath": "/index.html",
+            },
+            {
+              "ErrorCachingMinTTL": 300,
+              "ErrorCode": 404,
+              "ResponseCode": 404,
+              "ResponsePagePath": "/index.html",
+            },
+          ],
+          "DefaultCacheBehavior": {
+            "AllowedMethods": [
+              "GET",
+              "HEAD",
+            ],
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "CachedMethods": [
+              "GET",
+              "HEAD",
+            ],
+            "Compress": true,
+            "TargetOriginId": "TestFrontendStackFrontendDistributionOrigin140DFC356",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Logging": {
+            "Bucket": {
+              "Fn::GetAtt": [
+                "FrontendBucketLogBucketA4B64359",
+                "RegionalDomainName",
+              ],
+            },
+            "IncludeCookies": false,
+            "Prefix": "cloudfront/",
+          },
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "FrontendBucket5B7E4E1D",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "TestFrontendStackFrontendDistributionOrigin140DFC356",
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "FrontendDistributionOrigin1S3OriginAccessControl6A79F3C4",
+                  "Id",
+                ],
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": "",
+              },
+            },
+          ],
+          "PriceClass": "PriceClass_200",
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Fn::ImportValue": "LoanpediaCertificateArn",
+            },
+            "MinimumProtocolVersion": "TLSv1.2_2021",
+            "SslSupportMethod": "sni-only",
+          },
+          "WebACLId": {
+            "Fn::GetAtt": [
+              "WafCloudFrontWebACL549CAF36",
+              "Arn",
+            ],
+          },
+        },
+        "Tags": [
+          {
+            "Key": "Component",
+            "Value": "Frontend",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Production",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+          {
+            "Key": "Purpose",
+            "Value": "ContentDelivery",
+          },
+        ],
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "FrontendDistributionOrigin1S3OriginAccessControl6A79F3C4": {
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": "TestFrontendStackFrontendDisOrigin1S3OriginAccessControl86DC9B6B",
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4",
+        },
+      },
+      "Type": "AWS::CloudFront::OriginAccessControl",
+    },
+    "WafCloudFrontWebACL549CAF36": {
+      "Properties": {
+        "DefaultAction": {
+          "Allow": {},
+        },
+        "Name": "loanpedia-cloudfront-waf",
+        "Rules": [
+          {
+            "Name": "AWSManagedRulesCommonRuleSet",
+            "OverrideAction": {
+              "None": {},
+            },
+            "Priority": 1,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "Name": "AWSManagedRulesCommonRuleSet",
+                "VendorName": "AWS",
+              },
+            },
+            "VisibilityConfig": {
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "AWSManagedRulesCommonRuleSetMetric",
+              "SampledRequestsEnabled": true,
+            },
+          },
+        ],
+        "Scope": "CLOUDFRONT",
+        "Tags": [
+          {
+            "Key": "Component",
+            "Value": "Security",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Production",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+          {
+            "Key": "Purpose",
+            "Value": "WAF",
+          },
+        ],
+        "VisibilityConfig": {
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "WebAclMetric",
+          "SampledRequestsEnabled": true,
+        },
+      },
+      "Type": "AWS::WAFv2::WebACL",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
