@@ -6,6 +6,7 @@ import { Construct } from 'constructs';
 import { FrontendBucket } from './constructs/frontend-s3-bucket';
 import { FrontendDistribution } from './constructs/frontend-distribution';
 import { WafCloudFront } from './constructs/waf-cloudfront';
+import { BasicAuthFunction } from './constructs/basic-auth-function';
 
 /**
  * CloudFrontフロントエンド配信基盤スタック
@@ -52,6 +53,9 @@ export class FrontendStack extends cdk.Stack {
     // このスタックもus-east-1リージョンにデプロイする必要がある
     const wafConstruct = new WafCloudFront(this, 'WafCloudFront');
 
+    // Basic認証Functionを作成（開発環境用）
+    const basicAuthFunction = new BasicAuthFunction(this, 'BasicAuthFunction').function;
+
     // CloudFrontディストリビューションを作成
     const distributionConstruct = new FrontendDistribution(this, 'FrontendDistribution', {
       frontendBucket: frontendBucketConstruct.frontendBucket,
@@ -59,6 +63,7 @@ export class FrontendStack extends cdk.Stack {
       certificate: certificate,
       domainName: 'loanpedia.jp',
       webAclArn: wafConstruct.webAcl.attrArn,
+      basicAuthFunction: basicAuthFunction,
     });
 
     // T025: Route53 Aレコードを作成（loanpedia.jp → CloudFront）

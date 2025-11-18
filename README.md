@@ -32,6 +32,21 @@ loanpedia-batch/
 └── README.md           # このファイル
 ```
 
+## CloudFront Basic認証
+
+開発環境でCloudFrontにBasic認証が設定されています。
+
+### 認証情報
+
+- **ユーザー名**: `b4KxsVaR`
+- **パスワード**: `etg5rqKSXU4W`
+
+ブラウザでサイトにアクセスすると、自動的にユーザー名/パスワード入力ダイアログが表示されます。
+
+### 認証情報の変更
+
+認証情報を変更する場合は、[infra/lib/constructs/basic-auth-function.ts](infra/lib/constructs/basic-auth-function.ts) のCloudFront Functionコード内の認証情報を編集してください。変更後、CDKを再デプロイしてください。
+
 ## 詳細ドキュメント
 
 - [プロジェクト概要](docs/vision.md)
