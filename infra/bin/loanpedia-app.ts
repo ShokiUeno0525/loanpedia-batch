@@ -4,6 +4,7 @@ import { GitHubOidcStack } from '../lib/github-oidc-stack';
 import { Route53Stack } from '../lib/route53-stack';
 import { AcmCertificateStack } from '../lib/acm-certificate-stack';
 import { FrontendStack } from '../lib/frontend-stack';
+import { VpcNetworkStack } from '../lib/stacks/vpc-network-stack';
 
 const app = new cdk.App();
 
@@ -42,6 +43,16 @@ new FrontendStack(app, 'FrontendStack', {
     region: 'us-east-1', // CloudFront用WAFは必ずus-east-1
   },
   description: 'Loanpedia CloudFront Frontend Distribution Stack (us-east-1)',
+});
+
+// VPCネットワーク基盤スタック
+// シングルAZ構成のVPC、パブリック・プライベート・アイソレートサブネットを作成
+new VpcNetworkStack(app, 'VpcNetworkStack', {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'ap-northeast-1', // VPCはap-northeast-1に作成
+  },
+  description: 'Loanpedia VPC Network Infrastructure Stack (ap-northeast-1)',
 });
 
 app.synth();
