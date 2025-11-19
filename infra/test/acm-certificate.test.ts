@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { AcmCertificateStack } from '../lib/acm-certificate-stack';
+import { AcmCertificateStack } from '../lib/stacks/acm-certificate-stack';
 
 describe('AcmCertificateStack', () => {
   let app: cdk.App;

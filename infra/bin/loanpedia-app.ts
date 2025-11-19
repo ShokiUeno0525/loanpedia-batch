@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
-import { GitHubOidcStack } from '../lib/github-oidc-stack';
-import { Route53Stack } from '../lib/route53-stack';
-import { AcmCertificateStack } from '../lib/acm-certificate-stack';
-import { FrontendStack } from '../lib/frontend-stack';
+import { GitHubOidcStack } from '../lib/stacks/github-oidc-stack';
+import { Route53Stack } from '../lib/stacks/route53-stack';
+import { AcmCertificateStack } from '../lib/stacks/acm-certificate-stack';
+import { FrontendStack } from '../lib/stacks/frontend-stack';
 import { VpcNetworkStack } from '../lib/stacks/vpc-network-stack';
 
 const app = new cdk.App();

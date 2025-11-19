@@ -3,10 +3,10 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Construct } from 'constructs';
-import { FrontendBucket } from './constructs/frontend-s3-bucket';
-import { FrontendDistribution } from './constructs/frontend-distribution';
-import { WafCloudFront } from './constructs/waf-cloudfront';
-import { BasicAuthFunction } from './constructs/basic-auth-function';
+import { FrontendBucket } from '../constructs/frontend-s3-bucket';
+import { FrontendDistribution } from '../constructs/frontend-distribution';
+import { WafCloudFront } from '../constructs/waf-cloudfront';
+import { BasicAuthFunction } from '../constructs/basic-auth-function';
 
 /**
  * CloudFrontフロントエンド配信基盤スタック

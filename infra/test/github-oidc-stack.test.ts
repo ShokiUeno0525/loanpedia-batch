@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { GitHubOidcStack } from '../lib/github-oidc-stack';
+import { GitHubOidcStack } from '../lib/stacks/github-oidc-stack';
 
 describe('GitHubOidcStack', () => {
   test('GitHub OIDC Provider is created', () => {

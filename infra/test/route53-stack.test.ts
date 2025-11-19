@@ -1,6 +1,6 @@
 import { Template } from 'aws-cdk-lib/assertions';
 import * as cdk from 'aws-cdk-lib';
-import { Route53Stack } from '../lib/route53-stack';
+import { Route53Stack } from '../lib/stacks/route53-stack';
 
 describe('Route53Stack', () => {
   test('loanpedia.jp のパブリックホストゾーンが作成される', () => {
