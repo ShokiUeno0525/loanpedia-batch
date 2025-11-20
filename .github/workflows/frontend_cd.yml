@@ -1,34 +1,40 @@
 name: Frontend CD
 
 on:
-  workflow_run:
-    workflows: ["Frontend CI"]
-    types:
-      - completed
+  push:
     branches:
       - main
+    paths:
+      - 'frontend/**'
 
 permissions:
   id-token: write
   contents: read
-  actions: read
 
 jobs:
   deploy:
     name: Frontend Deploy
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: frontend-dist
-          path: frontend/dist/
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          node-version-file: 'frontend/.node-version'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+
+      - name: Build
+        run: npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
