@@ -13,13 +13,14 @@ loanpedia.jpドメインでHTTPS接続によるフロントエンドコンテン
 
 **Language/Version**: TypeScript 5.6.3 (AWS CDKによるインフラ定義)
 **Primary Dependencies**: aws-cdk-lib 2.215.0, aws-cdk/aws-cloudfront, aws-cdk/aws-s3, aws-cdk/aws-wafv2, aws-cdk/aws-route53
-**Storage**: Amazon S3 (静的コンテンツ, アクセスログ)
+**Storage**: Amazon S3 (静的コンテンツ: ap-northeast-1, アクセスログ: ap-northeast-1)
 **Testing**: CDK integration tests, manual deployment verification
-**Target Platform**: AWS Cloud (CloudFront, S3, Route53)
+**Target Platform**: AWS Cloud (CloudFront: us-east-1, WAF: us-east-1, S3: ap-northeast-1, Route53: グローバル)
 **Project Type**: Infrastructure as Code (AWS CDK)
 **Performance Goals**: 3秒以内のページ表示、CloudFront edge locationからの配信
 **Constraints**: ACM証明書は既存のものを使用、Route53ホストゾーンは既存、バックエンドALBは未実装のため/apiビヘイビアはTODO
 **Scale/Scope**: 単一ドメイン (loanpedia.jp)、単一環境、基本的なWAFルール
+**Region Strategy**: CloudFront/WAFはus-east-1（要件）、S3バケットはap-northeast-1（データ保管場所の最適化）
 
 ## Constitution Check
 
@@ -73,22 +74,29 @@ specs/001-cloudfront-frontend-setup/
 ```text
 infrastructure/
 ├── lib/
-│   ├── 001-cloudfront-frontend-setup-stack.ts  # CloudFrontスタック定義
+│   ├── stacks/
+│   │   ├── s3-stack.ts                         # S3バケットスタック (ap-northeast-1)
+│   │   └── frontend-stack.ts                   # CloudFrontスタック (us-east-1)
 │   └── constructs/
 │       ├── frontend-distribution.ts            # CloudFrontディストリビューションのConstruct
 │       ├── frontend-s3-bucket.ts               # フロントエンド用S3バケットのConstruct
 │       └── waf-cloudfront.ts                   # WAFのConstruct
 ├── bin/
-│   └── infrastructure.ts                       # CDKアプリケーションエントリーポイント
+│   └── loanpedia-app.ts                        # CDKアプリケーションエントリーポイント
 └── test/
-    └── 001-cloudfront-frontend-setup.test.ts   # スタックのテスト
+    ├── s3-stack.test.ts                        # S3スタックのテスト
+    └── frontend-stack.test.ts                  # CloudFrontスタックのテスト
 
 .github/
 └── workflows/
     └── deploy-infrastructure.yml               # 既存のCI/CDワークフロー（更新不要）
 ```
 
-**Structure Decision**: AWS CDKを使用したインフラストラクチャ定義。既存の`infrastructure/`ディレクトリ構造を踏襲し、新しいスタック定義ファイルとConstructを追加。Route53スタック（001-route53-hosted-zone）との依存関係を考慮し、既存のホストゾーンとACM証明書を参照する形で実装。
+**Structure Decision**: AWS CDKを使用したインフラストラクチャ定義。S3バケットとCloudFront/WAFを異なるリージョンに配置するため、2つのスタックに分離:
+- **S3Stack (ap-northeast-1)**: フロントエンド用S3バケット、ログ用S3バケット
+- **FrontendStack (us-east-1)**: CloudFrontディストリビューション、WAF、Route53レコード
+
+FrontendStackはS3Stackのバケットをクロスリージョン参照(`Fn.importValue`)で使用。Route53スタック（001-route53-hosted-zone）との依存関係を考慮し、既存のホストゾーンとACM証明書を参照する形で実装。
 
 ## Complexity Tracking
 
