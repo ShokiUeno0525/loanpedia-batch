@@ -58,7 +58,7 @@ jobs:
 
           # CloudFrontディストリビューションIDを取得（S3バケット名から検索）
           DIST_ID=$(aws cloudfront list-distributions --query \
-            "DistributionList.Items[?contains(Origins.Items[].DomainName, '${BUCKET_NAME}')].Id | [0]" \
+            "DistributionList.Items[?Origins.Items[?contains(DomainName, '${BUCKET_NAME}')]].Id | [0]" \
             --output text)
 
           if [ -z "${DIST_ID}" ] || [ "${DIST_ID}" = "None" ]; then
