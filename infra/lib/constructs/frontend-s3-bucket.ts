@@ -79,6 +79,23 @@ export class FrontendBucket extends Construct {
       serverAccessLogsPrefix: 's3-access/',
     });
 
+    // CloudFrontからのアクセスを許可するバケットポリシーを追加
+    // OAC経由でのみアクセス可能にする
+    this.frontendBucket.addToResourcePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        sid: 'AllowCloudFrontServicePrincipal',
+        effect: cdk.aws_iam.Effect.ALLOW,
+        principals: [new cdk.aws_iam.ServicePrincipal('cloudfront.amazonaws.com')],
+        actions: ['s3:GetObject'],
+        resources: [`${this.frontendBucket.bucketArn}/*`],
+        conditions: {
+          StringEquals: {
+            'AWS:SourceAccount': cdk.Stack.of(this).account,
+          },
+        },
+      })
+    );
+
     // タグ付け
     cdk.Tags.of(this).add('Component', 'Frontend');
     cdk.Tags.of(this).add('Purpose', 'StaticContent');

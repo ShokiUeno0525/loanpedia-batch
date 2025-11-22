@@ -132,8 +132,8 @@ describe('S3Stack', () => {
       // S3バケット: 2個（frontend + logs）
       template.resourceCountIs('AWS::S3::Bucket', 2);
 
-      // S3バケットポリシー: 1個（ログバケット用、フロントエンドバケットはCloudFrontスタックで設定）
-      template.resourceCountIs('AWS::S3::BucketPolicy', 1);
+      // S3バケットポリシー: 2個（ログバケット用 + フロントエンドバケット用）
+      template.resourceCountIs('AWS::S3::BucketPolicy', 2);
 
       // CloudFront関連リソースは存在しない
       template.resourceCountIs('AWS::CloudFront::Distribution', 0);

@@ -306,6 +306,46 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
       },
       "Type": "AWS::S3::BucketPolicy",
     },
+    "FrontendBucketPolicy861D070F": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FrontendBucket5B7E4E1D",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceAccount": "test-account",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FrontendBucket5B7E4E1D",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowCloudFrontServicePrincipal",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
   },
   "Rules": {
     "CheckBootstrapVersion": {

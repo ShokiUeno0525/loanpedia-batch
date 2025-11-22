@@ -214,41 +214,13 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
           "HttpVersion": "http2",
           "IPV6Enabled": true,
           "Logging": {
-            "Bucket": {
-              "Fn::Join": [
-                "",
-                [
-                  "test-log-bucket.s3.",
-                  {
-                    "Ref": "AWS::Region",
-                  },
-                  ".",
-                  {
-                    "Ref": "AWS::URLSuffix",
-                  },
-                ],
-              ],
-            },
+            "Bucket": "test-log-bucket.s3.us-east-1.amazonaws.com",
             "IncludeCookies": false,
             "Prefix": "cloudfront/",
           },
           "Origins": [
             {
-              "DomainName": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "test-frontend-bucket.s3.",
-                    {
-                      "Ref": "AWS::Region",
-                    },
-                    ".",
-                    {
-                      "Ref": "AWS::URLSuffix",
-                    },
-                  ],
-                ],
-              },
+              "DomainName": "test-frontend-bucket.s3.us-east-1.amazonaws.com",
               "Id": "TestFrontendStackFrontendDistributionOrigin140DFC356",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
