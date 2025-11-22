@@ -20,24 +20,23 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: 'frontend/.node-version'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+        run: npm ci
 
       - name: Build
         run: npm run build
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v5.1.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -45,10 +44,27 @@ jobs:
       - name: Resolve target resources (S3/CloudFront)
         id: resolve
         run: |
-          BUCKET_NAME=$(aws cloudformation list-exports --query "Exports[?Name=='LoanpediaFrontendBucketName'].Value" --output text)
-          DIST_ID=$(aws cloudformation list-exports --query "Exports[?Name=='LoanpediaCloudFrontDistributionId'].Value" --output text)
-          echo "bucket=$BUCKET_NAME" >> $GITHUB_OUTPUT
-          echo "dist_id=$DIST_ID" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          BUCKET_NAME="${{ secrets.FRONTEND_BUCKET_NAME }}"
+          REGION="${{ secrets.AWS_REGION }}"
+
+          if [ -z "${BUCKET_NAME}" ]; then
+            echo "FRONTEND_BUCKET_NAME secret is not set." >&2
+            exit 1
+          fi
+
+          echo "bucket=${BUCKET_NAME}" >> "$GITHUB_OUTPUT"
+
+          DIST_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?length(Origins.Items[?DomainName=='${BUCKET_NAME}.s3.amazonaws.com' || DomainName=='${BUCKET_NAME}.s3.${REGION}.amazonaws.com' || contains(DomainName, '${BUCKET_NAME}.')]) > `0`].Id | [0]" \
+            --output text)
+
+          if [ -z "${DIST_ID}" ] || [ "${DIST_ID}" = "None" ]; then
+            echo "No CloudFront distribution found for bucket '${BUCKET_NAME}'." >&2
+            exit 1
+          fi
+
+          echo "dist_id=${DIST_ID}" >> "$GITHUB_OUTPUT"
 
       - name: Upload assets to S3 (cacheable)
         run: |
