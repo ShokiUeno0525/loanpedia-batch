@@ -29,69 +29,6 @@ describe('FrontendStack', () => {
     template = Template.fromStack(stack);
   });
 
-  describe('S3バケット', () => {
-    test('フロントエンドバケットが作成される', () => {
-      template.hasResourceProperties('AWS::S3::Bucket', {
-        BucketName: 'loanpedia-frontend',
-        PublicAccessBlockConfiguration: {
-          BlockPublicAcls: true,
-          BlockPublicPolicy: true,
-          IgnorePublicAcls: true,
-          RestrictPublicBuckets: true,
-        },
-        BucketEncryption: {
-          ServerSideEncryptionConfiguration: [
-            {
-              ServerSideEncryptionByDefault: {
-                SSEAlgorithm: 'AES256',
-              },
-            },
-          ],
-        },
-        VersioningConfiguration: {
-          Status: 'Enabled',
-        },
-      });
-    });
-
-    test('ログバケットが作成される', () => {
-      template.hasResourceProperties('AWS::S3::Bucket', {
-        BucketName: 'loanpedia-cloudfront-logs',
-        PublicAccessBlockConfiguration: {
-          BlockPublicAcls: true,
-          BlockPublicPolicy: true,
-          IgnorePublicAcls: true,
-          RestrictPublicBuckets: true,
-        },
-        BucketEncryption: {
-          ServerSideEncryptionConfiguration: [
-            {
-              ServerSideEncryptionByDefault: {
-                SSEAlgorithm: 'AES256',
-              },
-            },
-          ],
-        },
-        LifecycleConfiguration: {
-          Rules: [
-            {
-              ExpirationInDays: 30,
-              Id: 'DeleteOldLogs',
-              Status: 'Enabled',
-            },
-          ],
-        },
-        OwnershipControls: {
-          Rules: [
-            {
-              ObjectOwnership: 'ObjectWriter',
-            },
-          ],
-        },
-      });
-    });
-  });
-
   describe('CloudFrontディストリビューション', () => {
     test('CloudFrontディストリビューションが作成される', () => {
       template.hasResourceProperties('AWS::CloudFront::Distribution', {
@@ -166,22 +103,10 @@ describe('FrontendStack', () => {
       });
     });
 
-    test('S3バケットポリシーにOACアクセスが含まれる', () => {
-      template.hasResourceProperties('AWS::S3::BucketPolicy', {
-        Bucket: Match.anyValue(),
-        PolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Action: 's3:GetObject',
-              Effect: 'Allow',
-              Principal: {
-                Service: 'cloudfront.amazonaws.com',
-              },
-              Resource: Match.anyValue(),
-            }),
-          ]),
-        },
-      });
+    test('S3バケットポリシーはS3Stackで作成される', () => {
+      // S3バケットはクロスリージョン参照のため、
+      // バケットポリシーもS3Stack（ap-northeast-1）で作成される
+      template.resourceCountIs('AWS::S3::BucketPolicy', 0);
     });
   });
 
@@ -248,6 +173,12 @@ describe('FrontendStack', () => {
     });
   });
 
+  describe('リージョン検証', () => {
+    test('スタックがus-east-1リージョンで作成される', () => {
+      expect(stack.region).toBe('us-east-1');
+    });
+  });
+
   describe('CloudFormation Outputs', () => {
     test('DistributionId Outputが定義される', () => {
       template.hasOutput('DistributionId', {
@@ -272,51 +203,6 @@ describe('FrontendStack', () => {
         Description: 'CloudFrontディストリビューションARN',
         Export: {
           Name: 'LoanpediaCloudFrontDistributionArn',
-        },
-      });
-    });
-
-    test('FrontendBucketName Outputが定義される', () => {
-      template.hasOutput('FrontendBucketName', {
-        Description: 'フロントエンド用S3バケット名',
-        Export: {
-          Name: 'LoanpediaFrontendBucketName',
-        },
-      });
-    });
-
-    test('FrontendBucketArn Outputが定義される', () => {
-      template.hasOutput('FrontendBucketArn', {
-        Description: 'フロントエンド用S3バケットARN',
-        Export: {
-          Name: 'LoanpediaFrontendBucketArn',
-        },
-      });
-    });
-
-    test('FrontendBucketDomainName Outputが定義される', () => {
-      template.hasOutput('FrontendBucketDomainName', {
-        Description: 'フロントエンド用S3バケットのドメイン名',
-        Export: {
-          Name: 'LoanpediaFrontendBucketDomainName',
-        },
-      });
-    });
-
-    test('LogBucketName Outputが定義される', () => {
-      template.hasOutput('LogBucketName', {
-        Description: 'CloudFrontログ用S3バケット名',
-        Export: {
-          Name: 'LoanpediaCloudFrontLogBucketName',
-        },
-      });
-    });
-
-    test('LogBucketArn Outputが定義される', () => {
-      template.hasOutput('LogBucketArn', {
-        Description: 'CloudFrontログ用S3バケットARN',
-        Export: {
-          Name: 'LoanpediaCloudFrontLogBucketArn',
         },
       });
     });
@@ -366,8 +252,8 @@ describe('FrontendStack', () => {
     });
 
     test('最小限のリソースが作成される', () => {
-      // S3バケット: 2個（frontend + logs）
-      template.resourceCountIs('AWS::S3::Bucket', 2);
+      // S3バケット: 0個（S3Stackで作成）
+      template.resourceCountIs('AWS::S3::Bucket', 0);
 
       // CloudFrontディストリビューション: 1個
       template.resourceCountIs('AWS::CloudFront::Distribution', 1);
@@ -378,8 +264,8 @@ describe('FrontendStack', () => {
       // Route53レコード: 1個
       template.resourceCountIs('AWS::Route53::RecordSet', 1);
 
-      // S3バケットポリシー: 2個（フロントエンドバケット用 + ログバケット用）
-      template.resourceCountIs('AWS::S3::BucketPolicy', 2);
+      // S3バケットポリシー: 0個（S3Stackで作成）
+      template.resourceCountIs('AWS::S3::BucketPolicy', 0);
     });
   });
 });

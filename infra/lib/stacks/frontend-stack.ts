@@ -2,26 +2,27 @@ import * as cdk from 'aws-cdk-lib';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import { FrontendBucket } from '../constructs/frontend-s3-bucket';
 import { FrontendDistribution } from '../constructs/frontend-distribution';
 import { WafCloudFront } from '../constructs/waf-cloudfront';
 import { BasicAuthFunction } from '../constructs/basic-auth-function';
 
 /**
- * CloudFrontフロントエンド配信基盤スタック
+ * CloudFrontフロントエンド配信基盤スタック（us-east-1）
  *
  * @remarks
  * このスタックは以下のリソースを作成します：
- * - フロントエンド用S3バケット（プライベート、OAC経由アクセス）
- * - CloudFrontログ用S3バケット
  * - CloudFrontディストリビューション（OAC設定、HTTPS、カスタムドメイン）
  * - WAF WebACL（AWS Managed Rules）
  * - Route53 Aレコード（loanpedia.jp → CloudFront）
  *
+ * デプロイリージョン: us-east-1（CloudFront/WAF要件）
+ *
  * 依存関係：
  * - Route53ホストゾーン（既存）
  * - ACM証明書（既存、us-east-1リージョン）
+ * - S3Stack（ap-northeast-1）からS3バケットをクロスリージョン参照
  *
  * ユーザーストーリー：
  * - US1: 基本的なフロントエンドコンテンツ配信
@@ -45,8 +46,18 @@ export class FrontendStack extends cdk.Stack {
       cdk.Fn.importValue('LoanpediaCertificateArn')
     );
 
-    // T005: フロントエンド用S3バケットとログバケットを作成
-    const frontendBucketConstruct = new FrontendBucket(this, 'FrontendBucket');
+    // S3バケットをクロスリージョン参照（S3Stackから）
+    const frontendBucket = s3.Bucket.fromBucketName(
+      this,
+      'FrontendBucket',
+      cdk.Fn.importValue('LoanpediaFrontendBucketName')
+    );
+
+    const logBucket = s3.Bucket.fromBucketName(
+      this,
+      'LogBucket',
+      cdk.Fn.importValue('LoanpediaCloudFrontLogBucketName')
+    );
 
     // T046: WAF WebACLを作成（User Story 3）
     // 注: WAFはus-east-1リージョンで作成する必要があるため、
@@ -58,8 +69,8 @@ export class FrontendStack extends cdk.Stack {
 
     // CloudFrontディストリビューションを作成
     const distributionConstruct = new FrontendDistribution(this, 'FrontendDistribution', {
-      frontendBucket: frontendBucketConstruct.frontendBucket,
-      logBucket: frontendBucketConstruct.logBucket,
+      frontendBucket: frontendBucket,
+      logBucket: logBucket,
       certificate: certificate,
       domainName: 'loanpedia.jp',
       webAclArn: wafConstruct.webAcl.attrArn,
@@ -95,38 +106,6 @@ export class FrontendStack extends cdk.Stack {
       value: `arn:aws:cloudfront::${this.account}:distribution/${distributionConstruct.distribution.distributionId}`,
       description: 'CloudFrontディストリビューションARN',
       exportName: 'LoanpediaCloudFrontDistributionArn',
-    });
-
-    // S3バケット関連
-    new cdk.CfnOutput(this, 'FrontendBucketName', {
-      value: frontendBucketConstruct.frontendBucket.bucketName,
-      description: 'フロントエンド用S3バケット名',
-      exportName: 'LoanpediaFrontendBucketName',
-    });
-
-    new cdk.CfnOutput(this, 'FrontendBucketArn', {
-      value: frontendBucketConstruct.frontendBucket.bucketArn,
-      description: 'フロントエンド用S3バケットARN',
-      exportName: 'LoanpediaFrontendBucketArn',
-    });
-
-    new cdk.CfnOutput(this, 'FrontendBucketDomainName', {
-      value: frontendBucketConstruct.frontendBucket.bucketRegionalDomainName,
-      description: 'フロントエンド用S3バケットのドメイン名',
-      exportName: 'LoanpediaFrontendBucketDomainName',
-    });
-
-    // ログバケット関連
-    new cdk.CfnOutput(this, 'LogBucketName', {
-      value: frontendBucketConstruct.logBucket.bucketName,
-      description: 'CloudFrontログ用S3バケット名',
-      exportName: 'LoanpediaCloudFrontLogBucketName',
-    });
-
-    new cdk.CfnOutput(this, 'LogBucketArn', {
-      value: frontendBucketConstruct.logBucket.bucketArn,
-      description: 'CloudFrontログ用S3バケットARN',
-      exportName: 'LoanpediaCloudFrontLogBucketArn',
     });
 
     // T049: WAF関連のOutputs（User Story 3）
