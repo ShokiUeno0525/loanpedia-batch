@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'frontend/**'
+  workflow_dispatch:  # 手動実行を許可
 
 permissions:
   id-token: write
