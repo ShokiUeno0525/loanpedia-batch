@@ -5,9 +5,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
   "Outputs": {
     "FrontendBucketArn": {
       "Description": "フロントエンド用S3バケットARN",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketArn",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucket5B7E4E1D",
@@ -17,9 +14,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "FrontendBucketDomainName": {
       "Description": "フロントエンド用S3バケットのドメイン名",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketDomainName",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucket5B7E4E1D",
@@ -29,18 +23,12 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "FrontendBucketName": {
       "Description": "フロントエンド用S3バケット名",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketName",
-      },
       "Value": {
         "Ref": "FrontendBucket5B7E4E1D",
       },
     },
     "LogBucketArn": {
       "Description": "CloudFrontログ用S3バケットARN",
-      "Export": {
-        "Name": "LoanpediaCloudFrontLogBucketArn",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucketLogBucketA4B64359",
@@ -50,9 +38,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "LogBucketName": {
       "Description": "CloudFrontログ用S3バケット名",
-      "Export": {
-        "Name": "LoanpediaCloudFrontLogBucketName",
-      },
       "Value": {
         "Ref": "FrontendBucketLogBucketA4B64359",
       },
@@ -314,6 +299,46 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
                   ],
                 },
               ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "FrontendBucketPolicy861D070F": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "FrontendBucket5B7E4E1D",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:GetObject",
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceAccount": "test-account",
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "FrontendBucket5B7E4E1D",
+                        "Arn",
+                      ],
+                    },
+                    "/*",
+                  ],
+                ],
+              },
+              "Sid": "AllowCloudFrontServicePrincipal",
             },
           ],
           "Version": "2012-10-17",

@@ -9,6 +9,21 @@ import { WafCloudFront } from '../constructs/waf-cloudfront';
 import { BasicAuthFunction } from '../constructs/basic-auth-function';
 
 /**
+ * FrontendStackのProps
+ */
+export interface FrontendStackProps extends cdk.StackProps {
+  /**
+   * フロントエンドコンテンツ用S3バケット（S3Stackから渡される）
+   */
+  readonly frontendBucket: s3.IBucket;
+
+  /**
+   * CloudFrontログ用S3バケット（S3Stackから渡される）
+   */
+  readonly logBucket: s3.IBucket;
+}
+
+/**
  * CloudFrontフロントエンド配信基盤スタック（us-east-1）
  *
  * @remarks
@@ -22,7 +37,7 @@ import { BasicAuthFunction } from '../constructs/basic-auth-function';
  * 依存関係：
  * - Route53ホストゾーン（既存）
  * - ACM証明書（既存、us-east-1リージョン）
- * - S3Stack（ap-northeast-1）からS3バケットをクロスリージョン参照
+ * - S3Stack（ap-northeast-1）からS3バケットをクロスリージョン参照（crossRegionReferencesを使用）
  *
  * ユーザーストーリー：
  * - US1: 基本的なフロントエンドコンテンツ配信
@@ -31,7 +46,7 @@ import { BasicAuthFunction } from '../constructs/basic-auth-function';
  * - US4: アクセスログの記録と監視
  */
 export class FrontendStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
     // T004: 既存のRoute53ホストゾーンを参照
@@ -46,18 +61,15 @@ export class FrontendStack extends cdk.Stack {
       cdk.Fn.importValue('LoanpediaCertificateArn')
     );
 
-    // S3バケットをクロスリージョン参照（S3Stackから）
+    // S3バケットをクロスリージョン参照（propsから取得）
+    // crossRegionReferences: trueにより、CDKが自動的にSSM ParameterまたはCustom Resourceを使用して参照を実現
+    // 循環参照を避けるため、バケット名のみを使用して再度参照を作成
     const frontendBucket = s3.Bucket.fromBucketName(
       this,
-      'FrontendBucket',
-      cdk.Fn.importValue('LoanpediaFrontendBucketName')
+      'FrontendBucketRef',
+      props.frontendBucket.bucketName
     );
-
-    const logBucket = s3.Bucket.fromBucketName(
-      this,
-      'LogBucket',
-      cdk.Fn.importValue('LoanpediaCloudFrontLogBucketName')
-    );
+    const logBucket = s3.Bucket.fromBucketName(this, 'LogBucketRef', props.logBucket.bucketName);
 
     // T046: WAF WebACLを作成（User Story 3）
     // 注: WAFはus-east-1リージョンで作成する必要があるため、

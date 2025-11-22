@@ -43,21 +43,22 @@ const s3Stack = new S3Stack(app, 'S3Stack', {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'ap-northeast-1', // S3バケットは東京リージョンに作成
   },
+  crossRegionReferences: true, // クロスリージョン参照を有効化
   description: 'Loanpedia S3 Storage Stack (ap-northeast-1)',
 });
 
 // T030: CloudFrontフロントエンド配信基盤スタック
 // CloudFront用WAFは必ずus-east-1リージョンで作成する必要がある
-const frontendStack = new FrontendStack(app, 'FrontendStack', {
+new FrontendStack(app, 'FrontendStack', {
+  frontendBucket: s3Stack.frontendBucket,
+  logBucket: s3Stack.logBucket,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'us-east-1', // CloudFront用WAFは必ずus-east-1
   },
+  crossRegionReferences: true, // クロスリージョン参照を有効化
   description: 'Loanpedia CloudFront Frontend Distribution Stack (us-east-1)',
 });
-
-// 依存関係: FrontendStackはS3Stackのバケットを参照する
-frontendStack.addDependency(s3Stack);
 
 // VPCネットワーク基盤スタック
 // シングルAZ構成のVPC、パブリック・プライベート・アイソレートサブネットを作成

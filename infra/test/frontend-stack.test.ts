@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { FrontendStack } from '../lib/stacks/frontend-stack';
 
@@ -20,7 +21,19 @@ describe('FrontendStack', () => {
         },
       },
     });
+
+    // テスト用の一時スタックを作成してバケット参照を作る
+    const tempStack = new cdk.Stack(app, 'TempStack');
+    const frontendBucket = s3.Bucket.fromBucketName(
+      tempStack,
+      'FrontendBucket',
+      'test-frontend-bucket'
+    );
+    const logBucket = s3.Bucket.fromBucketName(tempStack, 'LogBucket', 'test-log-bucket');
+
     stack = new FrontendStack(app, 'TestFrontendStack', {
+      frontendBucket,
+      logBucket,
       env: {
         account: 'test-account',
         region: 'us-east-1',

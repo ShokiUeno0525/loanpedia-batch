@@ -214,33 +214,13 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
           "HttpVersion": "http2",
           "IPV6Enabled": true,
           "Logging": {
-            "Bucket": {
-              "Fn::Join": [
-                "",
-                [
-                  {
-                    "Fn::ImportValue": "LoanpediaCloudFrontLogBucketName",
-                  },
-                  ".s3.us-east-1.amazonaws.com",
-                ],
-              ],
-            },
+            "Bucket": "test-log-bucket.s3.us-east-1.amazonaws.com",
             "IncludeCookies": false,
             "Prefix": "cloudfront/",
           },
           "Origins": [
             {
-              "DomainName": {
-                "Fn::Join": [
-                  "",
-                  [
-                    {
-                      "Fn::ImportValue": "LoanpediaFrontendBucketName",
-                    },
-                    ".s3.us-east-1.amazonaws.com",
-                  ],
-                ],
-              },
+              "DomainName": "test-frontend-bucket.s3.us-east-1.amazonaws.com",
               "Id": "TestFrontendStackFrontendDistributionOrigin140DFC356",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [

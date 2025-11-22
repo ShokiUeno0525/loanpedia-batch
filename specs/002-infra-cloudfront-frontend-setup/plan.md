@@ -47,7 +47,7 @@ Phase 1設計の完了後、以下を確認しました：
 
 2. **API契約（contracts/）**:
    - CloudFormation Outputsに機密情報を含めない
-   - Export名は適切に設定され、他のスタックから参照可能
+   - クロスリージョン参照はCDKの`crossRegionReferences: true`で自動管理
 
 3. **クイックスタートガイド（quickstart.md）**:
    - すべてのドキュメントが日本語で記述
@@ -96,7 +96,7 @@ infrastructure/
 - **S3Stack (ap-northeast-1)**: フロントエンド用S3バケット、ログ用S3バケット
 - **FrontendStack (us-east-1)**: CloudFrontディストリビューション、WAF、Route53レコード
 
-FrontendStackはS3Stackのバケットをクロスリージョン参照(`Fn.importValue`)で使用。Route53スタック（001-route53-hosted-zone）との依存関係を考慮し、既存のホストゾーンとACM証明書を参照する形で実装。
+FrontendStackはS3Stackのバケットを`crossRegionReferences: true`とProps経由で取得。CDKが自動的にクロスリージョン参照を管理し、CloudFormation Exportの伝播遅延問題を回避。Route53スタック（001-route53-hosted-zone）との依存関係を考慮し、既存のホストゾーンとACM証明書を参照する形で実装。
 
 ## Complexity Tracking
 

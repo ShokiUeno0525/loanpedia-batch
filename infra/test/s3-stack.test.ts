@@ -86,48 +86,33 @@ describe('S3Stack', () => {
   });
 
   describe('CloudFormation Outputs', () => {
-    test('FrontendBucketName Outputが定義される', () => {
+    test('FrontendBucketName Outputが定義される（exportNameなし）', () => {
       template.hasOutput('FrontendBucketName', {
         Description: 'フロントエンド用S3バケット名',
-        Export: {
-          Name: 'LoanpediaFrontendBucketName',
-        },
       });
     });
 
-    test('FrontendBucketArn Outputが定義される', () => {
+    test('FrontendBucketArn Outputが定義される（exportNameなし）', () => {
       template.hasOutput('FrontendBucketArn', {
         Description: 'フロントエンド用S3バケットARN',
-        Export: {
-          Name: 'LoanpediaFrontendBucketArn',
-        },
       });
     });
 
-    test('FrontendBucketDomainName Outputが定義される', () => {
+    test('FrontendBucketDomainName Outputが定義される（exportNameなし）', () => {
       template.hasOutput('FrontendBucketDomainName', {
         Description: 'フロントエンド用S3バケットのドメイン名',
-        Export: {
-          Name: 'LoanpediaFrontendBucketDomainName',
-        },
       });
     });
 
-    test('LogBucketName Outputが定義される', () => {
+    test('LogBucketName Outputが定義される（exportNameなし）', () => {
       template.hasOutput('LogBucketName', {
         Description: 'CloudFrontログ用S3バケット名',
-        Export: {
-          Name: 'LoanpediaCloudFrontLogBucketName',
-        },
       });
     });
 
-    test('LogBucketArn Outputが定義される', () => {
+    test('LogBucketArn Outputが定義される（exportNameなし）', () => {
       template.hasOutput('LogBucketArn', {
         Description: 'CloudFrontログ用S3バケットARN',
-        Export: {
-          Name: 'LoanpediaCloudFrontLogBucketArn',
-        },
       });
     });
   });
@@ -147,8 +132,8 @@ describe('S3Stack', () => {
       // S3バケット: 2個（frontend + logs）
       template.resourceCountIs('AWS::S3::Bucket', 2);
 
-      // S3バケットポリシー: 1個（ログバケット用、フロントエンドバケットはCloudFrontスタックで設定）
-      template.resourceCountIs('AWS::S3::BucketPolicy', 1);
+      // S3バケットポリシー: 2個（ログバケット用 + フロントエンドバケット用）
+      template.resourceCountIs('AWS::S3::BucketPolicy', 2);
 
       // CloudFront関連リソースは存在しない
       template.resourceCountIs('AWS::CloudFront::Distribution', 0);

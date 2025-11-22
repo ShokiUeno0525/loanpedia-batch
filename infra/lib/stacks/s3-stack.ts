@@ -16,7 +16,7 @@ import { FrontendBucket } from '../constructs/frontend-s3-bucket';
  * - なし（独立したスタック）
  *
  * 使用するスタック：
- * - FrontendStack（us-east-1）がこのスタックのS3バケットをクロスリージョン参照
+ * - FrontendStack（us-east-1）がこのスタックのS3バケットをクロスリージョン参照（crossRegionReferencesを使用）
  */
 export class S3Stack extends cdk.Stack {
   /**
@@ -38,35 +38,31 @@ export class S3Stack extends cdk.Stack {
     this.frontendBucket = frontendBucketConstruct.frontendBucket;
     this.logBucket = frontendBucketConstruct.logBucket;
 
-    // CloudFormation Outputs（クロスリージョン参照用）
+    // CloudFormation Outputs（参照用、exportNameなし）
+    // crossRegionReferences: trueを使用するため、exportNameは不要
     new cdk.CfnOutput(this, 'FrontendBucketName', {
       value: this.frontendBucket.bucketName,
       description: 'フロントエンド用S3バケット名',
-      exportName: 'LoanpediaFrontendBucketName',
     });
 
     new cdk.CfnOutput(this, 'FrontendBucketArn', {
       value: this.frontendBucket.bucketArn,
       description: 'フロントエンド用S3バケットARN',
-      exportName: 'LoanpediaFrontendBucketArn',
     });
 
     new cdk.CfnOutput(this, 'FrontendBucketDomainName', {
       value: this.frontendBucket.bucketRegionalDomainName,
       description: 'フロントエンド用S3バケットのドメイン名',
-      exportName: 'LoanpediaFrontendBucketDomainName',
     });
 
     new cdk.CfnOutput(this, 'LogBucketName', {
       value: this.logBucket.bucketName,
       description: 'CloudFrontログ用S3バケット名',
-      exportName: 'LoanpediaCloudFrontLogBucketName',
     });
 
     new cdk.CfnOutput(this, 'LogBucketArn', {
       value: this.logBucket.bucketArn,
       description: 'CloudFrontログ用S3バケットARN',
-      exportName: 'LoanpediaCloudFrontLogBucketArn',
     });
 
     // タグ付け
