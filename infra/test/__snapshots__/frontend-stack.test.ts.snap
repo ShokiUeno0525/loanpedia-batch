@@ -218,10 +218,14 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
               "Fn::Join": [
                 "",
                 [
+                  "test-log-bucket.s3.",
                   {
-                    "Fn::ImportValue": "LoanpediaCloudFrontLogBucketName",
+                    "Ref": "AWS::Region",
                   },
-                  ".s3.us-east-1.amazonaws.com",
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
                 ],
               ],
             },
@@ -234,10 +238,14 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
                 "Fn::Join": [
                   "",
                   [
+                    "test-frontend-bucket.s3.",
                     {
-                      "Fn::ImportValue": "LoanpediaFrontendBucketName",
+                      "Ref": "AWS::Region",
                     },
-                    ".s3.us-east-1.amazonaws.com",
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix",
+                    },
                   ],
                 ],
               },

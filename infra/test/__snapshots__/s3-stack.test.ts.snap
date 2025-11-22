@@ -5,9 +5,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
   "Outputs": {
     "FrontendBucketArn": {
       "Description": "フロントエンド用S3バケットARN",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketArn",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucket5B7E4E1D",
@@ -17,9 +14,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "FrontendBucketDomainName": {
       "Description": "フロントエンド用S3バケットのドメイン名",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketDomainName",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucket5B7E4E1D",
@@ -29,18 +23,12 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "FrontendBucketName": {
       "Description": "フロントエンド用S3バケット名",
-      "Export": {
-        "Name": "LoanpediaFrontendBucketName",
-      },
       "Value": {
         "Ref": "FrontendBucket5B7E4E1D",
       },
     },
     "LogBucketArn": {
       "Description": "CloudFrontログ用S3バケットARN",
-      "Export": {
-        "Name": "LoanpediaCloudFrontLogBucketArn",
-      },
       "Value": {
         "Fn::GetAtt": [
           "FrontendBucketLogBucketA4B64359",
@@ -50,9 +38,6 @@ exports[`S3Stack スタック全体の検証 スナップショットテスト 1
     },
     "LogBucketName": {
       "Description": "CloudFrontログ用S3バケット名",
-      "Export": {
-        "Name": "LoanpediaCloudFrontLogBucketName",
-      },
       "Value": {
         "Ref": "FrontendBucketLogBucketA4B64359",
       },

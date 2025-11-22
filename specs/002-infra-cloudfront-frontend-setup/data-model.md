@@ -222,7 +222,7 @@
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
             │                           │
-            │ (Fn.importValue)          │
+            │ (crossRegionReferences)   │
             │                           │
 ┌───────────┼───────────────────────────┼────────────────────────┐
 │           │  新規リソース (us-east-1) 🇺🇸                        │
@@ -249,7 +249,7 @@
 **リージョン戦略**:
 - **S3Stack (ap-northeast-1)**: データ保管場所の最適化
 - **FrontendStack (us-east-1)**: CloudFront/WAF要件（証明書・WAFはus-east-1必須）
-- **クロスリージョン参照**: FrontendStackがS3StackのバケットをFn.importValueで参照
+- **クロスリージョン参照**: CDKの`crossRegionReferences: true`を使用し、FrontendStackがS3Stackのバケットを直接参照
 ```
 
 ## リソース作成順序
@@ -258,11 +258,11 @@
 
 1. **LogBucket（S3）**: ログ出力先バケット
 2. **FrontendBucket（S3）**: フロントエンドコンテンツバケット
-3. **CloudFormation Outputs**: バケット名をエクスポート（FrontendStackから参照可能に）
+3. **CloudFormation Outputs**: バケット情報を出力（参照用、exportNameなし）
 
 ### Phase 2: FrontendStack (us-east-1) - セキュリティリソース
 
-4. **S3バケット参照**: S3StackからバケットをFn.importValueで取得
+4. **S3バケット参照**: S3StackからバケットをProps経由で取得（crossRegionReferencesで自動処理）
 5. **WAF WebACL**: Webアプリケーションファイアウォール
 6. **OAC**: CloudFrontからS3へのアクセス制御
 
@@ -312,11 +312,11 @@
 
 | Output名 | 説明 | Export名 |
 |----------|------|----------|
-| `FrontendBucketName` | フロントエンド用S3バケット名 | `LoanpediaFrontendBucketName` |
-| `FrontendBucketArn` | フロントエンド用S3バケットARN | `LoanpediaFrontendBucketArn` |
-| `FrontendBucketDomainName` | フロントエンド用S3バケットドメイン名 | `LoanpediaFrontendBucketDomainName` |
-| `LogBucketName` | ログ用S3バケット名 | `LoanpediaCloudFrontLogBucketName` |
-| `LogBucketArn` | ログ用S3バケットARN | `LoanpediaCloudFrontLogBucketArn` |
+| `FrontendBucketName` | フロントエンド用S3バケット名 | なし（crossRegionReferencesで自動管理） |
+| `FrontendBucketArn` | フロントエンド用S3バケットARN | なし（crossRegionReferencesで自動管理） |
+| `FrontendBucketDomainName` | フロントエンド用S3バケットドメイン名 | なし（crossRegionReferencesで自動管理） |
+| `LogBucketName` | ログ用S3バケット名 | なし（crossRegionReferencesで自動管理） |
+| `LogBucketArn` | ログ用S3バケットARN | なし（crossRegionReferencesで自動管理） |
 
 ### FrontendStack Outputs (us-east-1)
 
