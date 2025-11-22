@@ -24,7 +24,11 @@ describe('FrontendStack', () => {
 
     // テスト用の一時スタックを作成してバケット参照を作る
     const tempStack = new cdk.Stack(app, 'TempStack');
-    const frontendBucket = s3.Bucket.fromBucketName(tempStack, 'FrontendBucket', 'test-frontend-bucket');
+    const frontendBucket = s3.Bucket.fromBucketName(
+      tempStack,
+      'FrontendBucket',
+      'test-frontend-bucket'
+    );
     const logBucket = s3.Bucket.fromBucketName(tempStack, 'LogBucket', 'test-log-bucket');
 
     stack = new FrontendStack(app, 'TestFrontendStack', {
