@@ -1,0 +1,1477 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BackendStack スナップショットテスト Backend Stackのスナップショットが一致する 1`] = `
+{
+  "Outputs": {
+    "AlbArn": {
+      "Description": "ALB ARN",
+      "Export": {
+        "Name": "LoanpediaAlbArn",
+      },
+      "Value": {
+        "Ref": "Alb6F14D334",
+      },
+    },
+    "AlbDnsName": {
+      "Description": "ALB DNS名",
+      "Export": {
+        "Name": "LoanpediaAlbDnsName",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb6F14D334",
+          "DNSName",
+        ],
+      },
+    },
+    "ApiServiceName": {
+      "Description": "Web APIサービス名",
+      "Export": {
+        "Name": "LoanpediaApiServiceName",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "EcsApiService4BE44D91",
+          "Name",
+        ],
+      },
+    },
+    "ApiTaskDefinitionArn": {
+      "Description": "Web APIタスク定義ARN",
+      "Export": {
+        "Name": "LoanpediaApiTaskDefinitionArn",
+      },
+      "Value": {
+        "Ref": "EcsApiTaskDefinition3BE5C059",
+      },
+    },
+    "CognitoAppClientId": {
+      "Description": "Cognito App Client ID",
+      "Export": {
+        "Name": "LoanpediaCognitoAppClientId",
+      },
+      "Value": {
+        "Ref": "CognitoUserPoolAppClient4B964922",
+      },
+    },
+    "CognitoSecretArn": {
+      "Description": "Cognitoクライアントシークレット Secrets Manager ARN",
+      "Export": {
+        "Name": "LoanpediaCognitoSecretArn",
+      },
+      "Value": {
+        "Ref": "CognitoClientSecret44AD26C1",
+      },
+    },
+    "CognitoUserPoolId": {
+      "Description": "Cognito User Pool ID",
+      "Export": {
+        "Name": "LoanpediaCognitoUserPoolId",
+      },
+      "Value": {
+        "Ref": "CognitoUserPool279BBD48",
+      },
+    },
+    "EcrApiRepositoryUri": {
+      "Description": "ECR APIリポジトリURI",
+      "Export": {
+        "Name": "LoanpediaEcrApiRepositoryUri",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "ApiRepositoryB8378B43",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "ApiRepositoryB8378B43",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "ApiRepositoryB8378B43",
+            },
+          ],
+        ],
+      },
+    },
+    "EcrMigrationRepositoryUri": {
+      "Description": "ECRマイグレーションリポジトリURI",
+      "Export": {
+        "Name": "LoanpediaEcrMigrationRepositoryUri",
+      },
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            {
+              "Fn::Select": [
+                4,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "MigrationRepositoryE2B2F2AB",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".dkr.ecr.",
+            {
+              "Fn::Select": [
+                3,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": [
+                        "MigrationRepositoryE2B2F2AB",
+                        "Arn",
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "MigrationRepositoryE2B2F2AB",
+            },
+          ],
+        ],
+      },
+    },
+    "EcsClusterArn": {
+      "Description": "ECSクラスターARN",
+      "Export": {
+        "Name": "LoanpediaEcsClusterArn",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "EcsClusterEAC0C105",
+          "Arn",
+        ],
+      },
+    },
+    "EcsClusterName": {
+      "Description": "ECSクラスター名",
+      "Export": {
+        "Name": "LoanpediaEcsClusterName",
+      },
+      "Value": {
+        "Ref": "EcsClusterEAC0C105",
+      },
+    },
+    "MigrationTaskDefinitionArn": {
+      "Description": "マイグレーションタスク定義ARN",
+      "Export": {
+        "Name": "LoanpediaMigrationTaskDefinitionArn",
+      },
+      "Value": {
+        "Ref": "EcsMigrationTaskDefinition3E6C1CF8",
+      },
+    },
+    "RdsEndpoint": {
+      "Description": "RDS MySQLエンドポイント",
+      "Export": {
+        "Name": "LoanpediaRdsEndpoint",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "RdsInstance5075E838",
+          "Endpoint.Address",
+        ],
+      },
+    },
+    "RdsPort": {
+      "Description": "RDS MySQLポート",
+      "Export": {
+        "Name": "LoanpediaRdsPort",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "RdsInstance5075E838",
+          "Endpoint.Port",
+        ],
+      },
+    },
+    "RdsSecretArn": {
+      "Description": "RDS認証情報Secrets Manager ARN",
+      "Export": {
+        "Name": "LoanpediaRdsSecretArn",
+      },
+      "Value": {
+        "Ref": "RdsInstanceSecretAttachment10A0858F",
+      },
+    },
+    "TargetGroupArn": {
+      "Description": "ターゲットグループARN",
+      "Export": {
+        "Name": "LoanpediaTargetGroupArn",
+      },
+      "Value": {
+        "Ref": "AlbTargetGroup3E290A92",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alb6F14D334": {
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "SecurityGroupsAlbSecurityGroup9F78329C",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructPublicSubnet346C7EDEC7FA4DBA",
+          },
+          {
+            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefPublicSubnetCSubnet175E3284C0A9E25D",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbAliasRecordEE9D42DE": {
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::Join": [
+              "",
+              [
+                "dualstack.",
+                {
+                  "Fn::GetAtt": [
+                    "Alb6F14D334",
+                    "DNSName",
+                  ],
+                },
+              ],
+            ],
+          },
+          "HostedZoneId": {
+            "Fn::GetAtt": [
+              "Alb6F14D334",
+              "CanonicalHostedZoneID",
+            ],
+          },
+        },
+        "HostedZoneId": {
+          "Fn::ImportValue": "TestVpcStack:ExportsOutputRefTestZone0C3926D9C5FF8D53",
+        },
+        "Name": "api.loanpedia.jp.",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "AlbHttpListenerC9825CF4": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "RedirectConfig": {
+              "Port": "443",
+              "Protocol": "HTTPS",
+              "StatusCode": "HTTP_301",
+            },
+            "Type": "redirect",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb6F14D334",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpsListener0ED0A51A": {
+      "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Fn::ImportValue": "TestVpcStack:ExportsOutputRefTestCert9C74CCBF85A875A2",
+            },
+          },
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbTargetGroup3E290A92",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb6F14D334",
+        },
+        "Port": 443,
+        "Protocol": "HTTPS",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbTargetGroup3E290A92": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/health",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Fn::ImportValue": "TestVpcStack:ExportsOutputRefVpcConstructLoanpediaVpcB06057F205D9EFEF",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "ApiLogGroup1DEDFC07": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/loanpedia-api",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "ApiRepositoryB8378B43": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true,
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":1,"description":"未タグイメージを30日後に削除","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countNumber":30,"countUnit":"days"},"action":{"type":"expire"}}]}",
+        },
+        "RepositoryName": "loanpedia-api",
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "CognitoClientSecret44AD26C1": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Cognitoアプリクライアントシークレット",
+        "GenerateSecretString": {
+          "GenerateStringKey": "clientSecret",
+          "SecretStringTemplate": {
+            "Fn::Join": [
+              "",
+              [
+                "{"userPoolId":"",
+                {
+                  "Ref": "CognitoUserPool279BBD48",
+                },
+                "","clientId":"",
+                {
+                  "Ref": "CognitoUserPoolAppClient4B964922",
+                },
+                ""}",
+              ],
+            ],
+          },
+        },
+        "Name": "loanpedia/cognito/client-secret",
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CognitoUserPool279BBD48": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [
+            {
+              "Name": "verified_email",
+              "Priority": 1,
+            },
+          ],
+        },
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true,
+        },
+        "AutoVerifiedAttributes": [
+          "email",
+        ],
+        "EmailVerificationMessage": "The verification code to your new account is {####}",
+        "EmailVerificationSubject": "Verify your new account",
+        "EnabledMfas": [
+          "SOFTWARE_TOKEN_MFA",
+        ],
+        "MfaConfiguration": "ON",
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 8,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "RequireUppercase": true,
+          },
+        },
+        "Schema": [
+          {
+            "Mutable": true,
+            "Name": "email",
+            "Required": true,
+          },
+        ],
+        "SmsVerificationMessage": "The verification code to your new account is {####}",
+        "UserPoolName": "loanpedia-user-pool",
+        "UsernameAttributes": [
+          "email",
+        ],
+        "VerificationMessageTemplate": {
+          "DefaultEmailOption": "CONFIRM_WITH_CODE",
+          "EmailMessage": "The verification code to your new account is {####}",
+          "EmailSubject": "Verify your new account",
+          "SmsMessage": "The verification code to your new account is {####}",
+        },
+      },
+      "Type": "AWS::Cognito::UserPool",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "CognitoUserPoolAppClient4B964922": {
+      "Properties": {
+        "AccessTokenValidity": 60,
+        "AllowedOAuthFlows": [
+          "implicit",
+          "code",
+        ],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthScopes": [
+          "profile",
+          "phone",
+          "email",
+          "openid",
+          "aws.cognito.signin.user.admin",
+        ],
+        "CallbackURLs": [
+          "https://example.com",
+        ],
+        "ClientName": "loanpedia-app-client",
+        "EnableTokenRevocation": true,
+        "ExplicitAuthFlows": [
+          "ALLOW_USER_PASSWORD_AUTH",
+          "ALLOW_USER_SRP_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH",
+        ],
+        "GenerateSecret": true,
+        "IdTokenValidity": 60,
+        "PreventUserExistenceErrors": "ENABLED",
+        "RefreshTokenValidity": 43200,
+        "SupportedIdentityProviders": [
+          "COGNITO",
+        ],
+        "TokenValidityUnits": {
+          "AccessToken": "minutes",
+          "IdToken": "minutes",
+          "RefreshToken": "minutes",
+        },
+        "UserPoolId": {
+          "Ref": "CognitoUserPool279BBD48",
+        },
+      },
+      "Type": "AWS::Cognito::UserPoolClient",
+    },
+    "EcsApiService4BE44D91": {
+      "DependsOn": [
+        "AlbHttpsListener0ED0A51A",
+        "EcsTaskRoleDefaultPolicyF46A9F2F",
+        "EcsTaskRoleEB567537",
+      ],
+      "Properties": {
+        "Cluster": {
+          "Ref": "EcsClusterEAC0C105",
+        },
+        "DeploymentConfiguration": {
+          "Alarms": {
+            "AlarmNames": [],
+            "Enable": false,
+            "Rollback": false,
+          },
+          "MaximumPercent": 200,
+          "MinimumHealthyPercent": 50,
+        },
+        "DesiredCount": 1,
+        "EnableECSManagedTags": false,
+        "HealthCheckGracePeriodSeconds": 60,
+        "LaunchType": "FARGATE",
+        "LoadBalancers": [
+          {
+            "ContainerName": "loanpedia-api",
+            "ContainerPort": 80,
+            "TargetGroupArn": {
+              "Ref": "AlbTargetGroup3E290A92",
+            },
+          },
+        ],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "SecurityGroupsEcsSecurityGroup4A45070C",
+                  "GroupId",
+                ],
+              },
+            ],
+            "Subnets": [
+              {
+                "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructPrivateSubnet0703A31EE30D9867",
+              },
+            ],
+          },
+        },
+        "TaskDefinition": {
+          "Ref": "EcsApiTaskDefinition3BE5C059",
+        },
+      },
+      "Type": "AWS::ECS::Service",
+    },
+    "EcsApiTaskDefinition3BE5C059": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Environment": [
+              {
+                "Name": "APP_ENV",
+                "Value": "production",
+              },
+              {
+                "Name": "APP_DEBUG",
+                "Value": "false",
+              },
+            ],
+            "Essential": true,
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": [
+                              "ApiRepositoryB8378B43",
+                              "Arn",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".dkr.ecr.",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": [
+                              "ApiRepositoryB8378B43",
+                              "Arn",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Ref": "ApiRepositoryB8378B43",
+                  },
+                  ":latest",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "ApiLogGroup1DEDFC07",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "api",
+              },
+            },
+            "Name": "loanpedia-api",
+            "PortMappings": [
+              {
+                "ContainerPort": 80,
+                "Protocol": "tcp",
+              },
+            ],
+            "Secrets": [
+              {
+                "Name": "DB_HOST",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":host::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_PORT",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":port::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_DATABASE",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":dbname::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_USERNAME",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":username::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":password::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "COGNITO_CLIENT_SECRET",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "CognitoClientSecret44AD26C1",
+                      },
+                      ":clientSecret::",
+                    ],
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+        "Cpu": "512",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "EcsTaskExecutionRoleFD0875C8",
+            "Arn",
+          ],
+        },
+        "Family": "TestBackendStackEcsApiTaskDefinitionF5367F3E",
+        "Memory": "1024",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "EcsTaskRoleEB567537",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "EcsClusterEAC0C105": {
+      "Properties": {
+        "ClusterName": "loanpedia-cluster",
+        "ClusterSettings": [
+          {
+            "Name": "containerInsights",
+            "Value": "disabled",
+          },
+        ],
+      },
+      "Type": "AWS::ECS::Cluster",
+    },
+    "EcsMigrationTaskDefinition3E6C1CF8": {
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "Command": [
+              "php",
+              "artisan",
+              "migrate",
+              "--force",
+            ],
+            "Environment": [
+              {
+                "Name": "APP_ENV",
+                "Value": "production",
+              },
+            ],
+            "Essential": true,
+            "Image": {
+              "Fn::Join": [
+                "",
+                [
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": [
+                              "MigrationRepositoryE2B2F2AB",
+                              "Arn",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".dkr.ecr.",
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": [
+                              "MigrationRepositoryE2B2F2AB",
+                              "Arn",
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix",
+                  },
+                  "/",
+                  {
+                    "Ref": "MigrationRepositoryE2B2F2AB",
+                  },
+                  ":latest",
+                ],
+              ],
+            },
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "MigrationLogGroupFD140541",
+                },
+                "awslogs-region": "ap-northeast-1",
+                "awslogs-stream-prefix": "migration",
+              },
+            },
+            "Name": "loanpedia-migration",
+            "Secrets": [
+              {
+                "Name": "DB_HOST",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":host::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_PORT",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":port::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_DATABASE",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":dbname::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_USERNAME",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":username::",
+                    ],
+                  ],
+                },
+              },
+              {
+                "Name": "DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Ref": "RdsInstanceSecretAttachment10A0858F",
+                      },
+                      ":password::",
+                    ],
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+        "Cpu": "256",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "EcsTaskExecutionRoleFD0875C8",
+            "Arn",
+          ],
+        },
+        "Family": "TestBackendStackEcsMigrationTaskDefinitionAB836FF5",
+        "Memory": "512",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE",
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "EcsTaskRoleEB567537",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ECS::TaskDefinition",
+    },
+    "EcsTaskExecutionRoleDefaultPolicyEA8B31C6": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "RdsInstanceSecretAttachment10A0858F",
+              },
+            },
+            {
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "CognitoClientSecret44AD26C1",
+              },
+            },
+            {
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ApiRepositoryB8378B43",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": "ecr:GetAuthorizationToken",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ApiLogGroup1DEDFC07",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MigrationRepositoryE2B2F2AB",
+                  "Arn",
+                ],
+              },
+            },
+            {
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "MigrationLogGroupFD140541",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EcsTaskExecutionRoleDefaultPolicyEA8B31C6",
+        "Roles": [
+          {
+            "Ref": "EcsTaskExecutionRoleFD0875C8",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "EcsTaskExecutionRoleFD0875C8": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "EcsTaskRoleDefaultPolicyF46A9F2F": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "cognito-idp:*",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "EcsTaskRoleDefaultPolicyF46A9F2F",
+        "Roles": [
+          {
+            "Ref": "EcsTaskRoleEB567537",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "EcsTaskRoleEB567537": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "MigrationLogGroupFD140541": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/ecs/loanpedia-migration",
+        "RetentionInDays": 7,
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "MigrationRepositoryE2B2F2AB": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true,
+        },
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{"rules":[{"rulePriority":1,"description":"未タグイメージを30日後に削除","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countNumber":30,"countUnit":"days"},"action":{"type":"expire"}}]}",
+        },
+        "RepositoryName": "loanpedia-migration",
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "RdsInstance5075E838": {
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "AllocatedStorage": "20",
+        "BackupRetentionPeriod": 7,
+        "CopyTagsToSnapshot": true,
+        "DBInstanceClass": "db.t3.micro",
+        "DBName": "loanpedia",
+        "DBParameterGroupName": {
+          "Ref": "RdsParameterGroupC1EC0880",
+        },
+        "DBSubnetGroupName": {
+          "Ref": "RdsSubnetGroup8D91727A",
+        },
+        "DeletionProtection": false,
+        "Engine": "mysql",
+        "EngineVersion": "8.0",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "RdsInstanceSecret6F803C50",
+              },
+              ":SecretString:password::}}",
+            ],
+          ],
+        },
+        "MasterUsername": {
+          "Fn::Join": [
+            "",
+            [
+              "{{resolve:secretsmanager:",
+              {
+                "Ref": "RdsInstanceSecret6F803C50",
+              },
+              ":SecretString:username::}}",
+            ],
+          ],
+        },
+        "MaxAllocatedStorage": 100,
+        "MultiAZ": false,
+        "PreferredBackupWindow": "17:00-18:00",
+        "PreferredMaintenanceWindow": "sun:18:00-sun:19:00",
+        "PubliclyAccessible": false,
+        "StorageType": "gp3",
+        "VPCSecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "SecurityGroupsRdsSecurityGroup2F181BE8",
+              "GroupId",
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBInstance",
+      "UpdateReplacePolicy": "Snapshot",
+    },
+    "RdsInstanceSecret6F803C50": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": {
+          "Fn::Join": [
+            "",
+            [
+              "Generated by the CDK for stack: ",
+              {
+                "Ref": "AWS::StackName",
+              },
+            ],
+          ],
+        },
+        "GenerateSecretString": {
+          "ExcludeCharacters": " %+~\`#$&*()|[]{}:;<>?!'/@"\\",
+          "GenerateStringKey": "password",
+          "PasswordLength": 30,
+          "SecretStringTemplate": "{"username":"admin"}",
+        },
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "RdsInstanceSecretAttachment10A0858F": {
+      "Properties": {
+        "SecretId": {
+          "Ref": "RdsInstanceSecret6F803C50",
+        },
+        "TargetId": {
+          "Ref": "RdsInstance5075E838",
+        },
+        "TargetType": "AWS::RDS::DBInstance",
+      },
+      "Type": "AWS::SecretsManager::SecretTargetAttachment",
+    },
+    "RdsParameterGroupC1EC0880": {
+      "Properties": {
+        "Description": "Loanpedia MySQL 8.0用パラメータグループ（utf8mb4設定）",
+        "Family": "mysql8.0",
+        "Parameters": {
+          "character_set_client": "utf8mb4",
+          "character_set_connection": "utf8mb4",
+          "character_set_database": "utf8mb4",
+          "character_set_results": "utf8mb4",
+          "character_set_server": "utf8mb4",
+          "collation_server": "utf8mb4_unicode_ci",
+        },
+      },
+      "Type": "AWS::RDS::DBParameterGroup",
+    },
+    "RdsSubnetGroup8D91727A": {
+      "Properties": {
+        "DBSubnetGroupDescription": "Loanpedia RDS用サブネットグループ",
+        "SubnetIds": [
+          {
+            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructIsolatedSubnet67CFBF3DDF227504",
+          },
+        ],
+      },
+      "Type": "AWS::RDS::DBSubnetGroup",
+    },
+    "SecurityGroupsAlbSecurityGroup9F78329C": {
+      "Properties": {
+        "GroupDescription": "ALB用セキュリティグループ（CloudFrontからのHTTPSアクセスのみ許可）",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow from anyone on port 80",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow from anyone on port 443",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "TestVpcStack:ExportsOutputRefVpcConstructLoanpediaVpcB06057F205D9EFEF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsAlbSecurityGroupfrompl58a04531443704E065C": {
+      "Properties": {
+        "Description": "CloudFrontからのHTTPSアクセスを許可",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourcePrefixListId": "pl-58a04531",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "SecurityGroupsAlbSecurityGrouptoTestBackendStackSecurityGroupsEcsSecurityGroup17B185A580DCA48060": {
+      "Properties": {
+        "Description": "ECSへのHTTPアクセスを許可",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SecurityGroupsEcsSecurityGroup4A45070C": {
+      "Properties": {
+        "GroupDescription": "ECS Fargate用セキュリティグループ（ALBからのHTTPアクセス、RDS・外部API接続）",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "外部API（Cognito、BedRock等）へのHTTPSアクセスを許可",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "TestVpcStack:ExportsOutputRefVpcConstructLoanpediaVpcB06057F205D9EFEF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsEcsSecurityGroupfromTestBackendStackSecurityGroupsAlbSecurityGroup58B4600080F9F0187B": {
+      "Properties": {
+        "Description": "ALBからのHTTPアクセスを許可",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "SecurityGroupsEcsSecurityGrouptoTestBackendStackSecurityGroupsRdsSecurityGroup0EC947333306C2BDADCB": {
+      "Properties": {
+        "Description": "RDSへのMySQLアクセスを許可",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsRdsSecurityGroup2F181BE8",
+            "GroupId",
+          ],
+        },
+        "FromPort": 3306,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 3306,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SecurityGroupsRdsSecurityGroup2F181BE8": {
+      "Properties": {
+        "GroupDescription": "RDS MySQL用セキュリティグループ（ECSからのMySQLアクセスのみ許可）",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Fn::ImportValue": "TestVpcStack:ExportsOutputRefVpcConstructLoanpediaVpcB06057F205D9EFEF",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsRdsSecurityGroupfromTestBackendStackSecurityGroupsEcsSecurityGroup17B185A533064B391D8A": {
+      "Properties": {
+        "Description": "ECSからのMySQLアクセスを許可",
+        "FromPort": 3306,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsRdsSecurityGroup2F181BE8",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "ToPort": 3306,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

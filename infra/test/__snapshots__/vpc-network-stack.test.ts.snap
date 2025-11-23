@@ -1,0 +1,632 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`VpcNetworkStack スナップショットテスト VPC Network Stackのスナップショットが一致する 1`] = `
+{
+  "Outputs": {
+    "IsolatedSubnetId": {
+      "Description": "アイソレートサブネットID (AZ-a)",
+      "Export": {
+        "Name": "LoanpediaIsolatedSubnetId",
+      },
+      "Value": {
+        "Ref": "SubnetConstructIsolatedSubnet67CFBF3D",
+      },
+    },
+    "PrivateSubnetId": {
+      "Description": "プライベートサブネットID (AZ-a)",
+      "Export": {
+        "Name": "LoanpediaPrivateSubnetId",
+      },
+      "Value": {
+        "Ref": "SubnetConstructPrivateSubnet0703A31E",
+      },
+    },
+    "PublicSubnetAId": {
+      "Description": "AZ-a用パブリックサブネットID",
+      "Export": {
+        "Name": "LoanpediaPublicSubnetAId",
+      },
+      "Value": {
+        "Ref": "SubnetConstructPublicSubnet346C7EDE",
+      },
+    },
+    "PublicSubnetCId": {
+      "Description": "AZ-c用パブリックサブネットID (ALB 2AZ要件用)",
+      "Export": {
+        "Name": "LoanpediaPublicSubnetCId",
+      },
+      "Value": {
+        "Ref": "PublicSubnetCSubnet175E3284",
+      },
+    },
+    "VpcId": {
+      "Description": "VPC ID",
+      "Export": {
+        "Name": "LoanpediaVpcId",
+      },
+      "Value": {
+        "Ref": "VpcConstructLoanpediaVpcB06057F2",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "InternetGatewayConstructInternetGateway1AB307C0": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-IGW",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "InternetGatewayConstructPublicSubnetRouteB30EAFCE": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGatewayConstructInternetGateway1AB307C0",
+        },
+        "RouteTableId": {
+          "Ref": "SubnetConstructPublicSubnetRouteTable9ED82580",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "InternetGatewayConstructVpcGatewayAttachmentF51AC036": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "InternetGatewayConstructInternetGateway1AB307C0",
+        },
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "NatGatewayConstructNatGateway81BD8ACA": {
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "NatGatewayConstructNatGatewayEIP2722DCB9",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructPublicSubnet346C7EDE",
+        },
+        "Tags": [
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-NAT-Gateway",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "NatGatewayConstructNatGatewayEIP2722DCB9": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-NAT-EIP",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "NatGatewayConstructPrivateSubnetRouteA612893B": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "NatGatewayConstructNatGateway81BD8ACA",
+        },
+        "RouteTableId": {
+          "Ref": "SubnetConstructPrivateSubnetRouteTableE9E11B41",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "PublicSubnetCRoute": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGatewayConstructInternetGateway1AB307C0",
+        },
+        "RouteTableId": {
+          "Ref": "PublicSubnetCRouteTable3EAD8380",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "PublicSubnetCRouteTable3EAD8380": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Public-C",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "PublicSubnetCRouteTableAssociationA426FD4F": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "PublicSubnetCRouteTable3EAD8380",
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnetCSubnet175E3284",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "PublicSubnetCSubnet175E3284": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.16.16.0/20",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Public-C",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructIsolatedSubnet67CFBF3D": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.16.64.0/20",
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Isolated",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructIsolatedSubnetRouteTableAssociation56F880C9": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SubnetConstructIsolatedSubnetRouteTableB64CBF85",
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructIsolatedSubnet67CFBF3D",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SubnetConstructIsolatedSubnetRouteTableB64CBF85": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Isolated",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SubnetConstructPrivateSubnet0703A31E": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.16.32.0/20",
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Private",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructPrivateSubnetRouteTableAssociationFC876AF1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SubnetConstructPrivateSubnetRouteTableE9E11B41",
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructPrivateSubnet0703A31E",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SubnetConstructPrivateSubnetRouteTableE9E11B41": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Private",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SubnetConstructPublicSubnet346C7EDE": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.16.0.0/20",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Public",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructPublicSubnetRouteTable9ED82580": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Public",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SubnetConstructPublicSubnetRouteTableAssociationCA067AF6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SubnetConstructPublicSubnetRouteTable9ED82580",
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructPublicSubnet346C7EDE",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcConstructLoanpediaVpcB06057F2": {
+      "Properties": {
+        "CidrBlock": "10.16.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-VPC-Main",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

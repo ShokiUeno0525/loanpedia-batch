@@ -21,6 +21,12 @@ export interface FrontendStackProps extends cdk.StackProps {
    * CloudFrontログ用S3バケット（S3Stackから渡される）
    */
   readonly logBucket: s3.IBucket;
+
+  /**
+   * ALBドメイン名（オプション）
+   * /api/*ビヘイビアのオリジンとして使用
+   */
+  readonly albDomainName?: string;
 }
 
 /**
@@ -87,6 +93,7 @@ export class FrontendStack extends cdk.Stack {
       domainName: 'loanpedia.jp',
       webAclArn: wafConstruct.webAcl.attrArn,
       basicAuthFunction: basicAuthFunction,
+      albDomainName: props.albDomainName,
     });
 
     // T025: Route53 Aレコードを作成（loanpedia.jp → CloudFront）
