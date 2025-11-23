@@ -119,9 +119,7 @@ export class AlbConstruct extends Construct {
     new route53.ARecord(this, 'AliasRecord', {
       zone: hostedZone,
       recordName: 'api',
-      target: route53.RecordTarget.fromAlias(
-        new route53Targets.LoadBalancerTarget(this.alb)
-      ),
+      target: route53.RecordTarget.fromAlias(new route53Targets.LoadBalancerTarget(this.alb)),
     });
 
     // CloudFormation Output: ALB DNS名

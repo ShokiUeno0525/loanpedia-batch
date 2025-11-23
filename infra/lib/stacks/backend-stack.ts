@@ -109,7 +109,15 @@ export class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
-    const { vpc, publicSubnetA, publicSubnetC, privateSubnet, isolatedSubnet, certificate, hostedZone } = props;
+    const {
+      vpc,
+      publicSubnetA,
+      publicSubnetC,
+      privateSubnet,
+      isolatedSubnet,
+      certificate,
+      hostedZone,
+    } = props;
 
     // ECRリポジトリ: loanpedia-api
     this.ecrApiRepository = new ecr.Repository(this, 'ApiRepository', {

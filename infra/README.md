@@ -9,6 +9,7 @@ Loanpediaローン情報集約システムのAWSインフラストラクチャ�
 ### 主要コンポーネント
 
 #### フロントエンド基盤
+
 - **CloudFront**: loanpedia.jp でのWebコンテンツ配信
 - **S3**: 静的コンテンツ保存、CloudFrontログ保存
 - **WAF**: AWS Managed Rulesによる保護
@@ -16,6 +17,7 @@ Loanpediaローン情報集約システムのAWSインフラストラクチャ�
 - **Route53**: DNSホストゾーン
 
 #### バックエンド基盤
+
 - **VPC**: 2AZ構成（ap-northeast-1a、1c）
   - パブリックサブネット×2（ALB配置用）
   - プライベートサブネット×1（ECS配置用）
@@ -87,6 +89,7 @@ npx cdk deploy BackendStack
 ```
 
 以下のリソースが作成されます：
+
 - ECRリポジトリ（loanpedia-api、loanpedia-migration）
 - RDS MySQL 8.0
 - Cognito User Pool
@@ -118,16 +121,16 @@ npx cdk deploy --all
 
 ## スタック構成
 
-| スタック名 | リージョン | 説明 |
-|---|---|---|
-| GitHubOidcStack | ap-northeast-1 | GitHub Actions OIDC認証 |
-| Route53Stack | グローバル | loanpedia.jpホストゾーン |
-| AcmCertificateStack | us-east-1 | CloudFront用ACM証明書 |
-| VpcNetworkStack | ap-northeast-1 | VPCネットワーク基盤 |
-| AlbAcmCertificateStack | ap-northeast-1 | ALB用ACM証明書 |
-| BackendStack | ap-northeast-1 | バックエンドインフラ |
-| S3Stack | ap-northeast-1 | S3バケット |
-| FrontendStack | us-east-1 | CloudFront配信基盤 |
+| スタック名             | リージョン     | 説明                     |
+| ---------------------- | -------------- | ------------------------ |
+| GitHubOidcStack        | ap-northeast-1 | GitHub Actions OIDC認証  |
+| Route53Stack           | グローバル     | loanpedia.jpホストゾーン |
+| AcmCertificateStack    | us-east-1      | CloudFront用ACM証明書    |
+| VpcNetworkStack        | ap-northeast-1 | VPCネットワーク基盤      |
+| AlbAcmCertificateStack | ap-northeast-1 | ALB用ACM証明書           |
+| BackendStack           | ap-northeast-1 | バックエンドインフラ     |
+| S3Stack                | ap-northeast-1 | S3バケット               |
+| FrontendStack          | us-east-1      | CloudFront配信基盤       |
 
 ## 開発コマンド
 
