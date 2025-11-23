@@ -113,9 +113,17 @@ frontend/
 │   │   │   └── pages/
 │   │   │       └── LoanSearchPage.tsx
 │   │   │
-│   │   └── loanDetail/               # 詳細機能
+│   │   ├── loanDetail/               # 詳細機能
+│   │   │   └── pages/
+│   │   │       └── LoanDetailPage.tsx
+│   │   │
+│   │   └── auth/                     # 認証機能
+│   │       ├── components/           # 認証専用コンポーネント
+│   │       ├── hooks/                # 認証関連フック
 │   │       └── pages/
-│   │           └── LoanDetailPage.tsx
+│   │           ├── LoginPage.tsx     # ログイン
+│   │           ├── RegisterPage.tsx  # 新規登録
+│   │           └── PasswordResetPage.tsx # パスワードリセット
 │   │
 │   ├── shared/                       # 共有リソース
 │   │   ├── components/
@@ -259,12 +267,18 @@ npm run format:check
 | `/search` | LoanSearchPage | ローン検索・一覧 |
 | `/loans/:id` | LoanDetailPage | ローン詳細 |
 
-### 将来的な拡張
+### 認証関連
 
 | パス | ページ | 説明 |
 |------|--------|------|
 | `/login` | LoginPage | ログイン |
 | `/register` | RegisterPage | 新規登録 |
+| `/password-reset` | PasswordResetPage | パスワードリセット |
+
+### 将来的な拡張
+
+| パス | ページ | 説明 |
+|------|--------|------|
 | `/favorites` | FavoritesPage | お気に入り一覧 |
 | `/account` | AccountPage | アカウント設定 |
 
