@@ -25,7 +25,6 @@ describe('EcsConstruct', () => {
     const vpc = new ec2.Vpc(stack, 'TestVpc', { maxAzs: 1 });
     const privateSubnet = vpc.privateSubnets[0];
     const securityGroup = new ec2.SecurityGroup(stack, 'TestSg', { vpc });
-    const alb = new elbv2.ApplicationLoadBalancer(stack, 'TestAlb', { vpc, internetFacing: true });
     const targetGroup = new elbv2.ApplicationTargetGroup(stack, 'TestTg', {
       vpc,
       port: 80,

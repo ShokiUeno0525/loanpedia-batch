@@ -703,54 +703,6 @@ exports[`EcsConstruct スナップショットテスト ECS Constructのスナ�
       "Type": "AWS::SecretsManager::Secret",
       "UpdateReplacePolicy": "Delete",
     },
-    "TestAlb8F0A2B31": {
-      "DependsOn": [
-        "TestVpcPublicSubnet1DefaultRoute6C0F0315",
-        "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9",
-      ],
-      "Properties": {
-        "LoadBalancerAttributes": [
-          {
-            "Key": "deletion_protection.enabled",
-            "Value": "false",
-          },
-        ],
-        "Scheme": "internet-facing",
-        "SecurityGroups": [
-          {
-            "Fn::GetAtt": [
-              "TestAlbSecurityGroupA9ADEAB8",
-              "GroupId",
-            ],
-          },
-        ],
-        "Subnets": [
-          {
-            "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
-          },
-        ],
-        "Type": "application",
-      },
-      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
-    },
-    "TestAlbSecurityGroupA9ADEAB8": {
-      "Properties": {
-        "GroupDescription": "Automatically created Security Group for ELB TestStackTestAlb3F89D154",
-        "SecurityGroupEgress": [
-          {
-            "CidrIp": "255.255.255.255/32",
-            "Description": "Disallow all traffic",
-            "FromPort": 252,
-            "IpProtocol": "icmp",
-            "ToPort": 86,
-          },
-        ],
-        "VpcId": {
-          "Ref": "TestVpcE77CE678",
-        },
-      },
-      "Type": "AWS::EC2::SecurityGroup",
-    },
     "TestSg04E900F0": {
       "Properties": {
         "GroupDescription": "TestStack/TestSg",

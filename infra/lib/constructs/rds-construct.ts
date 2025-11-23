@@ -103,7 +103,10 @@ export class RdsConstruct extends Construct {
     });
 
     // Secrets ManagerからRDS認証情報を取得
-    this.secret = this.instance.secret!;
+    if (!this.instance.secret) {
+      throw new Error('RDS instance secret is not available');
+    }
+    this.secret = this.instance.secret;
 
     // CloudFormation Output: RDSエンドポイント
     new cdk.CfnOutput(scope, 'RdsEndpoint', {
