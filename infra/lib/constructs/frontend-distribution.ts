@@ -50,6 +50,12 @@ export interface FrontendDistributionProps {
    * Basic認証用のCloudFront Function（オプション）
    */
   readonly basicAuthFunction?: cloudfront.IFunction;
+
+  /**
+   * ALBドメイン名（オプション）
+   * /api/*ビヘイビアのオリジンとして使用
+   */
+  readonly albDomainName?: string;
 }
 
 /**
@@ -60,15 +66,13 @@ export interface FrontendDistributionProps {
  * - CloudFrontディストリビューション
  * - Origin Access Control (OAC)
  * - S3バケットポリシー（OAC経由のアクセス許可）
+ * - /api/*ビヘイビア（ALBへのルーティング、オプション）
  *
  * セキュリティ設定：
  * - HTTPS強制（REDIRECT_TO_HTTPS）
  * - OAC経由のみS3アクセス可能
  * - カスタムドメイン（loanpedia.jp）
  * - ACM証明書によるHTTPS接続
- *
- * 将来の拡張：
- * - /apiビヘイビア（ALBへのルーティング、現在はTODO）
  */
 export class FrontendDistribution extends Construct {
   /**
@@ -129,6 +133,27 @@ export class FrontendDistribution extends Construct {
           : undefined,
       },
 
+      // 追加ビヘイビア（オプション）
+      additionalBehaviors: props.albDomainName
+        ? {
+            // /api/*ビヘイビア（ALBオリジン）
+            '/api/*': {
+              origin: new origins.HttpOrigin(props.albDomainName, {
+                protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+                httpsPort: 443,
+              }),
+              viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+              allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+              cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
+              // APIエンドポイントはキャッシュしない（CachingDisabledポリシー）
+              cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+              // オリジンリクエストポリシー: すべてのヘッダー、クエリ文字列、Cookieを転送
+              originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+              compress: true,
+            },
+          }
+        : undefined,
+
       // エラーレスポンス設定
       errorResponses: [
         {
@@ -152,15 +177,6 @@ export class FrontendDistribution extends Construct {
     // Note: CloudFront DistributionのOACが自動的にバケットポリシーを設定するため、
     // 手動でのバケットポリシー追加は不要。OACが自動的に適切なポリシーを作成します。
     // 詳細: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
-
-    // T022: TODO: 将来の拡張 - /apiビヘイビア（ALBへのルーティング）
-    // 現在はバックエンドALBが未実装のため、TODOとして残す
-    // TODO: /apiビヘイビアを追加
-    // - pathPattern: '/api/*'
-    // - origin: ALB（未実装）
-    // - viewerProtocolPolicy: REDIRECT_TO_HTTPS
-    // - allowedMethods: ALL
-    // - cachePolicy: None（APIはキャッシュしない）
 
     // タグ付け
     cdk.Tags.of(this).add('Component', 'Frontend');

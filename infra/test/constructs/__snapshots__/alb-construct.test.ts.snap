@@ -1,0 +1,629 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AlbConstruct スナップショットテスト ALB Constructのスナップショットが一致する 1`] = `
+{
+  "Outputs": {
+    "AlbArn": {
+      "Description": "ALB ARN",
+      "Export": {
+        "Name": "LoanpediaAlbArn",
+      },
+      "Value": {
+        "Ref": "Alb6F14D334",
+      },
+    },
+    "AlbDnsName": {
+      "Description": "ALB DNS名",
+      "Export": {
+        "Name": "LoanpediaAlbDnsName",
+      },
+      "Value": {
+        "Fn::GetAtt": [
+          "Alb6F14D334",
+          "DNSName",
+        ],
+      },
+    },
+    "TargetGroupArn": {
+      "Description": "ターゲットグループARN",
+      "Export": {
+        "Name": "LoanpediaTargetGroupArn",
+      },
+      "Value": {
+        "Ref": "AlbTargetGroup3E290A92",
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "Alb6F14D334": {
+      "DependsOn": [
+        "TestVpcPublicSubnet1DefaultRoute6C0F0315",
+        "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9",
+        "TestVpcPublicSubnet2DefaultRoute054DAE0A",
+        "TestVpcPublicSubnet2RouteTableAssociationB386A819",
+      ],
+      "Properties": {
+        "LoadBalancerAttributes": [
+          {
+            "Key": "deletion_protection.enabled",
+            "Value": "false",
+          },
+        ],
+        "Scheme": "internet-facing",
+        "SecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "TestSg04E900F0",
+              "GroupId",
+            ],
+          },
+        ],
+        "Subnets": [
+          {
+            "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
+          },
+          {
+            "Ref": "TestVpcPublicSubnet2Subnet80A14523",
+          },
+        ],
+        "Type": "application",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    },
+    "AlbAliasRecordEE9D42DE": {
+      "Properties": {
+        "AliasTarget": {
+          "DNSName": {
+            "Fn::Join": [
+              "",
+              [
+                "dualstack.",
+                {
+                  "Fn::GetAtt": [
+                    "Alb6F14D334",
+                    "DNSName",
+                  ],
+                },
+              ],
+            ],
+          },
+          "HostedZoneId": {
+            "Fn::GetAtt": [
+              "Alb6F14D334",
+              "CanonicalHostedZoneID",
+            ],
+          },
+        },
+        "HostedZoneId": {
+          "Ref": "TestZone0C3926D9",
+        },
+        "Name": "api.loanpedia.jp.",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "AlbHttpListenerC9825CF4": {
+      "Properties": {
+        "DefaultActions": [
+          {
+            "RedirectConfig": {
+              "Port": "443",
+              "Protocol": "HTTPS",
+              "StatusCode": "HTTP_301",
+            },
+            "Type": "redirect",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb6F14D334",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbHttpsListener0ED0A51A": {
+      "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Ref": "TestCert9C74CCBF",
+            },
+          },
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {
+              "Ref": "AlbTargetGroup3E290A92",
+            },
+            "Type": "forward",
+          },
+        ],
+        "LoadBalancerArn": {
+          "Ref": "Alb6F14D334",
+        },
+        "Port": 443,
+        "Protocol": "HTTPS",
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+    },
+    "AlbTargetGroup3E290A92": {
+      "Properties": {
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/health",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 2,
+        "Matcher": {
+          "HttpCode": "200",
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetGroupAttributes": [
+          {
+            "Key": "deregistration_delay.timeout_seconds",
+            "Value": "30",
+          },
+          {
+            "Key": "stickiness.enabled",
+            "Value": "false",
+          },
+        ],
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "TestCert9C74CCBF": {
+      "Properties": {
+        "DomainName": "api.loanpedia.jp",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestCert",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+    },
+    "TestSg04E900F0": {
+      "Properties": {
+        "GroupDescription": "TestStack/TestSg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow from anyone on port 80",
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "ToPort": 80,
+          },
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow from anyone on port 443",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "TestVpcE77CE678": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "TestVpcIGW9DD53F70": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "TestVpcPrivateSubnet1DefaultRoute32E7B814": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "TestVpcPublicSubnet1NATGatewayA323E3EC",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet1RouteTable469B0105",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPrivateSubnet1RouteTable469B0105": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPrivateSubnet1RouteTableAssociationFFD4DFF7": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet1RouteTable469B0105",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPrivateSubnet1SubnetCC65D771",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPrivateSubnet1SubnetCC65D771": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.128.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcPrivateSubnet2DefaultRouteA7EB6930": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "TestVpcPublicSubnet2NATGatewayA9858C31",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet2RouteTableCEF29F7C",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPrivateSubnet2RouteTableAssociation18250AB4": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet2RouteTableCEF29F7C",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPrivateSubnet2SubnetDE0C64A2",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPrivateSubnet2RouteTableCEF29F7C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPrivateSubnet2SubnetDE0C64A2": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.192.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcPublicSubnet1DefaultRoute6C0F0315": {
+      "DependsOn": [
+        "TestVpcVPCGWF1827B84",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "TestVpcIGW9DD53F70",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet1RouteTable4CBFF871",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPublicSubnet1EIP4884338C": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "TestVpcPublicSubnet1NATGatewayA323E3EC": {
+      "DependsOn": [
+        "TestVpcPublicSubnet1DefaultRoute6C0F0315",
+        "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "TestVpcPublicSubnet1EIP4884338C",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "TestVpcPublicSubnet1RouteTable4CBFF871": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet1RouteTable4CBFF871",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPublicSubnet1SubnetA7DB1EDF": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.0.0.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcPublicSubnet2DefaultRoute054DAE0A": {
+      "DependsOn": [
+        "TestVpcVPCGWF1827B84",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "TestVpcIGW9DD53F70",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet2RouteTable75B88314",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPublicSubnet2EIP83F7944C": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "TestVpcPublicSubnet2NATGatewayA9858C31": {
+      "DependsOn": [
+        "TestVpcPublicSubnet2DefaultRoute054DAE0A",
+        "TestVpcPublicSubnet2RouteTableAssociationB386A819",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "TestVpcPublicSubnet2EIP83F7944C",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet2Subnet80A14523",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "TestVpcPublicSubnet2RouteTable75B88314": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPublicSubnet2RouteTableAssociationB386A819": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet2RouteTable75B88314",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet2Subnet80A14523",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPublicSubnet2Subnet80A14523": {
+      "Properties": {
+        "AvailabilityZone": "dummy1b",
+        "CidrBlock": "10.0.64.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcVPCGWF1827B84": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "TestVpcIGW9DD53F70",
+        },
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "TestZone0C3926D9": {
+      "Properties": {
+        "Name": "loanpedia.jp.",
+      },
+      "Type": "AWS::Route53::HostedZone",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 import { Tags } from 'aws-cdk-lib';
 import { VpcConstruct } from '../constructs/vpc-construct';
@@ -9,11 +10,14 @@ import { NatGatewayConstruct } from '../constructs/nat-gateway-construct';
 /**
  * VPCネットワークスタック
  *
- * シングルAZ構成のVPCネットワーク基盤を構築します。
+ * 2AZ構成のVPCネットワーク基盤を構築します。
  * - VPC: 10.16.0.0/16
- * - パブリックサブネット: 10.16.0.0/20
- * - プライベートサブネット: 10.16.32.0/20
- * - アイソレートサブネット: 10.16.64.0/20
+ * - パブリックサブネット: 10.16.0.0/20 (AZ-a)、10.16.16.0/20 (AZ-c)
+ * - プライベートサブネット: 10.16.32.0/20 (AZ-a)
+ * - アイソレートサブネット: 10.16.64.0/20 (AZ-a)
+ *
+ * 注: AZ-c用のパブリックサブネットはALB 2AZ要件を満たすためのダミー。
+ *     プライベート・アイソレートサブネットはAZ-aのみに配置。
  */
 export class VpcNetworkStack extends cdk.Stack {
   /**
@@ -22,9 +26,14 @@ export class VpcNetworkStack extends cdk.Stack {
   public readonly vpcConstruct: VpcConstruct;
 
   /**
-   * 作成されたサブネットコンストラクト
+   * 作成されたサブネットコンストラクト (AZ-a)
    */
   public readonly subnetConstruct: SubnetConstruct;
+
+  /**
+   * AZ-c用のパブリックサブネット (ALB 2AZ要件のためのダミー)
+   */
+  public readonly publicSubnetC: ec2.PublicSubnet;
 
   /**
    * 作成されたInternet Gatewayコンストラクト
@@ -71,6 +80,56 @@ export class VpcNetworkStack extends cdk.Stack {
     this.natGatewayConstruct = new NatGatewayConstruct(this, 'NatGatewayConstruct', {
       publicSubnet: this.subnetConstruct.publicSubnet,
       privateSubnet: this.subnetConstruct.privateSubnet,
+    });
+
+    // AZ-c用のパブリックサブネットを作成 (ALB 2AZ要件のためのダミー)
+    const availabilityZoneC = cdk.Stack.of(this).availabilityZones[2]; // ap-northeast-1c
+    this.publicSubnetC = new ec2.PublicSubnet(this, 'PublicSubnetC', {
+      vpcId: this.vpcConstruct.vpc.vpcId,
+      cidrBlock: '10.16.16.0/20',
+      availabilityZone: availabilityZoneC,
+      mapPublicIpOnLaunch: true,
+    });
+
+    Tags.of(this.publicSubnetC).add('Name', 'Loanpedia-Dev-Subnet-Public-C');
+    Tags.of(this.publicSubnetC).add('aws-cdk:subnet-type', 'Public');
+
+    // AZ-c用パブリックサブネットのルートテーブルにInternet Gatewayへのルートを追加
+    new ec2.CfnRoute(this, 'PublicSubnetCRoute', {
+      routeTableId: this.publicSubnetC.routeTable.routeTableId,
+      destinationCidrBlock: '0.0.0.0/0',
+      gatewayId: this.internetGatewayConstruct.internetGateway.ref,
+    });
+
+    // CloudFormation Outputs
+    new cdk.CfnOutput(this, 'VpcId', {
+      value: this.vpcConstruct.vpc.vpcId,
+      description: 'VPC ID',
+      exportName: 'LoanpediaVpcId',
+    });
+
+    new cdk.CfnOutput(this, 'PublicSubnetAId', {
+      value: this.subnetConstruct.publicSubnet.subnetId,
+      description: 'AZ-a用パブリックサブネットID',
+      exportName: 'LoanpediaPublicSubnetAId',
+    });
+
+    new cdk.CfnOutput(this, 'PublicSubnetCId', {
+      value: this.publicSubnetC.subnetId,
+      description: 'AZ-c用パブリックサブネットID (ALB 2AZ要件用)',
+      exportName: 'LoanpediaPublicSubnetCId',
+    });
+
+    new cdk.CfnOutput(this, 'PrivateSubnetId', {
+      value: this.subnetConstruct.privateSubnet.subnetId,
+      description: 'プライベートサブネットID (AZ-a)',
+      exportName: 'LoanpediaPrivateSubnetId',
+    });
+
+    new cdk.CfnOutput(this, 'IsolatedSubnetId', {
+      value: this.subnetConstruct.isolatedSubnet.subnetId,
+      description: 'アイソレートサブネットID (AZ-a)',
+      exportName: 'LoanpediaIsolatedSubnetId',
     });
   }
 }

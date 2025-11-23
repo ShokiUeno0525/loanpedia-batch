@@ -1,0 +1,387 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SecurityGroupsConstruct スナップショットテスト Security Groups Constructのスナップショットが一致する 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "SecurityGroupsAlbSecurityGroup9F78329C": {
+      "Properties": {
+        "GroupDescription": "ALB用セキュリティグループ（CloudFrontからのHTTPSアクセスのみ許可）",
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsAlbSecurityGroupfrompl58a04531443704E065C": {
+      "Properties": {
+        "Description": "CloudFrontからのHTTPSアクセスを許可",
+        "FromPort": 443,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourcePrefixListId": "pl-58a04531",
+        "ToPort": 443,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "SecurityGroupsAlbSecurityGrouptoTestStackSecurityGroupsEcsSecurityGroup77F75BD18033847B1C": {
+      "Properties": {
+        "Description": "ECSへのHTTPアクセスを許可",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SecurityGroupsEcsSecurityGroup4A45070C": {
+      "Properties": {
+        "GroupDescription": "ECS Fargate用セキュリティグループ（ALBからのHTTPアクセス、RDS・外部API接続）",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "外部API（Cognito、BedRock等）へのHTTPSアクセスを許可",
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsEcsSecurityGroupfromTestStackSecurityGroupsAlbSecurityGroupCDAE5C18801D68EA79": {
+      "Properties": {
+        "Description": "ALBからのHTTPアクセスを許可",
+        "FromPort": 80,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsAlbSecurityGroup9F78329C",
+            "GroupId",
+          ],
+        },
+        "ToPort": 80,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "SecurityGroupsEcsSecurityGrouptoTestStackSecurityGroupsRdsSecurityGroup1530D9283306A6125D4E": {
+      "Properties": {
+        "Description": "RDSへのMySQLアクセスを許可",
+        "DestinationSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsRdsSecurityGroup2F181BE8",
+            "GroupId",
+          ],
+        },
+        "FromPort": 3306,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 3306,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "SecurityGroupsRdsSecurityGroup2F181BE8": {
+      "Properties": {
+        "GroupDescription": "RDS MySQL用セキュリティグループ（ECSからのMySQLアクセスのみ許可）",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "255.255.255.255/32",
+            "Description": "Disallow all traffic",
+            "FromPort": 252,
+            "IpProtocol": "icmp",
+            "ToPort": 86,
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "SecurityGroupsRdsSecurityGroupfromTestStackSecurityGroupsEcsSecurityGroup77F75BD133064EFB5CF7": {
+      "Properties": {
+        "Description": "ECSからのMySQLアクセスを許可",
+        "FromPort": 3306,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsRdsSecurityGroup2F181BE8",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "SecurityGroupsEcsSecurityGroup4A45070C",
+            "GroupId",
+          ],
+        },
+        "ToPort": 3306,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "TestVpcE77CE678": {
+      "Properties": {
+        "CidrBlock": "10.16.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "TestVpcIGW9DD53F70": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "TestVpcPrivateSubnet1DefaultRoute32E7B814": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "TestVpcPublicSubnet1NATGatewayA323E3EC",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet1RouteTable469B0105",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPrivateSubnet1RouteTable469B0105": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPrivateSubnet1RouteTableAssociationFFD4DFF7": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPrivateSubnet1RouteTable469B0105",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPrivateSubnet1SubnetCC65D771",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPrivateSubnet1SubnetCC65D771": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.16.128.0/17",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcPublicSubnet1DefaultRoute6C0F0315": {
+      "DependsOn": [
+        "TestVpcVPCGWF1827B84",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "TestVpcIGW9DD53F70",
+        },
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet1RouteTable4CBFF871",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "TestVpcPublicSubnet1EIP4884338C": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "TestVpcPublicSubnet1NATGatewayA323E3EC": {
+      "DependsOn": [
+        "TestVpcPublicSubnet1DefaultRoute6C0F0315",
+        "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "TestVpcPublicSubnet1EIP4884338C",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "TestVpcPublicSubnet1RouteTable4CBFF871": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "TestVpcPublicSubnet1RouteTableAssociation7D1DECD9": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "TestVpcPublicSubnet1RouteTable4CBFF871",
+        },
+        "SubnetId": {
+          "Ref": "TestVpcPublicSubnet1SubnetA7DB1EDF",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "TestVpcPublicSubnet1SubnetA7DB1EDF": {
+      "Properties": {
+        "AvailabilityZone": "dummy1a",
+        "CidrBlock": "10.16.0.0/17",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "TestStack/TestVpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "TestVpcVPCGWF1827B84": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "TestVpcIGW9DD53F70",
+        },
+        "VpcId": {
+          "Ref": "TestVpcE77CE678",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

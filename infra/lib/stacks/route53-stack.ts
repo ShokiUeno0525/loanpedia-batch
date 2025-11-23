@@ -17,11 +17,16 @@ import { Construct } from 'constructs';
  * - HostedZoneIdのエクスポート（他のスタックからの参照用）
  */
 export class Route53Stack extends cdk.Stack {
+  /**
+   * 作成されたRoute53ホストゾーン
+   */
+  public readonly hostedZone: route53.IHostedZone;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // loanpedia.jp のパブリックホストゾーンを作成
-    const hostedZone = new route53.PublicHostedZone(this, 'LoanpediaHostedZone', {
+    this.hostedZone = new route53.PublicHostedZone(this, 'LoanpediaHostedZone', {
       zoneName: 'loanpedia.jp',
       comment: 'Loanpedia本番環境用パブリックホストゾーン',
     });
@@ -29,7 +34,7 @@ export class Route53Stack extends cdk.Stack {
     // ネームサーバー情報を個別に出力（お名前.comでの設定用）
     // AWS Route53は自動的に4つのネームサーバーを割り当てる
     // Fn.select を使用してトークンリストから各要素を取得
-    const nameServers = hostedZone.hostedZoneNameServers || [];
+    const nameServers = this.hostedZone.hostedZoneNameServers || [];
     for (let i = 0; i < 4; i++) {
       new cdk.CfnOutput(this, `NameServer${i + 1}`, {
         value: cdk.Fn.select(i, nameServers),
@@ -39,7 +44,7 @@ export class Route53Stack extends cdk.Stack {
 
     // ホストゾーンIDを出力（将来の参照用：ACM証明書、CloudFrontなど）
     new cdk.CfnOutput(this, 'HostedZoneId', {
-      value: hostedZone.hostedZoneId,
+      value: this.hostedZone.hostedZoneId,
       description: 'Route53 ホストゾーンID（他のスタックから参照可能）',
       exportName: 'LoanpediaHostedZoneId',
     });
