@@ -12,7 +12,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
   "Resources": {
     "SecurityGroupsAlbSecurityGroup9F78329C": {
       "Properties": {
-        "GroupDescription": "ALB用セキュリティグループ（CloudFrontからのHTTPSアクセスのみ許可）",
+        "GroupDescription": "ALB security group - Allow HTTPS from CloudFront only",
         "VpcId": {
           "Ref": "TestVpcE77CE678",
         },
@@ -58,7 +58,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsEcsSecurityGroup4A45070C": {
       "Properties": {
-        "GroupDescription": "ECS Fargate用セキュリティグループ（ALBからのHTTPアクセス、RDS・外部API接続）",
+        "GroupDescription": "ECS Fargate security group - Allow HTTP from ALB and access to RDS/External APIs",
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -118,7 +118,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsRdsSecurityGroup2F181BE8": {
       "Properties": {
-        "GroupDescription": "RDS MySQL用セキュリティグループ（ECSからのMySQLアクセスのみ許可）",
+        "GroupDescription": "RDS MySQL security group - Allow MySQL access from ECS only",
         "SecurityGroupEgress": [
           {
             "CidrIp": "255.255.255.255/32",

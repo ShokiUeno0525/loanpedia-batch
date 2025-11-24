@@ -33,12 +33,8 @@ describe('BackendStack', () => {
     });
 
     // Backend Stackを作成
+    // VPCとサブネットはCloudFormation Exportsから参照するため、propsから除外
     backendStack = new BackendStack(app, 'TestBackendStack', {
-      vpc: vpcStack.vpcConstruct.vpc,
-      publicSubnetA: vpcStack.subnetConstruct.publicSubnet,
-      publicSubnetC: vpcStack.publicSubnetC,
-      privateSubnet: vpcStack.subnetConstruct.privateSubnet,
-      isolatedSubnet: vpcStack.subnetConstruct.isolatedSubnet,
       certificate,
       hostedZone,
       env: {
@@ -46,6 +42,9 @@ describe('BackendStack', () => {
         region: 'ap-northeast-1',
       },
     });
+
+    // BackendStackはVpcStackに依存する
+    backendStack.addDependency(vpcStack);
 
     template = Template.fromStack(backendStack);
   });

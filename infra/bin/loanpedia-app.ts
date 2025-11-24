@@ -59,12 +59,9 @@ const albAcmCertificateStack = new AlbAcmCertificateStack(app, 'AlbAcmCertificat
 });
 
 // バックエンドスタック（ECR、RDS、Cognito、ALB、ECS）
+// VPCとサブネットはCloudFormation Exportsから参照するため、propsからは削除
+// これによりAWS::EarlyValidation::ResourceExistenceCheckが正しく動作する
 const backendStack = new BackendStack(app, 'BackendStack', {
-  vpc: vpcNetworkStack.vpcConstruct.vpc,
-  publicSubnetA: vpcNetworkStack.subnetConstruct.publicSubnet,
-  publicSubnetC: vpcNetworkStack.publicSubnetC,
-  privateSubnet: vpcNetworkStack.subnetConstruct.privateSubnet,
-  isolatedSubnet: vpcNetworkStack.subnetConstruct.isolatedSubnet,
   certificate: albAcmCertificateStack.certificate,
   hostedZone: route53Stack.hostedZone,
   env: {
@@ -75,6 +72,7 @@ const backendStack = new BackendStack(app, 'BackendStack', {
 });
 
 // BackendStackの依存関係を明示的に設定
+// CloudFormation Exportsを使用するため、VpcNetworkStackへの依存関係が必須
 backendStack.addDependency(vpcNetworkStack);
 backendStack.addDependency(albAcmCertificateStack);
 backendStack.addDependency(route53Stack);
