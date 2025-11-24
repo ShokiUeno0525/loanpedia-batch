@@ -65,13 +65,13 @@ export class RdsConstruct extends Construct {
         character_set_database: 'utf8mb4',
         character_set_results: 'utf8mb4',
       },
-      description: 'Loanpedia MySQL 8.0用パラメータグループ（utf8mb4設定）',
+      description: 'Loanpedia MySQL 8.0 parameter group with utf8mb4 settings',
     });
 
     // RDSサブネットグループ（アイソレートサブネット、AZ-aのみ使用）
     const subnetGroup = new rds.SubnetGroup(this, 'SubnetGroup', {
       vpc,
-      description: 'Loanpedia RDS用サブネットグループ',
+      description: 'Loanpedia RDS subnet group',
       vpcSubnets: {
         subnets: [isolatedSubnet],
       },

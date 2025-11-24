@@ -52,21 +52,21 @@ export class SecurityGroupsConstruct extends Construct {
     // ALB用セキュリティグループ
     this.albSg = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
       vpc,
-      description: 'ALB用セキュリティグループ（CloudFrontからのHTTPSアクセスのみ許可）',
+      description: 'ALB security group - Allow HTTPS from CloudFront only',
       allowAllOutbound: false,
     });
 
     // ECS用セキュリティグループ
     this.ecsSg = new ec2.SecurityGroup(this, 'EcsSecurityGroup', {
       vpc,
-      description: 'ECS Fargate用セキュリティグループ（ALBからのHTTPアクセス、RDS・外部API接続）',
+      description: 'ECS Fargate security group - Allow HTTP from ALB and access to RDS/External APIs',
       allowAllOutbound: false,
     });
 
     // RDS用セキュリティグループ
     this.rdsSg = new ec2.SecurityGroup(this, 'RdsSecurityGroup', {
       vpc,
-      description: 'RDS MySQL用セキュリティグループ（ECSからのMySQLアクセスのみ許可）',
+      description: 'RDS MySQL security group - Allow MySQL access from ECS only',
       allowAllOutbound: false,
     });
 
