@@ -89,29 +89,35 @@ export class BackendStack extends cdk.Stack {
     // VPCとサブネットをCloudFormation Exportsから参照
     // これによりAWS::EarlyValidation::ResourceExistenceCheckが正しく動作する
     const vpcId = cdk.Fn.importValue('LoanpediaVpcId');
+
+    // Availability Zonesを取得（VpcNetworkStackと同じアプローチ）
+    const availabilityZones = cdk.Stack.of(this).availabilityZones;
+    const azA = availabilityZones[0]; // ap-northeast-1a
+    const azC = availabilityZones[2]; // ap-northeast-1c
+
     const vpc = ec2.Vpc.fromVpcAttributes(this, 'Vpc', {
       vpcId: vpcId,
-      availabilityZones: cdk.Fn.getAzs(),
+      availabilityZones: availabilityZones,
     });
 
     const publicSubnetA = ec2.Subnet.fromSubnetAttributes(this, 'PublicSubnetA', {
       subnetId: cdk.Fn.importValue('LoanpediaPublicSubnetAId'),
-      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+      availabilityZone: azA,
     });
 
     const publicSubnetC = ec2.Subnet.fromSubnetAttributes(this, 'PublicSubnetC', {
       subnetId: cdk.Fn.importValue('LoanpediaPublicSubnetCId'),
-      availabilityZone: cdk.Fn.select(2, cdk.Fn.getAzs()),
+      availabilityZone: azC,
     });
 
     const privateSubnet = ec2.Subnet.fromSubnetAttributes(this, 'PrivateSubnet', {
       subnetId: cdk.Fn.importValue('LoanpediaPrivateSubnetId'),
-      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+      availabilityZone: azA,
     });
 
     const isolatedSubnet = ec2.Subnet.fromSubnetAttributes(this, 'IsolatedSubnet', {
       subnetId: cdk.Fn.importValue('LoanpediaIsolatedSubnetId'),
-      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+      availabilityZone: azA,
     });
 
     // ECRリポジトリ: loanpedia-api
