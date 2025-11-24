@@ -74,6 +74,11 @@ const backendStack = new BackendStack(app, 'BackendStack', {
   description: 'Loanpedia Backend Infrastructure Stack (ap-northeast-1)',
 });
 
+// BackendStackの依存関係を明示的に設定
+backendStack.addDependency(vpcNetworkStack);
+backendStack.addDependency(albAcmCertificateStack);
+backendStack.addDependency(route53Stack);
+
 // S3バケットスタック（東京リージョン）
 // フロントエンド用S3バケットとログバケットを作成
 const s3Stack = new S3Stack(app, 'S3Stack', {
