@@ -218,7 +218,7 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
     },
     "SubnetConstructCIsolatedSubnet5C043BC8": {
       "Properties": {
-        "AvailabilityZone": "dummy1c",
+        "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.16.80.0/20",
         "Tags": [
           {
@@ -307,7 +307,7 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
     },
     "SubnetConstructCPrivateSubnetD05EA6F8": {
       "Properties": {
-        "AvailabilityZone": "dummy1c",
+        "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.16.48.0/20",
         "Tags": [
           {
@@ -396,7 +396,7 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
     },
     "SubnetConstructCPublicSubnetC9265809": {
       "Properties": {
-        "AvailabilityZone": "dummy1c",
+        "AvailabilityZone": "dummy1b",
         "CidrBlock": "10.16.16.0/20",
         "MapPublicIpOnLaunch": true,
         "Tags": [

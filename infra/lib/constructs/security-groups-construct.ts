@@ -75,26 +75,26 @@ export class SecurityGroupsConstruct extends Construct {
     this.albSg.addIngressRule(
       ec2.Peer.prefixList('pl-58a04531'), // CloudFront Managed Prefix List (Global)
       ec2.Port.tcp(443),
-      'CloudFrontからのHTTPSアクセスを許可'
+      'Allow HTTPS from CloudFront'
     );
 
     // ALB SG: ECS SGへのHTTPアウトバウンドを許可
-    this.albSg.addEgressRule(this.ecsSg, ec2.Port.tcp(80), 'ECSへのHTTPアクセスを許可');
+    this.albSg.addEgressRule(this.ecsSg, ec2.Port.tcp(80), 'Allow HTTP to ECS');
 
     // ECS SG: ALB SGからのHTTPインバウンドを許可
-    this.ecsSg.addIngressRule(this.albSg, ec2.Port.tcp(80), 'ALBからのHTTPアクセスを許可');
+    this.ecsSg.addIngressRule(this.albSg, ec2.Port.tcp(80), 'Allow HTTP from ALB');
 
     // ECS SG: RDS SGへのMySQLアウトバウンドを許可
-    this.ecsSg.addEgressRule(this.rdsSg, ec2.Port.tcp(3306), 'RDSへのMySQLアクセスを許可');
+    this.ecsSg.addEgressRule(this.rdsSg, ec2.Port.tcp(3306), 'Allow MySQL to RDS');
 
     // ECS SG: 外部API（Cognito、BedRock等）へのHTTPSアウトバウンドを許可（NAT Gateway経由）
     this.ecsSg.addEgressRule(
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(443),
-      '外部API（Cognito、BedRock等）へのHTTPSアクセスを許可'
+      'Allow HTTPS to external APIs (Cognito, BedRock, etc.)'
     );
 
     // RDS SG: ECS SGからのMySQLインバウンドを許可
-    this.rdsSg.addIngressRule(this.ecsSg, ec2.Port.tcp(3306), 'ECSからのMySQLアクセスを許可');
+    this.rdsSg.addIngressRule(this.ecsSg, ec2.Port.tcp(3306), 'Allow MySQL from ECS');
   }
 }

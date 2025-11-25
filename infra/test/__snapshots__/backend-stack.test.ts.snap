@@ -1313,7 +1313,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsAlbSecurityGroupfrompl58a04531443704E065C": {
       "Properties": {
-        "Description": "CloudFrontからのHTTPSアクセスを許可",
+        "Description": "Allow HTTPS from CloudFront",
         "FromPort": 443,
         "GroupId": {
           "Fn::GetAtt": [
@@ -1329,7 +1329,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsAlbSecurityGrouptoTestBackendStackSecurityGroupsEcsSecurityGroup17B185A580DCA48060": {
       "Properties": {
-        "Description": "ECSへのHTTPアクセスを許可",
+        "Description": "Allow HTTP to ECS",
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "SecurityGroupsEcsSecurityGroup4A45070C",
@@ -1354,7 +1354,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
-            "Description": "外部API（Cognito、BedRock等）へのHTTPSアクセスを許可",
+            "Description": "Allow HTTPS to external APIs (Cognito, BedRock, etc.)",
             "FromPort": 443,
             "IpProtocol": "tcp",
             "ToPort": 443,
@@ -1368,7 +1368,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsEcsSecurityGroupfromTestBackendStackSecurityGroupsAlbSecurityGroup58B4600080F9F0187B": {
       "Properties": {
-        "Description": "ALBからのHTTPアクセスを許可",
+        "Description": "Allow HTTP from ALB",
         "FromPort": 80,
         "GroupId": {
           "Fn::GetAtt": [
@@ -1389,7 +1389,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsEcsSecurityGrouptoTestBackendStackSecurityGroupsRdsSecurityGroup0EC947333306C2BDADCB": {
       "Properties": {
-        "Description": "RDSへのMySQLアクセスを許可",
+        "Description": "Allow MySQL to RDS",
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "SecurityGroupsRdsSecurityGroup2F181BE8",
@@ -1428,7 +1428,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsRdsSecurityGroupfromTestBackendStackSecurityGroupsEcsSecurityGroup17B185A533064B391D8A": {
       "Properties": {
-        "Description": "ECSからのMySQLアクセスを許可",
+        "Description": "Allow MySQL from ECS",
         "FromPort": 3306,
         "GroupId": {
           "Fn::GetAtt": [

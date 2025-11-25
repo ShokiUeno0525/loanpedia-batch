@@ -21,7 +21,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsAlbSecurityGroupfrompl58a04531443704E065C": {
       "Properties": {
-        "Description": "CloudFrontからのHTTPSアクセスを許可",
+        "Description": "Allow HTTPS from CloudFront",
         "FromPort": 443,
         "GroupId": {
           "Fn::GetAtt": [
@@ -37,7 +37,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsAlbSecurityGrouptoTestStackSecurityGroupsEcsSecurityGroup77F75BD18033847B1C": {
       "Properties": {
-        "Description": "ECSへのHTTPアクセスを許可",
+        "Description": "Allow HTTP to ECS",
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "SecurityGroupsEcsSecurityGroup4A45070C",
@@ -62,7 +62,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
-            "Description": "外部API（Cognito、BedRock等）へのHTTPSアクセスを許可",
+            "Description": "Allow HTTPS to external APIs (Cognito, BedRock, etc.)",
             "FromPort": 443,
             "IpProtocol": "tcp",
             "ToPort": 443,
@@ -76,7 +76,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsEcsSecurityGroupfromTestStackSecurityGroupsAlbSecurityGroupCDAE5C18801D68EA79": {
       "Properties": {
-        "Description": "ALBからのHTTPアクセスを許可",
+        "Description": "Allow HTTP from ALB",
         "FromPort": 80,
         "GroupId": {
           "Fn::GetAtt": [
@@ -97,7 +97,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsEcsSecurityGrouptoTestStackSecurityGroupsRdsSecurityGroup1530D9283306A6125D4E": {
       "Properties": {
-        "Description": "RDSへのMySQLアクセスを許可",
+        "Description": "Allow MySQL to RDS",
         "DestinationSecurityGroupId": {
           "Fn::GetAtt": [
             "SecurityGroupsRdsSecurityGroup2F181BE8",
@@ -136,7 +136,7 @@ exports[`SecurityGroupsConstruct スナップショットテスト Security Grou
     },
     "SecurityGroupsRdsSecurityGroupfromTestStackSecurityGroupsEcsSecurityGroup77F75BD133064EFB5CF7": {
       "Properties": {
-        "Description": "ECSからのMySQLアクセスを許可",
+        "Description": "Allow MySQL from ECS",
         "FromPort": 3306,
         "GroupId": {
           "Fn::GetAtt": [
