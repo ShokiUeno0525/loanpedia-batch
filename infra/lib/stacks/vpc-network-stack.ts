@@ -88,7 +88,7 @@ export class VpcNetworkStack extends cdk.Stack {
     });
 
     // AZ-c用のサブネットを作成 (RDS/ALB 2AZ要件のため)
-    const availabilityZoneC = cdk.Stack.of(this).availabilityZones[2]; // ap-northeast-1c
+    const availabilityZoneC = cdk.Stack.of(this).availabilityZones[1]; // ap-northeast-1c
     this.subnetConstructC = new SubnetConstruct(this, 'SubnetConstructC', {
       vpc: this.vpcConstruct.vpc,
       availabilityZone: availabilityZoneC,
