@@ -12,6 +12,24 @@ export interface SubnetConstructProps {
    * サブネットを配置するアベイラビリティゾーン
    */
   readonly availabilityZone: string;
+
+  /**
+   * パブリックサブネットのCIDRブロック
+   * @default '10.16.0.0/20'
+   */
+  readonly publicCidr?: string;
+
+  /**
+   * プライベートサブネットのCIDRブロック
+   * @default '10.16.32.0/20'
+   */
+  readonly privateCidr?: string;
+
+  /**
+   * アイソレートサブネットのCIDRブロック
+   * @default '10.16.64.0/20'
+   */
+  readonly isolatedCidr?: string;
 }
 
 /**
@@ -41,12 +59,18 @@ export class SubnetConstruct extends Construct {
   constructor(scope: Construct, id: string, props: SubnetConstructProps) {
     super(scope, id);
 
-    const { vpc, availabilityZone } = props;
+    const {
+      vpc,
+      availabilityZone,
+      publicCidr = '10.16.0.0/20',
+      privateCidr = '10.16.32.0/20',
+      isolatedCidr = '10.16.64.0/20',
+    } = props;
 
-    // パブリックサブネット (10.16.0.0/20)
+    // パブリックサブネット
     this.publicSubnet = new ec2.PublicSubnet(this, 'PublicSubnet', {
       vpcId: vpc.vpcId,
-      cidrBlock: '10.16.0.0/20',
+      cidrBlock: publicCidr,
       availabilityZone: availabilityZone,
       mapPublicIpOnLaunch: true, // パブリックIPの自動割り当てを有効化
     });
@@ -54,20 +78,20 @@ export class SubnetConstruct extends Construct {
     Tags.of(this.publicSubnet).add('Name', 'Loanpedia-Dev-Subnet-Public');
     Tags.of(this.publicSubnet).add('aws-cdk:subnet-type', 'Public');
 
-    // プライベートサブネット (10.16.32.0/20)
+    // プライベートサブネット
     this.privateSubnet = new ec2.PrivateSubnet(this, 'PrivateSubnet', {
       vpcId: vpc.vpcId,
-      cidrBlock: '10.16.32.0/20',
+      cidrBlock: privateCidr,
       availabilityZone: availabilityZone,
     });
 
     Tags.of(this.privateSubnet).add('Name', 'Loanpedia-Dev-Subnet-Private');
     Tags.of(this.privateSubnet).add('aws-cdk:subnet-type', 'Private');
 
-    // アイソレートサブネット (10.16.64.0/20)
+    // アイソレートサブネット
     this.isolatedSubnet = new ec2.PrivateSubnet(this, 'IsolatedSubnet', {
       vpcId: vpc.vpcId,
-      cidrBlock: '10.16.64.0/20',
+      cidrBlock: isolatedCidr,
       availabilityZone: availabilityZone,
     });
 

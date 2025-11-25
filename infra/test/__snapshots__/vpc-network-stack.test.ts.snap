@@ -3,6 +3,15 @@
 exports[`VpcNetworkStack スナップショットテスト VPC Network Stackのスナップショットが一致する 1`] = `
 {
   "Outputs": {
+    "IsolatedSubnetCId": {
+      "Description": "アイソレートサブネットID (AZ-c, RDS 2AZ要件用)",
+      "Export": {
+        "Name": "LoanpediaIsolatedSubnetCId",
+      },
+      "Value": {
+        "Ref": "SubnetConstructCIsolatedSubnet5C043BC8",
+      },
+    },
     "IsolatedSubnetId": {
       "Description": "アイソレートサブネットID (AZ-a)",
       "Export": {
@@ -36,7 +45,7 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
         "Name": "LoanpediaPublicSubnetCId",
       },
       "Value": {
-        "Ref": "PublicSubnetCSubnet175E3284",
+        "Ref": "SubnetConstructCPublicSubnetC9265809",
       },
     },
     "VpcId": {
@@ -202,17 +211,19 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
           "Ref": "InternetGatewayConstructInternetGateway1AB307C0",
         },
         "RouteTableId": {
-          "Ref": "PublicSubnetCRouteTable3EAD8380",
+          "Ref": "SubnetConstructCPublicSubnetRouteTable244E95BF",
         },
       },
       "Type": "AWS::EC2::Route",
     },
-    "PublicSubnetCRouteTable3EAD8380": {
+    "SubnetConstructCIsolatedSubnet5C043BC8": {
       "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.16.80.0/20",
         "Tags": [
           {
             "Key": "aws-cdk:subnet-type",
-            "Value": "Public",
+            "Value": "Isolated",
           },
           {
             "Key": "CostCenter",
@@ -232,7 +243,56 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
           },
           {
             "Key": "Name",
-            "Value": "Loanpedia-Dev-Subnet-Public-C",
+            "Value": "Loanpedia-Dev-Subnet-Isolated",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructCIsolatedSubnetRouteTableAssociationD21CBB82": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SubnetConstructCIsolatedSubnetRouteTableEEE75244",
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructCIsolatedSubnet5C043BC8",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "SubnetConstructCIsolatedSubnetRouteTableEEE75244": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Isolated",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Isolated",
           },
           {
             "Key": "Project",
@@ -245,18 +305,96 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
       },
       "Type": "AWS::EC2::RouteTable",
     },
-    "PublicSubnetCRouteTableAssociationA426FD4F": {
+    "SubnetConstructCPrivateSubnetD05EA6F8": {
+      "Properties": {
+        "AvailabilityZone": "dummy1c",
+        "CidrBlock": "10.16.48.0/20",
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Private",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructCPrivateSubnetRouteTableAssociation14FAEDAA": {
       "Properties": {
         "RouteTableId": {
-          "Ref": "PublicSubnetCRouteTable3EAD8380",
+          "Ref": "SubnetConstructCPrivateSubnetRouteTableFF8FE5BA",
         },
         "SubnetId": {
-          "Ref": "PublicSubnetCSubnet175E3284",
+          "Ref": "SubnetConstructCPrivateSubnetD05EA6F8",
         },
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
-    "PublicSubnetCSubnet175E3284": {
+    "SubnetConstructCPrivateSubnetRouteTableFF8FE5BA": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Private",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SubnetConstructCPublicSubnetC9265809": {
       "Properties": {
         "AvailabilityZone": "dummy1c",
         "CidrBlock": "10.16.16.0/20",
@@ -284,7 +422,7 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
           },
           {
             "Key": "Name",
-            "Value": "Loanpedia-Dev-Subnet-Public-C",
+            "Value": "Loanpedia-Dev-Subnet-Public",
           },
           {
             "Key": "Project",
@@ -296,6 +434,55 @@ exports[`VpcNetworkStack スナップショットテスト VPC Network Stackの�
         },
       },
       "Type": "AWS::EC2::Subnet",
+    },
+    "SubnetConstructCPublicSubnetRouteTable244E95BF": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "Loanpedia-Infrastructure",
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development",
+          },
+          {
+            "Key": "Feature",
+            "Value": "003-infra-vpc-network-setup",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "CDK",
+          },
+          {
+            "Key": "Name",
+            "Value": "Loanpedia-Dev-Subnet-Public",
+          },
+          {
+            "Key": "Project",
+            "Value": "Loanpedia",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VpcConstructLoanpediaVpcB06057F2",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "SubnetConstructCPublicSubnetRouteTableAssociationD8FED1C0": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "SubnetConstructCPublicSubnetRouteTable244E95BF",
+        },
+        "SubnetId": {
+          "Ref": "SubnetConstructCPublicSubnetC9265809",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
     },
     "SubnetConstructIsolatedSubnet67CFBF3D": {
       "Properties": {

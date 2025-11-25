@@ -30,9 +30,9 @@ describe('VpcNetworkStack', () => {
   });
 
   describe('サブネット', () => {
-    test('4つのサブネットが作成される（パブリック×2、プライベート、アイソレート）', () => {
-      // パブリックサブネット×2 + プライベート + アイソレート = 4つ
-      template.resourceCountIs('AWS::EC2::Subnet', 4);
+    test('6つのサブネットが作成される（AZ-a: パブリック、プライベート、アイソレート、AZ-c: パブリック、プライベート、アイソレート）', () => {
+      // AZ-a: パブリック + プライベート + アイソレート + AZ-c: パブリック + プライベート + アイソレート = 6つ
+      template.resourceCountIs('AWS::EC2::Subnet', 6);
     });
 
     test('AZ-a用パブリックサブネット (10.16.0.0/20) が作成される', () => {
@@ -49,15 +49,27 @@ describe('VpcNetworkStack', () => {
       });
     });
 
-    test('プライベートサブネット (10.16.32.0/20) が作成される', () => {
+    test('AZ-a用プライベートサブネット (10.16.32.0/20) が作成される', () => {
       template.hasResourceProperties('AWS::EC2::Subnet', {
         CidrBlock: '10.16.32.0/20',
       });
     });
 
-    test('アイソレートサブネット (10.16.64.0/20) が作成される', () => {
+    test('AZ-c用プライベートサブネット (10.16.48.0/20) が作成される', () => {
+      template.hasResourceProperties('AWS::EC2::Subnet', {
+        CidrBlock: '10.16.48.0/20',
+      });
+    });
+
+    test('AZ-a用アイソレートサブネット (10.16.64.0/20) が作成される', () => {
       template.hasResourceProperties('AWS::EC2::Subnet', {
         CidrBlock: '10.16.64.0/20',
+      });
+    });
+
+    test('AZ-c用アイソレートサブネット (10.16.80.0/20) が作成される', () => {
+      template.hasResourceProperties('AWS::EC2::Subnet', {
+        CidrBlock: '10.16.80.0/20',
       });
     });
   });
@@ -91,9 +103,9 @@ describe('VpcNetworkStack', () => {
 
   describe('ルートテーブル', () => {
     test('各サブネット用のルートテーブルが作成される', () => {
-      // 4つのサブネット用ルートテーブル
-      template.resourceCountIs('AWS::EC2::RouteTable', 4);
-      template.resourceCountIs('AWS::EC2::SubnetRouteTableAssociation', 4);
+      // 6つのサブネット用ルートテーブル
+      template.resourceCountIs('AWS::EC2::RouteTable', 6);
+      template.resourceCountIs('AWS::EC2::SubnetRouteTableAssociation', 6);
     });
   });
 
@@ -110,6 +122,22 @@ describe('VpcNetworkStack', () => {
         Description: 'AZ-c用パブリックサブネットID (ALB 2AZ要件用)',
         Export: {
           Name: 'LoanpediaPublicSubnetCId',
+        },
+      });
+    });
+
+    test('IsolatedSubnetIdとIsolatedSubnetCIdが出力される', () => {
+      template.hasOutput('IsolatedSubnetId', {
+        Description: 'アイソレートサブネットID (AZ-a)',
+        Export: {
+          Name: 'LoanpediaIsolatedSubnetId',
+        },
+      });
+
+      template.hasOutput('IsolatedSubnetCId', {
+        Description: 'アイソレートサブネットID (AZ-c, RDS 2AZ要件用)',
+        Export: {
+          Name: 'LoanpediaIsolatedSubnetCId',
         },
       });
     });

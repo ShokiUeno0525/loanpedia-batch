@@ -59,7 +59,8 @@ export class SecurityGroupsConstruct extends Construct {
     // ECS用セキュリティグループ
     this.ecsSg = new ec2.SecurityGroup(this, 'EcsSecurityGroup', {
       vpc,
-      description: 'ECS Fargate security group - Allow HTTP from ALB and access to RDS/External APIs',
+      description:
+        'ECS Fargate security group - Allow HTTP from ALB and access to RDS/External APIs',
       allowAllOutbound: false,
     });
 

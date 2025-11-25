@@ -31,6 +31,11 @@ export class VpcNetworkStack extends cdk.Stack {
   public readonly subnetConstruct: SubnetConstruct;
 
   /**
+   * 作成されたサブネットコンストラクト (AZ-c)
+   */
+  public readonly subnetConstructC: SubnetConstruct;
+
+  /**
    * AZ-c用のパブリックサブネット (ALB 2AZ要件のためのダミー)
    */
   public readonly publicSubnetC: ec2.PublicSubnet;
@@ -82,19 +87,21 @@ export class VpcNetworkStack extends cdk.Stack {
       privateSubnet: this.subnetConstruct.privateSubnet,
     });
 
-    // AZ-c用のパブリックサブネットを作成 (ALB 2AZ要件のためのダミー)
+    // AZ-c用のサブネットを作成 (RDS/ALB 2AZ要件のため)
     const availabilityZoneC = cdk.Stack.of(this).availabilityZones[2]; // ap-northeast-1c
-    this.publicSubnetC = new ec2.PublicSubnet(this, 'PublicSubnetC', {
-      vpcId: this.vpcConstruct.vpc.vpcId,
-      cidrBlock: '10.16.16.0/20',
+    this.subnetConstructC = new SubnetConstruct(this, 'SubnetConstructC', {
+      vpc: this.vpcConstruct.vpc,
       availabilityZone: availabilityZoneC,
-      mapPublicIpOnLaunch: true,
+      publicCidr: '10.16.16.0/20',
+      privateCidr: '10.16.48.0/20',
+      isolatedCidr: '10.16.80.0/20',
     });
 
-    Tags.of(this.publicSubnetC).add('Name', 'Loanpedia-Dev-Subnet-Public-C');
-    Tags.of(this.publicSubnetC).add('aws-cdk:subnet-type', 'Public');
+    // ALB用にAZ-cのパブリックサブネットを参照（後方互換性のため）
+    this.publicSubnetC = this.subnetConstructC.publicSubnet;
 
     // AZ-c用パブリックサブネットのルートテーブルにInternet Gatewayへのルートを追加
+    // (ALB 2AZ要件のため)
     new ec2.CfnRoute(this, 'PublicSubnetCRoute', {
       routeTableId: this.publicSubnetC.routeTable.routeTableId,
       destinationCidrBlock: '0.0.0.0/0',
@@ -130,6 +137,12 @@ export class VpcNetworkStack extends cdk.Stack {
       value: this.subnetConstruct.isolatedSubnet.subnetId,
       description: 'アイソレートサブネットID (AZ-a)',
       exportName: 'LoanpediaIsolatedSubnetId',
+    });
+
+    new cdk.CfnOutput(this, 'IsolatedSubnetCId', {
+      value: this.subnetConstructC.isolatedSubnet.subnetId,
+      description: 'アイソレートサブネットID (AZ-c, RDS 2AZ要件用)',
+      exportName: 'LoanpediaIsolatedSubnetCId',
     });
   }
 }

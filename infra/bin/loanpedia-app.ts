@@ -65,6 +65,7 @@ const backendStack = new BackendStack(app, 'BackendStack', {
   publicSubnetC: vpcNetworkStack.publicSubnetC,
   privateSubnet: vpcNetworkStack.subnetConstruct.privateSubnet,
   isolatedSubnet: vpcNetworkStack.subnetConstruct.isolatedSubnet,
+  isolatedSubnetC: vpcNetworkStack.subnetConstructC.isolatedSubnet,
   certificate: albAcmCertificateStack.certificate,
   hostedZone: route53Stack.hostedZone,
   env: {

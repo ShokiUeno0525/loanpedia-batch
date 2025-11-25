@@ -16,9 +16,10 @@ export interface RdsConstructProps {
   readonly securityGroup: ec2.ISecurityGroup;
 
   /**
-   * アイソレートサブネット (AZ-a)
+   * アイソレートサブネット（複数AZ）
+   * RDSサブネットグループには最低2つの異なるAZのサブネットが必要
    */
-  readonly isolatedSubnet: ec2.ISubnet;
+  readonly isolatedSubnets: ec2.ISubnet[];
 }
 
 /**
@@ -50,7 +51,7 @@ export class RdsConstruct extends Construct {
   constructor(scope: Construct, id: string, props: RdsConstructProps) {
     super(scope, id);
 
-    const { vpc, securityGroup, isolatedSubnet } = props;
+    const { vpc, securityGroup, isolatedSubnets } = props;
 
     // RDSパラメータグループ（utf8mb4設定）
     const parameterGroup = new rds.ParameterGroup(this, 'ParameterGroup', {
@@ -68,12 +69,12 @@ export class RdsConstruct extends Construct {
       description: 'Loanpedia MySQL 8.0 parameter group with utf8mb4 settings',
     });
 
-    // RDSサブネットグループ（アイソレートサブネット、AZ-aのみ使用）
+    // RDSサブネットグループ（アイソレートサブネット、複数AZ）
     const subnetGroup = new rds.SubnetGroup(this, 'SubnetGroup', {
       vpc,
-      description: 'Loanpedia RDS subnet group',
+      description: 'Loanpedia RDS subnet group (multi-AZ requirement)',
       vpcSubnets: {
-        subnets: [isolatedSubnet],
+        subnets: isolatedSubnets,
       },
     });
 
@@ -84,9 +85,6 @@ export class RdsConstruct extends Construct {
       }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       vpc,
-      vpcSubnets: {
-        subnets: [isolatedSubnet],
-      },
       subnetGroup,
       securityGroups: [securityGroup],
       parameterGroup,

@@ -48,4 +48,52 @@ describe('SubnetConstruct', () => {
       AvailabilityZone: 'ap-northeast-1a',
     });
   });
+
+  test('カスタムCIDRブロックでサブネットが作成される', () => {
+    const app = new cdk.App();
+    const stack = new cdk.Stack(app, 'TestStack', {
+      env: {
+        account: '123456789012',
+        region: 'ap-northeast-1',
+      },
+    });
+
+    const vpc = new ec2.Vpc(stack, 'TestVpc', {
+      ipAddresses: ec2.IpAddresses.cidr('10.16.0.0/16'),
+      maxAzs: 1,
+      subnetConfiguration: [],
+    });
+
+    new SubnetConstruct(stack, 'TestSubnetConstruct', {
+      vpc,
+      availabilityZone: 'ap-northeast-1c',
+      publicCidr: '10.16.16.0/20',
+      privateCidr: '10.16.48.0/20',
+      isolatedCidr: '10.16.80.0/20',
+    });
+
+    const template = Template.fromStack(stack);
+
+    // サブネット総数
+    template.resourceCountIs('AWS::EC2::Subnet', 3);
+
+    // カスタムパブリックサブネット
+    template.hasResourceProperties('AWS::EC2::Subnet', {
+      CidrBlock: '10.16.16.0/20',
+      MapPublicIpOnLaunch: true,
+      AvailabilityZone: 'ap-northeast-1c',
+    });
+
+    // カスタムプライベートサブネット
+    template.hasResourceProperties('AWS::EC2::Subnet', {
+      CidrBlock: '10.16.48.0/20',
+      AvailabilityZone: 'ap-northeast-1c',
+    });
+
+    // カスタムアイソレートサブネット
+    template.hasResourceProperties('AWS::EC2::Subnet', {
+      CidrBlock: '10.16.80.0/20',
+      AvailabilityZone: 'ap-northeast-1c',
+    });
+  });
 });

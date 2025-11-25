@@ -39,6 +39,7 @@ describe('BackendStack', () => {
       publicSubnetC: vpcStack.publicSubnetC,
       privateSubnet: vpcStack.subnetConstruct.privateSubnet,
       isolatedSubnet: vpcStack.subnetConstruct.isolatedSubnet,
+      isolatedSubnetC: vpcStack.subnetConstructC.isolatedSubnet,
       certificate,
       hostedZone,
       env: {

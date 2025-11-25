@@ -38,6 +38,11 @@ export interface BackendStackProps extends cdk.StackProps {
   readonly isolatedSubnet: ec2.ISubnet;
 
   /**
+   * アイソレートサブネット（AZ-c）
+   */
+  readonly isolatedSubnetC: ec2.ISubnet;
+
+  /**
    * ACM証明書
    */
   readonly certificate: acm.ICertificate;
@@ -115,6 +120,7 @@ export class BackendStack extends cdk.Stack {
       publicSubnetC,
       privateSubnet,
       isolatedSubnet,
+      isolatedSubnetC,
       certificate,
       hostedZone,
     } = props;
@@ -172,7 +178,7 @@ export class BackendStack extends cdk.Stack {
     this.rds = new RdsConstruct(this, 'Rds', {
       vpc,
       securityGroup: this.securityGroups.rdsSg,
-      isolatedSubnet,
+      isolatedSubnets: [isolatedSubnet, isolatedSubnetC],
     });
 
     // Cognito User Pool作成

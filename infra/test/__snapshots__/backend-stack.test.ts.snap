@@ -283,7 +283,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
             "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructPublicSubnet346C7EDEC7FA4DBA",
           },
           {
-            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefPublicSubnetCSubnet175E3284C0A9E25D",
+            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructCPublicSubnetC92658096AEFE41F",
           },
         ],
         "Type": "application",
@@ -1208,7 +1208,6 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
         "MultiAZ": false,
         "PreferredBackupWindow": "17:00-18:00",
         "PreferredMaintenanceWindow": "sun:18:00-sun:19:00",
-        "PubliclyAccessible": false,
         "StorageType": "gp3",
         "VPCSecurityGroups": [
           {
@@ -1260,7 +1259,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "RdsParameterGroupC1EC0880": {
       "Properties": {
-        "Description": "Loanpedia MySQL 8.0用パラメータグループ（utf8mb4設定）",
+        "Description": "Loanpedia MySQL 8.0 parameter group with utf8mb4 settings",
         "Family": "mysql8.0",
         "Parameters": {
           "character_set_client": "utf8mb4",
@@ -1275,10 +1274,13 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "RdsSubnetGroup8D91727A": {
       "Properties": {
-        "DBSubnetGroupDescription": "Loanpedia RDS用サブネットグループ",
+        "DBSubnetGroupDescription": "Loanpedia RDS subnet group (multi-AZ requirement)",
         "SubnetIds": [
           {
             "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructIsolatedSubnet67CFBF3DDF227504",
+          },
+          {
+            "Fn::ImportValue": "TestVpcStack:ExportsOutputRefSubnetConstructCIsolatedSubnet5C043BC8F405940C",
           },
         ],
       },
@@ -1286,7 +1288,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsAlbSecurityGroup9F78329C": {
       "Properties": {
-        "GroupDescription": "ALB用セキュリティグループ（CloudFrontからのHTTPSアクセスのみ許可）",
+        "GroupDescription": "ALB security group - Allow HTTPS from CloudFront only",
         "SecurityGroupIngress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -1348,7 +1350,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsEcsSecurityGroup4A45070C": {
       "Properties": {
-        "GroupDescription": "ECS Fargate用セキュリティグループ（ALBからのHTTPアクセス、RDS・外部API接続）",
+        "GroupDescription": "ECS Fargate security group - Allow HTTP from ALB and access to RDS/External APIs",
         "SecurityGroupEgress": [
           {
             "CidrIp": "0.0.0.0/0",
@@ -1408,7 +1410,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
     },
     "SecurityGroupsRdsSecurityGroup2F181BE8": {
       "Properties": {
-        "GroupDescription": "RDS MySQL用セキュリティグループ（ECSからのMySQLアクセスのみ許可）",
+        "GroupDescription": "RDS MySQL security group - Allow MySQL access from ECS only",
         "SecurityGroupEgress": [
           {
             "CidrIp": "255.255.255.255/32",
