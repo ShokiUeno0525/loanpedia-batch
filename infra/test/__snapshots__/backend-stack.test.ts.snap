@@ -1167,7 +1167,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
       "DeletionPolicy": "Snapshot",
       "Properties": {
         "AllocatedStorage": "20",
-        "BackupRetentionPeriod": 7,
+        "BackupRetentionPeriod": 1,
         "CopyTagsToSnapshot": true,
         "DBInstanceClass": "db.t3.micro",
         "DBName": "loanpedia",
