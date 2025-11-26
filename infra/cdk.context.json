@@ -1,1 +1,11 @@
-{}
+{
+  "hosted-zone:account=099107841837:domainName=loanpedia.jp:region=us-east-1": {
+    "Id": "/hostedzone/Z0508547Z5LEXITX3FYA",
+    "Name": "loanpedia.jp."
+  },
+  "availability-zones:account=099107841837:region=ap-northeast-1": [
+    "ap-northeast-1a",
+    "ap-northeast-1c",
+    "ap-northeast-1d"
+  ]
+}

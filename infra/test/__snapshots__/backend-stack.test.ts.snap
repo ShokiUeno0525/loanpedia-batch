@@ -406,8 +406,9 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
       "UpdateReplacePolicy": "Delete",
     },
     "ApiRepositoryB8378B43": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "Delete",
       "Properties": {
+        "EmptyOnDelete": true,
         "ImageScanningConfiguration": {
           "ScanOnPush": true,
         },
@@ -417,7 +418,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
         "RepositoryName": "loanpedia-api",
       },
       "Type": "AWS::ECR::Repository",
-      "UpdateReplacePolicy": "Retain",
+      "UpdateReplacePolicy": "Delete",
     },
     "CognitoClientSecret44AD26C1": {
       "DeletionPolicy": "Delete",
@@ -1150,8 +1151,9 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
       "UpdateReplacePolicy": "Delete",
     },
     "MigrationRepositoryE2B2F2AB": {
-      "DeletionPolicy": "Retain",
+      "DeletionPolicy": "Delete",
       "Properties": {
+        "EmptyOnDelete": true,
         "ImageScanningConfiguration": {
           "ScanOnPush": true,
         },
@@ -1161,7 +1163,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
         "RepositoryName": "loanpedia-migration",
       },
       "Type": "AWS::ECR::Repository",
-      "UpdateReplacePolicy": "Retain",
+      "UpdateReplacePolicy": "Delete",
     },
     "RdsInstance5075E838": {
       "DeletionPolicy": "Snapshot",

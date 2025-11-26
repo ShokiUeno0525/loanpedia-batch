@@ -130,7 +130,8 @@ export class BackendStack extends cdk.Stack {
       repositoryName: 'loanpedia-api',
       imageScanOnPush: true, // イメージスキャン有効化
       encryption: ecr.RepositoryEncryption.AES_256, // AES-256暗号化
-      removalPolicy: cdk.RemovalPolicy.RETAIN, // リポジトリ保持
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // 開発環境のため削除可能
+      emptyOnDelete: true, // スタック削除時にイメージも削除
       lifecycleRules: [
         {
           description: '未タグイメージを30日後に削除',
@@ -145,7 +146,8 @@ export class BackendStack extends cdk.Stack {
       repositoryName: 'loanpedia-migration',
       imageScanOnPush: true,
       encryption: ecr.RepositoryEncryption.AES_256,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // 開発環境のため削除可能
+      emptyOnDelete: true, // スタック削除時にイメージも削除
       lifecycleRules: [
         {
           description: '未タグイメージを30日後に削除',
