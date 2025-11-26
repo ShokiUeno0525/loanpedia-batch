@@ -34,7 +34,7 @@ export interface RdsConstructProps {
  * - シングルAZ (ap-northeast-1a)
  * - 文字セット: utf8mb4
  * - 照合順序: utf8mb4_unicode_ci
- * - バックアップ保持期間: 7日間
+ * - バックアップ: 無効（開発環境）
  * - 認証情報: Secrets Manager自動生成
  */
 export class RdsConstruct extends Construct {
@@ -94,8 +94,6 @@ export class RdsConstruct extends Construct {
       maxAllocatedStorage: 100, // 自動スケーリング上限
       multiAz: false, // シングルAZ（開発環境、コスト削減）
       deletionProtection: false, // 開発環境のため無効化
-      backupRetention: cdk.Duration.days(1), // 無料利用枠の上限（最大1日）
-      preferredBackupWindow: '17:00-18:00', // JST 02:00-03:00
       preferredMaintenanceWindow: 'sun:18:00-sun:19:00', // JST 日曜03:00-04:00
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT, // スタック削除時はスナップショット作成
     });

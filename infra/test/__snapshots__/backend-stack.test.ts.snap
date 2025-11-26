@@ -1167,7 +1167,6 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
       "DeletionPolicy": "Snapshot",
       "Properties": {
         "AllocatedStorage": "20",
-        "BackupRetentionPeriod": 1,
         "CopyTagsToSnapshot": true,
         "DBInstanceClass": "db.t3.micro",
         "DBName": "loanpedia",
@@ -1206,7 +1205,6 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
         },
         "MaxAllocatedStorage": 100,
         "MultiAZ": false,
-        "PreferredBackupWindow": "17:00-18:00",
         "PreferredMaintenanceWindow": "sun:18:00-sun:19:00",
         "StorageType": "gp3",
         "VPCSecurityGroups": [

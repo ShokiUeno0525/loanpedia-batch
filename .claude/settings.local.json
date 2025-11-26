@@ -22,7 +22,8 @@
       "Bash(npm run build:*)",
       "Bash(.specify/scripts/bash/:*)",
       "Bash(gh issue create:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npx cdk synth)"
     ],
     "deny": [
       "Bash(rm:*)"
