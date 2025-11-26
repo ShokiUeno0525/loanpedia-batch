@@ -564,7 +564,7 @@ exports[`BackendStack スナップショットテスト Backend Stackのスナ�
           "MaximumPercent": 200,
           "MinimumHealthyPercent": 50,
         },
-        "DesiredCount": 1,
+        "DesiredCount": 0,
         "EnableECSManagedTags": false,
         "HealthCheckGracePeriodSeconds": 60,
         "LaunchType": "FARGATE",

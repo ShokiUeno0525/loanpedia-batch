@@ -209,7 +209,7 @@ export class EcsConstruct extends Construct {
     this.apiService = new ecs.FargateService(this, 'ApiService', {
       cluster: this.cluster,
       taskDefinition: this.apiTaskDefinition,
-      desiredCount: 1,
+      desiredCount: 0, // 初期状態では起動しない（開発環境）
       vpcSubnets: {
         subnets: [privateSubnet],
       },
