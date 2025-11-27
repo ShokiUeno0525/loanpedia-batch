@@ -5,7 +5,7 @@ import { FinalCtaSection } from "../components/FinalCtaSection";
 
 export const LandingPage = () => {
   return (
-    <div>
+    <div className="space-y-24">
       <HeroSection />
       <ReasonSection />
       <PopularLoanTypesSection />

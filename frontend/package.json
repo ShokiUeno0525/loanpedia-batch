@@ -16,6 +16,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md,css}\""
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.2",
