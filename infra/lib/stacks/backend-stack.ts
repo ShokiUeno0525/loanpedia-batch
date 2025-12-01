@@ -13,36 +13,6 @@ import { EcsConstruct } from '../constructs/ecs-construct';
 
 export interface BackendStackProps extends cdk.StackProps {
   /**
-   * VPC
-   */
-  readonly vpc: ec2.IVpc;
-
-  /**
-   * パブリックサブネット（AZ-a）
-   */
-  readonly publicSubnetA: ec2.ISubnet;
-
-  /**
-   * パブリックサブネット（AZ-c）
-   */
-  readonly publicSubnetC: ec2.ISubnet;
-
-  /**
-   * プライベートサブネット（AZ-a）
-   */
-  readonly privateSubnet: ec2.ISubnet;
-
-  /**
-   * アイソレートサブネット（AZ-a）
-   */
-  readonly isolatedSubnet: ec2.ISubnet;
-
-  /**
-   * アイソレートサブネット（AZ-c）
-   */
-  readonly isolatedSubnetC: ec2.ISubnet;
-
-  /**
    * ACM証明書
    */
   readonly certificate: acm.ICertificate;
@@ -114,16 +84,35 @@ export class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
-    const {
-      vpc,
-      publicSubnetA,
-      publicSubnetC,
-      privateSubnet,
-      isolatedSubnet,
-      isolatedSubnetC,
-      certificate,
-      hostedZone,
-    } = props;
+    const { certificate, hostedZone } = props;
+
+    // VPCとサブネットをCloudFormation Exportsから参照
+    // これによりAWS::EarlyValidation::ResourceExistenceCheckが正しく動作する
+    const vpcId = cdk.Fn.importValue('LoanpediaVpcId');
+    const vpc = ec2.Vpc.fromVpcAttributes(this, 'Vpc', {
+      vpcId: vpcId,
+      availabilityZones: cdk.Fn.getAzs(),
+    });
+
+    const publicSubnetA = ec2.Subnet.fromSubnetAttributes(this, 'PublicSubnetA', {
+      subnetId: cdk.Fn.importValue('LoanpediaPublicSubnetAId'),
+      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+    });
+
+    const publicSubnetC = ec2.Subnet.fromSubnetAttributes(this, 'PublicSubnetC', {
+      subnetId: cdk.Fn.importValue('LoanpediaPublicSubnetCId'),
+      availabilityZone: cdk.Fn.select(2, cdk.Fn.getAzs()),
+    });
+
+    const privateSubnet = ec2.Subnet.fromSubnetAttributes(this, 'PrivateSubnet', {
+      subnetId: cdk.Fn.importValue('LoanpediaPrivateSubnetId'),
+      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+    });
+
+    const isolatedSubnet = ec2.Subnet.fromSubnetAttributes(this, 'IsolatedSubnet', {
+      subnetId: cdk.Fn.importValue('LoanpediaIsolatedSubnetId'),
+      availabilityZone: cdk.Fn.select(0, cdk.Fn.getAzs()),
+    });
 
     // ECRリポジトリ: loanpedia-api
     this.ecrApiRepository = new ecr.Repository(this, 'ApiRepository', {
