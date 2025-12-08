@@ -1,9 +1,11 @@
+import { BrowserRouter } from "react-router-dom";
+import { AppRouter } from "@/app/router";
+
 function App() {
   return (
-    <div>
-      <h1>Loanpedia</h1>
-      <p>ローン情報集約システム</p>
-    </div>
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
   );
 }
 
