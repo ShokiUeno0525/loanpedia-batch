@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 
 export const HeroSection = () => {
@@ -12,7 +13,8 @@ export const HeroSection = () => {
         {/* メインのキャッチコピー */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-gray-900">
           青森県内のローン商品を
-          <span className="text-primary">まとめて比較・検索</span>できます
+          <br className="hidden sm:block" />
+          <span className="text-[#2563EB]">まとめて比較・検索できます</span>
         </h1>
         {/* サブ説明文 */}
         <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
@@ -26,13 +28,16 @@ export const HeroSection = () => {
           <Button size="lg" className="px-10 py-6 text-lg rounded-xl shadow-md">
             無料で試してみる
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="px-10 py-6 text-lg rounded-xl border-gray-300 text-gray-800"
-          >
-            ローンを探す
-          </Button>
+
+          <Link to="/search">
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-10 py-6 text-lg rounded-xl border-gray-300 text-gray-800"
+            >
+              ローンを探す
+            </Button>
+          </Link>
         </div>
 
         {/* 補足テキスト */}
