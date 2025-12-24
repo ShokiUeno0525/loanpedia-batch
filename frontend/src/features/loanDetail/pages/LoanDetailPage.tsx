@@ -1,12 +1,6 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const LOANS = [
-  { id: "1", bank: "青森みちのく銀行", type: "住宅ローン", rateFrom: 0.45 },
-  { id: "2", bank: "青森みちのく銀行", type: "マイカーローン", rateFrom: 1.2 },
-  { id: "3", bank: "青い森信用金庫", type: "住宅ローン", rateFrom: 1.1 },
-  { id: "4", bank: "青い森信用金庫", type: "教育ローン", rateFrom: 1.1 },
-];
+import { LOANS } from "../../loans/data/loans";
 
 export const LoanDetailPage = () => {
   const { id } = useParams();

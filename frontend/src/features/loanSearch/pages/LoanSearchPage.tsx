@@ -1,39 +1,29 @@
 import { useMemo, useState } from "react";
 import { LoanCard } from "../../landing/components/LoanCard";
+import { LOANS, LoanType, Bank } from "../../loans/data/loans";
 
-type LoanType = "住宅ローン" | "マイカーローン" | "教育ローン";
-type Bank = "すべて" | "青森みちのく銀行" | "青い森信用金庫";
-
-type Loan = {
-  id: string;
-  bank: Exclude<Bank, "すべて">;
-  type: LoanType;
-  rateFrom: number; //最低金利(例:0.45%)
-};
-
-const LOANS: Loan[] = [
-  { id: "1", bank: "青森みちのく銀行", type: "住宅ローン", rateFrom: 0.45 },
-  { id: "2", bank: "青森みちのく銀行", type: "マイカーローン", rateFrom: 1.2 },
-  { id: "3", bank: "青い森信用金庫", type: "住宅ローン", rateFrom: 1.1 },
-  { id: "4", bank: "青い森信用金庫", type: "教育ローン", rateFrom: 1.1 },
-];
+type BankFilter = "すべて" | Bank;
 
 export const LoanSearchPage = () => {
   // ①検索条件(state)
   const [draftLoanType, setDraftLoanType] = useState<LoanType>("住宅ローン");
-  const [draftBank, setDraftBank] = useState<Bank>("すべて");
+  const [draftBank, setDraftBank] = useState<BankFilter>("すべて");
+  const [draftMaxRate, setDraftMaxRate] = useState<number | "">("");
+  const [appliedMaxRate, setAppliedMaxRate] = useState<number | "">("");
 
   // 検索条件の確定(検索ボタンを押したときに更新)
   const [appliedLoanType, setAppliedLoanType] =
     useState<LoanType>("住宅ローン");
-  const [appliedBank, setAppliedBank] = useState<Bank>("すべて");
+  const [appliedBank, setAppliedBank] = useState<BankFilter>("すべて");
   // ②条件に応じた結果(フィルタ)
   const results = useMemo(() => {
     return LOANS.filter((loan) => {
       const matchType = loan.type === appliedLoanType;
       const matchBank =
         appliedBank === "すべて" ? true : loan.bank === appliedBank;
-      return matchType && matchBank;
+      const matchRate =
+        appliedMaxRate === "" ? true : loan.rateFrom <= appliedMaxRate;
+      return matchType && matchBank && matchRate;
     });
   }, [appliedLoanType, appliedBank]);
 
@@ -41,6 +31,7 @@ export const LoanSearchPage = () => {
     //検索ボタンを押したときだけ「確定条件」を更新
     setAppliedLoanType(draftLoanType);
     setAppliedBank(draftBank);
+    setAppliedMaxRate(draftMaxRate);
   };
 
   return (
@@ -83,6 +74,22 @@ export const LoanSearchPage = () => {
               <option value="青い森信用金庫">青い森信用金庫</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">上限金利(%)</label>
+          <input
+            type="number"
+            step="0.01"
+            className="w-full border rounded-md px-3 py-2"
+            placeholder="例:1.0"
+            value={draftMaxRate}
+            onChange={(e) =>
+              setDraftMaxRate(
+                e.target.value === "" ? "" : Number(e.target.value)
+              )
+            }
+          />
         </div>
 
         {/* ボタン(今回は見た目だけ。押しても結果は既に反映される) */}
