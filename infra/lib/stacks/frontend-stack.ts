@@ -69,13 +69,15 @@ export class FrontendStack extends cdk.Stack {
 
     // S3バケットをクロスリージョン参照（propsから取得）
     // crossRegionReferences: trueにより、CDKが自動的にSSM ParameterまたはCustom Resourceを使用して参照を実現
-    // 循環参照を避けるため、バケット名のみを使用して再度参照を作成
-    const frontendBucket = s3.Bucket.fromBucketName(
-      this,
-      'FrontendBucketRef',
-      props.frontendBucket.bucketName
-    );
-    const logBucket = s3.Bucket.fromBucketName(this, 'LogBucketRef', props.logBucket.bucketName);
+    // fromBucketAttributesでリージョンを明示的に指定（fromBucketNameだとus-east-1と誤認される）
+    const frontendBucket = s3.Bucket.fromBucketAttributes(this, 'FrontendBucketRef', {
+      bucketName: props.frontendBucket.bucketName,
+      region: 'ap-northeast-1',
+    });
+    const logBucket = s3.Bucket.fromBucketAttributes(this, 'LogBucketRef', {
+      bucketName: props.logBucket.bucketName,
+      region: 'ap-northeast-1',
+    });
 
     // T046: WAF WebACLを作成（User Story 3）
     // 注: WAFはus-east-1リージョンで作成する必要があるため、
