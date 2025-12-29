@@ -1,20 +1,33 @@
 import { useMemo, useState } from "react";
 import { LoanCard } from "../../landing/components/LoanCard";
 import { LOANS, LoanType, Bank } from "../../loans/data/loans";
+import { useSearchParams } from "react-router-dom";
 
 type BankFilter = "すべて" | Bank;
 
 export const LoanSearchPage = () => {
   // ①検索条件(state)
-  const [draftLoanType, setDraftLoanType] = useState<LoanType>("住宅ローン");
-  const [draftBank, setDraftBank] = useState<BankFilter>("すべて");
-  const [draftMaxRate, setDraftMaxRate] = useState<number | "">("");
-  const [appliedMaxRate, setAppliedMaxRate] = useState<number | "">("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialLoanType =
+    (searchParams.get("type") as LoanType) ?? "住宅ローン";
+  const initialBank = (searchParams.get("bank") as BankFilter) ?? "すべて";
+  const initialMaxRate: number | "" =
+    searchParams.get("maxRate") !== null
+      ? Number(searchParams.get("maxRate"))
+      : "";
+
+  const [draftLoanType, setDraftLoanType] = useState<LoanType>(initialLoanType);
+  const [draftBank, setDraftBank] = useState<BankFilter>(initialBank);
+  const [draftMaxRate, setDraftMaxRate] = useState<number | "">(initialMaxRate);
 
   // 検索条件の確定(検索ボタンを押したときに更新)
   const [appliedLoanType, setAppliedLoanType] =
-    useState<LoanType>("住宅ローン");
-  const [appliedBank, setAppliedBank] = useState<BankFilter>("すべて");
+    useState<LoanType>(initialLoanType);
+  const [appliedBank, setAppliedBank] = useState<BankFilter>(initialBank);
+  const [appliedMaxRate, setAppliedMaxRate] = useState<number | "">(
+    initialMaxRate
+  );
   // ②条件に応じた結果(フィルタ)
   const results = useMemo(() => {
     return LOANS.filter((loan) => {
@@ -25,13 +38,24 @@ export const LoanSearchPage = () => {
         appliedMaxRate === "" ? true : loan.rateFrom <= appliedMaxRate;
       return matchType && matchBank && matchRate;
     });
-  }, [appliedLoanType, appliedBank]);
+  }, [appliedLoanType, appliedBank, appliedMaxRate]);
 
   const onSearch = () => {
     //検索ボタンを押したときだけ「確定条件」を更新
     setAppliedLoanType(draftLoanType);
     setAppliedBank(draftBank);
     setAppliedMaxRate(draftMaxRate);
+
+    const params: Record<string, string> = {
+      type: draftLoanType,
+    };
+    if (draftBank !== "すべて") {
+      params.bank = draftBank;
+    }
+    if (draftMaxRate !== "") {
+      params.maxRate = String(draftMaxRate);
+    }
+    setSearchParams(params);
   };
 
   return (
@@ -67,7 +91,7 @@ export const LoanSearchPage = () => {
             <select
               className="w-full border rounded-md px-3 py-2"
               value={draftBank}
-              onChange={(e) => setDraftBank(e.target.value as Bank)}
+              onChange={(e) => setDraftBank(e.target.value as BankFilter)}
             >
               <option value="すべて">すべて</option>
               <option value="青森みちのく銀行">青森みちのく銀行</option>
@@ -106,7 +130,7 @@ export const LoanSearchPage = () => {
 
       {/* 検索結果 */}
       <section className="space-y-4">
-        <div className="flex item-baseline justify-between">
+        <div className="flex items-baseline justify-between">
           <h2 className="text-xl font-semibold">検索結果</h2>
           <p className="text-sm text-gray-600">{results.length} 件</p>
         </div>
