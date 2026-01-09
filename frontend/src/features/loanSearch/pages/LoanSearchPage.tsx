@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LoanCard } from "../../landing/components/LoanCard";
 import { LOANS, LoanType, Bank } from "../../loans/data/loans";
 import { useSearchParams } from "react-router-dom";
+import { getLoans } from "../../loans/data/loanRepository";
 
 type BankFilter = "すべて" | Bank;
 
@@ -28,16 +29,43 @@ export const LoanSearchPage = () => {
   const [appliedMaxRate, setAppliedMaxRate] = useState<number | "">(
     initialMaxRate
   );
+
+  useEffect(() => {
+    setDraftLoanType(initialLoanType);
+    setDraftBank(initialBank);
+    setDraftMaxRate(initialMaxRate);
+
+    setAppliedLoanType(initialLoanType);
+    setAppliedBank(initialBank);
+    setAppliedMaxRate(initialMaxRate);
+  }, [searchParams]);
+
   // ②条件に応じた結果(フィルタ)
-  const results = useMemo(() => {
-    return LOANS.filter((loan) => {
-      const matchType = loan.type === appliedLoanType;
-      const matchBank =
-        appliedBank === "すべて" ? true : loan.bank === appliedBank;
-      const matchRate =
-        appliedMaxRate === "" ? true : loan.rateFrom <= appliedMaxRate;
-      return matchType && matchBank && matchRate;
-    });
+  const [results, setResults] = useState(LOANS);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let canceled = false;
+
+    const run = async () => {
+      setIsLoading(true);
+
+      const data = await getLoans({
+        type: appliedLoanType,
+        bank: appliedBank === "すべて" ? undefined : appliedBank,
+        maxRate: appliedMaxRate === "" ? undefined : appliedMaxRate,
+      });
+      if (!canceled) {
+        setResults(data);
+        setIsLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      canceled = true;
+    };
   }, [appliedLoanType, appliedBank, appliedMaxRate]);
 
   const onSearch = () => {
@@ -57,6 +85,7 @@ export const LoanSearchPage = () => {
     }
     setSearchParams(params);
   };
+  const countText = useMemo(() => `${results.length} 件`, [results.length]);
 
   return (
     <div className="py-16 max-w-5xl mx-auto px-6 space-y-10">
@@ -116,7 +145,7 @@ export const LoanSearchPage = () => {
           />
         </div>
 
-        {/* ボタン(今回は見た目だけ。押しても結果は既に反映される) */}
+        {/* 検索ボタン（押したときに条件を確定してURLも更新） */}
         <div className="text-right">
           <button
             type="button"
@@ -132,25 +161,29 @@ export const LoanSearchPage = () => {
       <section className="space-y-4">
         <div className="flex items-baseline justify-between">
           <h2 className="text-xl font-semibold">検索結果</h2>
-          <p className="text-sm text-gray-600">{results.length} 件</p>
+          <p className="text-sm text-gray-600">{countText} 件</p>
         </div>
 
-        {results.length === 0 ? (
+        {isLoading && <p className="text-sm text-gray-500">読み込み中．．．</p>}
+
+        {!isLoading && results.length === 0 ? (
           <div className="border rounded-lg p-6 text-center text-gray-600">
             条件に合うローンが見つかりませんでした
           </div>
         ) : (
-          <div className="space-y-3">
-            {results.map((loan) => (
-              <LoanCard
-                key={loan.id}
-                id={loan.id}
-                bank={loan.bank}
-                type={loan.type}
-                rateFrom={loan.rateFrom}
-              />
-            ))}
-          </div>
+          !isLoading && (
+            <div className="space-y-3">
+              {results.map((loan) => (
+                <LoanCard
+                  key={loan.id}
+                  id={loan.id}
+                  bank={loan.bank}
+                  type={loan.type}
+                  rateFrom={loan.rateFrom}
+                />
+              ))}
+            </div>
+          )
         )}
       </section>
     </div>
