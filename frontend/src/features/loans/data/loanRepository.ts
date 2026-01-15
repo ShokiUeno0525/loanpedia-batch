@@ -1,6 +1,6 @@
 import { LOANS, Loan, LoanType, Bank } from "../../loans/data/loans";
 
-type LoanQuery = {
+export type LoanQuery = {
   type?: LoanType;
   bank?: Bank;
   maxRate?: number;
