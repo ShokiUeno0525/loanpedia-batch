@@ -156,7 +156,7 @@ export const LoanSearchPage = () => {
             value={draftMaxRate}
             onChange={(e) =>
               setDraftMaxRate(
-                e.target.value === "" ? "" : Number(e.target.value)
+                e.target.value === "" ? "" : Number(e.target.value),
               )
             }
           />

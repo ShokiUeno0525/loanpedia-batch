@@ -1,1 +1,1 @@
-export { LoanSearchPage } from './pages/LoanSearchPage';
+export { LoanSearchPage } from "./pages/LoanSearchPage";
