@@ -42,7 +42,7 @@ export const LoanSearchPage = () => {
 
   // ---------------------------
   // ② 検索確定（submittedQuery）
-  //   - “検索ボタン押下”でだけ更新する
+  //   - "検索ボタン押下"でだけ更新する
   // ---------------------------
   const [submittedQuery, setSubmittedQuery] = useState<LoanQuery | null>(null);
 
