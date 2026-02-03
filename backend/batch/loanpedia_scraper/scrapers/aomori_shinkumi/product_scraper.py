@@ -193,7 +193,7 @@ class AomoriShinkumiScraper:
             "source_url": url,
             "html_content": html_text,
             "extracted_text": extracted_text,
-            "content_hash": hashlib.md5(html_text.encode()).hexdigest(),
+            "content_hash": hashlib.sha256(html_text.encode()).hexdigest(),
             "scraping_status": "success",
             "scraped_at": datetime.now().isoformat(),
 

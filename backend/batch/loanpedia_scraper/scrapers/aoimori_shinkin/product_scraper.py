@@ -24,6 +24,40 @@ class AoimoriShinkinScraper:
         self.db_config = db_config
         self.session = http_client.build_session(config.HEADERS)
 
+    def _fetch_and_parse_html(self, url: str) -> Dict[str, Any]:
+        """URLからHTMLを取得してパースする
+
+        Args:
+            url: 取得対象のURL
+
+        Returns:
+            パース結果を含む辞書:
+            - html_part: パースされたHTML情報
+            - page_title: ページタイトル
+            - html_text: 生のHTMLテキスト
+            - soup: BeautifulSoupオブジェクト
+        """
+        resp = http_client.get(self.session, url, timeout=15)
+        soup = BeautifulSoup(resp.content, "html.parser")
+        html_part = parse_html_document(soup)
+
+        # タイトル取得
+        page_title = None
+        try:
+            title_el = soup.find("title")
+            page_title = title_el.get_text(strip=True) if title_el else None
+        except Exception:
+            page_title = None
+
+        html_text = getattr(resp, "text", None) or resp.content.decode("utf-8", errors="ignore")
+
+        return {
+            "html_part": html_part,
+            "page_title": page_title,
+            "html_text": html_text,
+            "soup": soup,
+        }
+
     def scrape_loan_info(self, url: Optional[str] = None) -> Dict[str, Any]:
         item = build_base_item()
 
@@ -83,21 +117,11 @@ class AoimoriShinkinScraper:
         if url:
             attempted = True
             try:
-                resp = http_client.get(self.session, url, timeout=15)
-                soup = BeautifulSoup(resp.content, "html.parser")
-                html_part = parse_html_document(soup)
-                # DB保存用にタイトル/本文を取得
-                page_title = None
-                try:
-                    title_el = soup.find("title")
-                    page_title = title_el.get_text(strip=True) if title_el else None
-                except Exception:
-                    page_title = None
-                html_text = getattr(resp, "text", None) or resp.content.decode("utf-8", errors="ignore")
-
+                parsed = self._fetch_and_parse_html(url)
+                html_part = parsed["html_part"]
                 merged = merge_product_fields(item, {**html_part, "source_url": url})
                 results.append(merged)
-                save_html_result_if_needed(item, html_part, url, page_title, html_text)
+                save_html_result_if_needed(item, html_part, url, parsed["page_title"], parsed["html_text"])
             except Exception as e:
                 html_error = str(e)
                 logger.warning(f"HTML parse skipped/failed: {e}")
@@ -109,45 +133,27 @@ class AoimoriShinkinScraper:
                     purl_raw = p.get("url") or ""
                     purl = str(purl_raw)
                     try:
-                        resp = http_client.get(self.session, purl, timeout=15)
-                        soup = BeautifulSoup(resp.content, "html.parser")
-                        html_part = parse_html_document(soup)
+                        parsed = self._fetch_and_parse_html(purl)
+                        html_part = parsed["html_part"]
                         item_with_name = {**html_part}
                         p_name = p.get("name")
                         if p_name and not item_with_name.get("product_name"):
                             item_with_name["product_name"] = str(p_name)
-                        # タイトルとHTML本文
-                        page_title = None
-                        try:
-                            title_el = soup.find("title")
-                            page_title = title_el.get_text(strip=True) if title_el else None
-                        except Exception:
-                            page_title = None
-                        html_text = getattr(resp, "text", None) or resp.content.decode("utf-8", errors="ignore")
 
                         merged = merge_product_fields(item, {**item_with_name, "source_url": purl})
                         results.append(merged)
-                        save_html_result_if_needed(item, item_with_name, purl, page_title or "", html_text)
+                        save_html_result_if_needed(item, item_with_name, purl, parsed["page_title"] or "", parsed["html_text"])
                     except Exception as e:
                         html_error = str(e)
                         logger.warning(f"HTML parse skipped/failed for {purl}: {e}")
             elif config.START:
                 attempted = True
                 try:
-                    resp = http_client.get(self.session, config.START, timeout=15)
-                    soup = BeautifulSoup(resp.content, "html.parser")
-                    html_part = parse_html_document(soup)
-                    page_title = None
-                    try:
-                        title_el = soup.find("title")
-                        page_title = title_el.get_text(strip=True) if title_el else None
-                    except Exception:
-                        page_title = None
-                    html_text = getattr(resp, "text", None) or resp.content.decode("utf-8", errors="ignore")
-
+                    parsed = self._fetch_and_parse_html(config.START)
+                    html_part = parsed["html_part"]
                     merged = merge_product_fields(item, {**html_part, "source_url": config.START})
                     results.append(merged)
-                    save_html_result_if_needed(item, html_part, config.START, page_title, html_text)
+                    save_html_result_if_needed(item, html_part, config.START, parsed["page_title"], parsed["html_text"])
                 except Exception as e:
                     html_error = str(e)
                     logger.warning(f"HTML parse skipped/failed: {e}")
@@ -173,8 +179,3 @@ class AoimoriShinkinScraper:
             # 空のproductsでも成功とみなす
             return {**item, "products": [], "scraping_status": "success", "db_saved_ids": db_saved_ids if self.save_to_db else None}
         return {**item, "products": results, "scraping_status": "success", "db_saved_ids": db_saved_ids if self.save_to_db else None}
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aoimori_shinkin/product_scraper.py
-# 青い森信用金庫のメインスクレイパー（製品抽出）
-# なぜ: 金利/条件/メタ情報を統合し標準構造化データを生成するため
-# 関連: http_client.py, html_parser.py, pdf_parser.py, ../../database/loan_database.py

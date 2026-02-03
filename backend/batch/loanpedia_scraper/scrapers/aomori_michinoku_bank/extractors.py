@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple, Optional
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
@@ -48,6 +51,7 @@ def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
         all_months += [y * 12 for y in years]
 
     if not all_months:
+        logger.warning(f"返済期間の抽出失敗: テキストから期間情報を検出できませんでした (サンプル: {text[:100]}...)")
         return None, None
 
     # 妥当性フィルタ（最低6ヶ月を優先。一般的な無担保ローンの最短想定）
@@ -108,6 +112,7 @@ def to_yen_range(text: str):
     # 重複を除去して一意な金額数を確認
     unique = sorted(set(nums))
     if not unique:
+        logger.warning(f"融資金額の抽出失敗: テキストから金額情報を検出できませんでした (サンプル: {text[:100]}...)")
         return (None, None)
     # 単一金額のみ検出された場合は上限のみとみなし、下限は未確定にする
     # （後段の妥当性補完で10万円などのデフォルト最小額を設定する）
@@ -123,6 +128,8 @@ def extract_age(text: str) -> Tuple[Optional[int], Optional[int]]:
     )
     mn = int(m1.group(1)) if m1 else None
     mx = int(m2.group(1) or m2.group(2)) if m2 else None
+    if mn is None and mx is None:
+        logger.warning(f"年齢条件の抽出失敗: テキストから年齢情報を検出できませんでした (サンプル: {text[:100]}...)")
     return mn, mx
 
 
@@ -146,8 +153,3 @@ def interest_type_from_hints(text: str, hints: list[str]):
         if "変動" in h:
             return "変動金利"
     return None
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aomori_michinoku_bank/extractors.py
-# 値抽出ユーティリティ（正規表現/パターン）
-# なぜ: 抽出ロジックの共通化とテスト容易性向上のため
-# 関連: html_parser.py, product_scraper.py, models.py

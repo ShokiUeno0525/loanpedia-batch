@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, Tuple, Optional
 import io
+import logging
 import pdfplumber
+
+logger = logging.getLogger(__name__)
+
 try:
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import extract_age, to_month_range
 except ImportError:
@@ -45,9 +49,5 @@ def extract_interest_range_from_pdf(pdf_text: str) -> Tuple[Optional[float], Opt
     nums = [float(x) / 100.0 for x in re.findall(r"(\d+(?:\.\d+)?)\s*[％%]", t)]
     if nums:
         return (min(nums), max(nums))
+    logger.warning(f"PDF金利の抽出失敗: テキストから金利情報を検出できませんでした (サンプル: {t[:100] if t else ''}...)")
     return (None, None)
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aomori_michinoku_bank/pdf_parser.py
-# PDFからの金利/条件抽出
-# なぜ: HTML欠落の補完と正確性向上のため
-# 関連: product_scraper.py, html_parser.py, rate_pages.py

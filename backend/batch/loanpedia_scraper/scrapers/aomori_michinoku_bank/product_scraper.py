@@ -5,6 +5,12 @@ import time
 from urllib.parse import urljoin
 import re
 
+# 共通ユーティリティのインポート
+try:
+    from loanpedia_scraper.scrapers.common.utils import merge_fields, apply_sanity, extract_specials
+except ImportError:
+    from ..common.utils import merge_fields, apply_sanity, extract_specials
+
 try:
     # Try package-style imports first
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.http_client import fetch_html, fetch_bytes
@@ -27,7 +33,7 @@ except ImportError:
     import extractors
     import hash_utils
     # models imported separately via importlib below
-    
+
     fetch_html = http_client.fetch_html
     fetch_bytes = http_client.fetch_bytes
     START = config.START
@@ -57,67 +63,6 @@ try:
     )
 except ImportError:
     models_module = importlib.import_module("models")
-
-
-def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:
-    kws = profile.get("special_keywords") or []
-    found = [kw for kw in kws if kw in text]
-    return " / ".join(sorted(set(found))) or None
-
-
-def merge_fields(
-    html_fields: Dict[str, Any], pdf_fields: Dict[str, Any], priority_keys: List[str]
-) -> Dict[str, Any]:
-    merged = dict(html_fields)
-    for k in priority_keys or []:
-        if pdf_fields.get(k) is not None:
-            merged[k] = pdf_fields[k]
-    return merged
-
-
-def _apply_sanity(merged: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, Any]:
-    """抽出結果の簡易妥当性チェックと補完"""
-    out = dict(merged)
-
-    # 金利: 0.3%〜20%に収まらない場合は破棄
-    rmin = out.get("min_interest_rate")
-    rmax = out.get("max_interest_rate")
-    if rmin is not None and rmax is not None:
-        if rmin > rmax or rmin < 0.003 or rmax > 0.2:
-            out["min_interest_rate"], out["max_interest_rate"] = None, None
-
-    # 金額: 上限のみ→最小を10万円で補完
-    amin = out.get("min_loan_amount")
-    amax = out.get("max_loan_amount")
-    if amax and (not amin or amin > amax):
-        out["min_loan_amount"] = min(amax, 100_000)
-
-    # 期間: min>max の場合は入替
-    tmin = out.get("min_loan_term")
-    tmax = out.get("max_loan_term")
-    if tmin and tmax and tmin > tmax:
-        out["min_loan_term"], out["max_loan_term"] = tmax, tmin
-
-    # 年齢: 既定補完
-    ltype = (profile.get("loan_type") or "").strip()
-    default_age = {
-        "教育ローン": (20, 75),
-        "マイカーローン": (18, 75),
-        "フリーローン": (20, 80),
-        "おまとめローン": (20, 69),
-    }.get(ltype, (20, 75))
-
-    agemin = out.get("min_age")
-    agemax = out.get("max_age")
-    if agemin is None and agemax is None:
-        out["min_age"], out["max_age"] = default_age
-    else:
-        if agemin is None:
-            out["min_age"] = default_age[0]
-        if agemax is None:
-            out["max_age"] = default_age[1]
-
-    return out
 
 
 def build_loan_product(
@@ -236,7 +181,7 @@ def scrape_product(
     fields["min_interest_rate"], fields["max_interest_rate"] = rate_min, rate_max
 
     # 7.5) 妥当性チェック/補完
-    fields = _apply_sanity(fields, profile)
+    fields = apply_sanity(fields, profile)
 
     # 8) 組み立て
     product = build_loan_product(fields, profile, pdf_url, fin_id, variant=variant)
@@ -257,8 +202,3 @@ def discover_product_links(start_url: str = START) -> list[str]:
         if re.search(r"/kojin/loan/[^/]+/?$", u) and not u.rstrip("/").endswith("loan"):
             urls.add(u)
     return sorted(urls)
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aomori_michinoku_bank/product_scraper.py
-# 青森みちのく銀行のメインスクレイパー
-# なぜ: 金利/条件/商品情報を統合し標準データに変換するため
-# 関連: http_client.py, html_parser.py, pdf_parser.py, ../../database/loan_database.py

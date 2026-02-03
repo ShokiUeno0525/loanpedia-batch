@@ -92,7 +92,7 @@ profiles: Dict[str, Dict[str, Any]] = {
         "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-86.pdf"],
     },
-    "/kojin/loan/jutakuloan/": {
+    "/kojin/loan/jutakuloan/aoginshinyo/": {
         "product_name": "青森みちのく住宅ローン （あおぎん信用保証型）",
         "loan_type": "住宅ローン",
         "category": "住宅",
@@ -101,12 +101,12 @@ profiles: Dict[str, Dict[str, Any]] = {
         "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-94.pdf"],
     },
-    "/kojin/loan/jutakuloan/": {
+    "/kojin/loan/jutakuloan/zenkokuhosho/": {
         "product_name": "青森みちのく住宅ローン （全国保証型）",
         "loan_type": "住宅ローン",
         "category": "住宅",
         "interest_type_hints": ["固定金利"],
-        "special_keywords": [ "借換", "リフォーム", "新築", "中古", "増改築", "最長"],
+        "special_keywords": ["借換", "リフォーム", "新築", "中古", "増改築", "最長"],
         "pdf_priority_fields": ["min_age", "max_age", "min_loan_term", "max_loan_term", "repayment_method"],
         "pdf_url_override": ["https://www.am-bk.co.jp/kojin/loan/pdf/l-95.pdf"],
     },
@@ -144,8 +144,3 @@ def pick_profile(url: str) -> Dict[str, Any]:
         }
     key = max(candidates, key=len)  # 最長一致
     return profiles[key]
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aomori_michinoku_bank/config.py
-# スクレイパー設定（URL/セレクタ/しきい値）
-# なぜ: 頻繁に変わる値をコードから分離するため
-# 関連: product_scraper.py, rate_pages.py, html_parser.py
