@@ -7,7 +7,10 @@
 from typing import Tuple, Optional
 import re
 import unicodedata
+import logging
 from decimal import Decimal, ROUND_DOWN
+
+logger = logging.getLogger(__name__)
 
 
 def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
@@ -54,6 +57,7 @@ def to_month_range(text: str) -> Tuple[Optional[int], Optional[int]]:
         all_months += [y * 12 for y in years]
 
     if not all_months:
+        logger.warning(f"返済期間の抽出失敗: テキストから期間情報を検出できませんでした (サンプル: {text[:100] if text else ''}...)")
         return None, None
 
     # 妥当性フィルタ（最低3ヶ月を許容。東しん: 3ヶ月～の表記あり）
@@ -135,6 +139,8 @@ def extract_touou_loan_amounts(text: str) -> Tuple[Optional[int], Optional[int]]
                 if val and 10_000 <= val <= 100_000_000:
                     max_amount = val if (max_amount is None or val > max_amount) else max_amount
 
+    if min_amount is None and max_amount is None:
+        logger.warning(f"融資金額の抽出失敗: テキストから金額情報を検出できませんでした (サンプル: {text[:100] if text else ''}...)")
     return (min_amount, max_amount)
 
 
@@ -150,6 +156,8 @@ def extract_age(text: str) -> Tuple[Optional[int], Optional[int]]:
     )
     mn = int(m1.group(1)) if m1 else None
     mx = int(m2.group(1) or m2.group(2)) if m2 else None
+    if mn is None and mx is None:
+        logger.warning(f"年齢条件の抽出失敗: テキストから年齢情報を検出できませんでした (サンプル: {text[:100] if text else ''}...)")
     return mn, mx
 
 
@@ -229,6 +237,7 @@ def extract_amount_from_text(text: Optional[str]) -> Optional[int]:
             elif unit == "億":
                 n *= 100_000_000
             return n if n > 0 else None
+    logger.warning(f"金額抽出失敗(単一値): テキストから金額を検出できませんでした (サンプル: {s[:100] if s else ''}...)")
     return None
 
 
@@ -243,9 +252,6 @@ def extract_term_from_text(text: Optional[str]) -> Optional[int]:
     months = [int(x) for x in re.findall(r"(\d+)\s*(?:ヶ月|か月|カ月|ヵ月|ケ月)", s)]
     years = [int(x) for x in re.findall(r"(\d+)\s*年", s)]
     all_months = months + [y * 12 for y in years]
+    if not all_months:
+        logger.warning(f"返済期間抽出失敗(単一値): テキストから期間を検出できませんでした (サンプル: {s[:100] if s else ''}...)")
     return max(all_months) if all_months else None
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/touou_shinkin/extractors.py
-# 値抽出ユーティリティ（正規表現/パターン）
-# なぜ: HTML/PDF抽出の共通ロジックを再利用可能にするため
-# 関連: html_parser.py, pdf_parser.py, product_scraper.py

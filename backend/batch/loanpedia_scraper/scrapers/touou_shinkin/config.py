@@ -136,3 +136,17 @@ def pick_profile(url: str) -> Dict[str, Any]:
 
 def pick_profile_from_pdf(pdf_url: str) -> Dict[str, Any]:
     return pick_profile(pdf_url)
+
+
+# 商品タイプ別のデフォルト金利範囲（PDF抽出失敗時のフォールバック）
+DEFAULT_INTEREST_RATES: Dict[str, tuple[float, float]] = {
+    "car": (2.0, 5.0),        # マイカーローン
+    "education": (2.0, 4.0),  # 教育ローン
+    "freeloan": (4.0, 14.0),  # フリーローン
+    "default": (2.0, 14.0),   # その他
+}
+
+
+def get_default_interest_rate(slug: str) -> tuple[float, float]:
+    """商品タイプに応じたデフォルト金利範囲を返す"""
+    return DEFAULT_INTEREST_RATES.get(slug, DEFAULT_INTEREST_RATES["default"])

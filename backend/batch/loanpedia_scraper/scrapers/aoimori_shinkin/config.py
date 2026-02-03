@@ -76,8 +76,3 @@ def get_pdf_urls() -> List[str]:
         f"{BASE}/pdf/poster_myhomeroan_241010.pdf",
         f"{BASE}/pdf/kyouikuroan_241010.pdf",
     ]
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aoimori_shinkin/config.py
-# スクレイパー設定（URL/セレクタ/閾値など）
-# なぜ: 変更頻度の高い値をコードから分離するため
-# 関連: product_scraper.py, rate_pages.py, html_parser.py

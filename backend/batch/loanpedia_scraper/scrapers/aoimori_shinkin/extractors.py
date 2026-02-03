@@ -1,8 +1,11 @@
 from __future__ import annotations
 import re
+import logging
 from typing import Optional
 from unicodedata import normalize
 from decimal import Decimal, ROUND_DOWN, InvalidOperation
+
+logger = logging.getLogger(__name__)
 
 
 def zenkaku_to_hankaku(text: Optional[str]) -> str:
@@ -22,6 +25,7 @@ def clean_rate_cell(text: Optional[str]) -> Optional[Decimal]:
     normalized_text = zenkaku_to_hankaku(text).replace("％", "%")
     match = re.search(r"([0-9][0-9,\.]*[0-9])\s*%?", normalized_text)
     if not match:
+        logger.warning(f"金利の抽出失敗: テキストから金利情報を検出できませんでした (入力: {text})")
         return None
 
     number_str = match.group(1).replace(",", "")  # 桁区切りカンマ削除
@@ -29,9 +33,5 @@ def clean_rate_cell(text: Optional[str]) -> Optional[Decimal]:
     try:
         return Decimal(number_str).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
     except (InvalidOperation, ValueError):
+        logger.warning(f"金利の変換失敗: 数値への変換に失敗しました (入力: {number_str})")
         return None
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/aoimori_shinkin/extractors.py
-# セレクタや正規表現に基づく値抽出ユーティリティ
-# なぜ: 解析ロジックの再利用性とテスト容易性を上げるため
-# 関連: html_parser.py, product_scraper.py, models.py

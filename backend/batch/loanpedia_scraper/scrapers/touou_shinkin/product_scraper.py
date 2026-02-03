@@ -3,10 +3,16 @@
 # 東奥信用金庫のメインスクレイパー（HTML+PDF統合抽出）
 # なぜ: 金利表の正確性を担保しつつ標準構造化データを生成するため
 # 関連: pdf_parser.py, web_parser.py, html_parser.py, ../../database/loan_database.py
-from typing import Tuple, Dict, Any, List, TYPE_CHECKING, cast
+from typing import Tuple, Dict, Any, List, TYPE_CHECKING, cast, Optional
 import time
 from urllib.parse import urljoin
 import re
+
+# 共通ユーティリティのインポート
+try:
+    from loanpedia_scraper.scrapers.common.utils import merge_fields, apply_sanity, extract_specials
+except ImportError:
+    from ..common.utils import merge_fields, apply_sanity, extract_specials
 
 try:
     # Try package-style imports first
@@ -26,7 +32,7 @@ except ImportError:
     from . import extractors
     from . import hash_utils
     # models imported separately via importlib below
-    
+
     fetch_html = http_client.fetch_html
     fetch_bytes = http_client.fetch_bytes
     START = config.START
@@ -39,28 +45,54 @@ except ImportError:
     interest_type_from_hints = extractors.interest_type_from_hints
     sha_bytes = hash_utils.sha_bytes
     # models module is imported via importlib below
-    # Import rate_pages functions
 
 # For type checking only, import model classes without affecting runtime
 if TYPE_CHECKING:
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.models import LoanProduct, RawLoanData
 
-# Define missing functions
+# 金利関連ユーティリティ
+try:
+    from loanpedia_scraper.scrapers.touou_shinkin.config import get_default_interest_rate
+except ImportError:
+    from .config import get_default_interest_rate
+
+
 def guess_rate_slug_from_url(url: str) -> str:
-    """PDFからスラッグを推定する簡易実装"""
-    if "carlife" in url:
+    """URLから商品タイプ（slug）を推定する
+
+    Args:
+        url: PDF URLまたは商品ページURL
+
+    Returns:
+        商品タイプを示すslug ("car", "education", "freeloan", "default")
+    """
+    url_lower = url.lower()
+    if "carlife" in url_lower or "mycar" in url_lower:
         return "car"
-    elif "kyoiku" in url:
+    elif "kyoiku" in url_lower:
         return "education"
-    elif "free" in url:
-        return "free"
+    elif "free" in url_lower:
+        return "freeloan"
     else:
         return "default"
 
-def fetch_interest_range_from_rate_page(slug: str, variant: str = None) -> Tuple[float, float]:
-    """金利情報を取得する簡易実装"""
-    # 東奥信用金庫の一般的な金利範囲を返す
-    return (2.0, 14.0)
+
+def fetch_interest_range_from_rate_page(
+    slug: str, variant: Optional[str] = None
+) -> Tuple[Optional[float], Optional[float]]:
+    """商品タイプに応じたデフォルト金利範囲を返す
+
+    東奥信用金庫はPDFベースで金利を取得するため、
+    この関数はPDF抽出失敗時のフォールバックとして使用される。
+
+    Args:
+        slug: 商品タイプ ("car", "education", "freeloan", "default")
+        variant: 未使用（互換性のため保持）
+
+    Returns:
+        (min_rate, max_rate) のタプル
+    """
+    return get_default_interest_rate(slug)
 
 # Re-export functions for tests to patch
 try:
@@ -78,67 +110,6 @@ try:
     )
 except ImportError:
     models_module = importlib.import_module("models")
-
-
-def extract_specials(text: str, profile: Dict[str, Any]) -> str | None:
-    kws = profile.get("special_keywords") or []
-    found = [kw for kw in kws if kw in text]
-    return " / ".join(sorted(set(found))) or None
-
-
-def merge_fields(
-    html_fields: Dict[str, Any], pdf_fields: Dict[str, Any], priority_keys: List[str]
-) -> Dict[str, Any]:
-    merged = dict(html_fields)
-    for k in priority_keys or []:
-        if pdf_fields.get(k) is not None:
-            merged[k] = pdf_fields[k]
-    return merged
-
-
-def _apply_sanity(merged: Dict[str, Any], profile: Dict[str, Any]) -> Dict[str, Any]:
-    """抽出結果の簡易妥当性チェックと補完"""
-    out = dict(merged)
-
-    # 金利: 0.3%〜20%に収まらない場合は破棄
-    rmin = out.get("min_interest_rate")
-    rmax = out.get("max_interest_rate")
-    if rmin is not None and rmax is not None:
-        if rmin > rmax or rmin < 0.003 or rmax > 0.2:
-            out["min_interest_rate"], out["max_interest_rate"] = None, None
-
-    # 金額: 上限のみ→最小を10万円で補完
-    amin = out.get("min_loan_amount")
-    amax = out.get("max_loan_amount")
-    if amax and (not amin or amin > amax):
-        out["min_loan_amount"] = min(amax, 100_000)
-
-    # 期間: min>max の場合は入替
-    tmin = out.get("min_loan_term")
-    tmax = out.get("max_loan_term")
-    if tmin and tmax and tmin > tmax:
-        out["min_loan_term"], out["max_loan_term"] = tmax, tmin
-
-    # 年齢: 既定補完
-    ltype = (profile.get("loan_type") or "").strip()
-    default_age = {
-        "教育ローン": (20, 75),
-        "マイカーローン": (18, 75),
-        "フリーローン": (20, 80),
-        "おまとめローン": (20, 69),
-    }.get(ltype, (20, 75))
-
-    agemin = out.get("min_age")
-    agemax = out.get("max_age")
-    if agemin is None and agemax is None:
-        out["min_age"], out["max_age"] = default_age
-    else:
-        if agemin is None:
-            out["min_age"] = default_age[0]
-        if agemax is None:
-            out["max_age"] = default_age[1]
-
-    return out
 
 
 def build_loan_product(
@@ -267,7 +238,7 @@ def scrape_product(
         fields["min_interest_rate"], fields["max_interest_rate"] = rate_min, rate_max
 
     # 7.5) 妥当性チェック/補完
-    fields = _apply_sanity(fields, profile)
+    fields = apply_sanity(fields, profile)
 
     # 8) 組み立て
     product = build_loan_product(fields, profile, pdf_url, fin_id, variant=variant)
@@ -428,8 +399,3 @@ def extract_from_pdf_url(url: str) -> List[Dict[str, Any]]:
         "source_url": url,
     }
     return [item]
-#!/usr/bin/env python3
-# /loanpedia_scraper/scrapers/touou_shinkin/product_scraper.py
-# 東奥信用金庫のメインスクレイパー（HTML+PDF統合抽出）
-# なぜ: 金利表の正確性を担保しつつ標準構造化データを生成するため
-# 関連: pdf_parser.py, web_parser.py, html_parser.py, ../../database/loan_database.py
