@@ -1,6 +1,8 @@
 services:
   lambda:
-    build: .
+    build:
+      context: ../..
+      dockerfile: infra/docker/dockerfile
     depends_on:
       - mysql
       - localstack
@@ -18,7 +20,7 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: ap-northeast-1
     volumes:
-      - .:/app
+      - ../..:/app
       - /app/__pycache__
     command: tail -f /dev/null
 

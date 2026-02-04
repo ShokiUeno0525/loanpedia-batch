@@ -10,11 +10,13 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# Python依存関係をインストール
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Python依存関係をインストール（リポジトリ直下の要件ファイルを使用）
+# ビルドコンテキストはリポジトリルートを想定
+COPY backend/batch/loanpedia_scraper/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY . .
+# 実行時のパス解決を安定化
+ENV PYTHONPATH=/app
 
-# Lambda関数として実行
-CMD ["python", "-c", "from lambda_function import lambda_handler; import json; print('Lambda function ready')"]
+# 実行コマンドは docker-compose 側で上書き（デフォルトは待機）
+CMD ["tail", "-f", "/dev/null"]
