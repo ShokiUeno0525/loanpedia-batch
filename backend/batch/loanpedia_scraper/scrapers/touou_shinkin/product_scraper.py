@@ -98,18 +98,23 @@ def fetch_interest_range_from_rate_page(
 try:
     from loanpedia_scraper.scrapers.touou_shinkin.config import get_pdf_urls as get_pdf_urls  # type: ignore
 except Exception:
-    def get_pdf_urls():  # type: ignore
-        return []
+    try:
+        from .config import get_pdf_urls as get_pdf_urls  # type: ignore
+    except Exception:
+        def get_pdf_urls():  # type: ignore
+            return []
 
 
 # Resolve models module in both runtime environments without redefining imports
 import importlib
 try:
+    # Prefer package path in this module's package
     models_module = importlib.import_module(
-        "loanpedia_scraper.scrapers.aomori_michinoku_bank.models"
+        "loanpedia_scraper.scrapers.touou_shinkin.models"
     )
 except ImportError:
-    models_module = importlib.import_module("models")
+    # Fallback to relative import for package execution contexts
+    models_module = importlib.import_module(".models", package=__package__)
 
 
 def build_loan_product(
@@ -265,7 +270,10 @@ class TououShinkinScraper:
     """東奥信用金庫のローン商品情報を抽出するスクレイパー"""
 
     def __init__(self, save_to_db: bool = False, db_config: dict | None = None):
-        from loanpedia_scraper.scrapers.touou_shinkin.config import INSTITUTION_INFO
+        try:
+            from loanpedia_scraper.scrapers.touou_shinkin.config import INSTITUTION_INFO
+        except ImportError:
+            from .config import INSTITUTION_INFO  # type: ignore
         self.save_to_db = bool(save_to_db)
         self.db_config = db_config
         self.session = object()  # 非Noneであれば十分（ユニットテスト要件）

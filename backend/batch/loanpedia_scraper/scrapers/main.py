@@ -14,13 +14,21 @@ from typing import List, Dict, Optional, Any, cast
 from .aomori_michinoku_bank import AomorimichinokuBankScraper
 try:
     from .aoimori_shinkin.product_scraper import AoimoriShinkinScraper
-except Exception:
+except Exception as e:  # pragma: no cover (実行時診断用)
+    logging.getLogger(__name__).exception("Failed to import AoimoriShinkinScraper: %s", e)
     AoimoriShinkinScraper = None  # type: ignore
 
 try:
     from .aomori_shinkumi.product_scraper import AomoriShinkumiScraper
-except Exception:
+except Exception as e:  # pragma: no cover (実行時診断用)
+    logging.getLogger(__name__).exception("Failed to import AomoriShinkumiScraper: %s", e)
     AomoriShinkumiScraper = None  # type: ignore
+
+try:
+    from .touou_shinkin.product_scraper import TououShinkinScraper
+except Exception as e:  # pragma: no cover (実行時診断用)
+    logging.getLogger(__name__).exception("Failed to import TououShinkinScraper: %s", e)
+    TououShinkinScraper = None  # type: ignore
 
 # データベースライブラリをインポート
 try:
@@ -56,7 +64,7 @@ class LoanScrapingOrchestrator:
         self.scrapers = {
             'aomori_michinoku': AomorimichinokuBankScraper(),
             'aoimori_shinkin': (AoimoriShinkinScraper() if AoimoriShinkinScraper is not None else _DummyScraper()),
-            'touou_shinkin': _DummyScraper(),
+            'touou_shinkin': (TououShinkinScraper() if TououShinkinScraper is not None else _DummyScraper()),
             'aomori_shinkumi': (AomoriShinkumiScraper() if AomoriShinkumiScraper is not None else _DummyScraper()),
         }
         self.results = []
@@ -174,6 +182,14 @@ def main():
     
     orchestrator = LoanScrapingOrchestrator(save_to_db=args.save_to_db)
     
+    def _fmt_pct(v: Any) -> str:
+        try:
+            if v is None:
+                return "N/A"
+            return f"{round(float(v) * 100, 2)}%"
+        except Exception:
+            return str(v)
+
     if args.institution:
         # 特定の金融機関のみ実行
         result = orchestrator.run_single_scraper(args.institution)
@@ -181,7 +197,7 @@ def main():
             print(f"\n✅ {args.institution} スクレイピング成功")
             print(f"商品名: {result.get('product_name', 'N/A')}")
             if 'min_interest_rate' in result:
-                print(f"金利: {result['min_interest_rate']}% - {result.get('max_interest_rate', 'N/A')}%")
+                print(f"金利: {_fmt_pct(result.get('min_interest_rate'))} - {_fmt_pct(result.get('max_interest_rate'))}")
         else:
             print(f"\n❌ {args.institution} スクレイピング失敗")
         return
@@ -199,11 +215,27 @@ def main():
     if summary['results']:
         print(f"\n取得データ:")
         for i, result in enumerate(summary['results'], 1):
-            print(f"{i}. {result['institution_name']}: {result['product_name']}")
-            if 'min_interest_rate' in result:
-                print(f"   金利: {result['min_interest_rate']}% - {result.get('max_interest_rate', 'N/A')}%")
-            if 'max_loan_amount' in result:
-                print(f"   融資額: 最大{result['max_loan_amount']:,}円")
+            institution_name = result.get('institution_name', 'N/A')
+
+            # productsリストを持つ形式（青い森信用金庫、青森県信用組合など）
+            if 'products' in result and isinstance(result['products'], list):
+                products = result['products']
+                print(f"{i}. {institution_name}: {len(products)}商品")
+                for j, product in enumerate(products, 1):
+                    product_name = product.get('product_name', '商品名不明')
+                    print(f"   {i}-{j}. {product_name}")
+                    if 'min_interest_rate' in product:
+                        print(f"        金利: {_fmt_pct(product.get('min_interest_rate'))} - {_fmt_pct(product.get('max_interest_rate'))}")
+                    if 'max_loan_amount' in product:
+                        print(f"        融資額: 最大{product['max_loan_amount']:,}円")
+            else:
+                # 単一商品形式（青森みちのく銀行など）
+                product_name = result.get('product_name', '商品名不明')
+                print(f"{i}. {institution_name}: {product_name}")
+                if 'min_interest_rate' in result:
+                    print(f"   金利: {_fmt_pct(result.get('min_interest_rate'))} - {_fmt_pct(result.get('max_interest_rate'))}")
+                if 'max_loan_amount' in result:
+                    print(f"   融資額: 最大{result['max_loan_amount']:,}円")
     
     if summary['errors']:
         print(f"\nエラー:")

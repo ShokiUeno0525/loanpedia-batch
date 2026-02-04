@@ -3,10 +3,10 @@
 # -*- coding: utf-8 -*-
 import requests
 try:
-    from loanpedia_scraper.scrapers.aomori_michinoku_bank.config import HEADERS
+    from loanpedia_scraper.scrapers.touou_shinkin.config import HEADERS
 except ImportError:
-    import config
-    HEADERS = config.HEADERS
+    from . import config  # type: ignore
+    HEADERS = config.HEADERS  # type: ignore
 
 
 def fetch_html(url: str, timeout: int = 30) -> str:
