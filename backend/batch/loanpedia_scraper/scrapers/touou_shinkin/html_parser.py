@@ -12,11 +12,12 @@ try:
         extract_repayment,
     )
 except ImportError:
-    import extractors
-    to_month_range = extractors.to_month_range
-    to_yen_range = extractors.to_yen_range
-    extract_age = extractors.extract_age
-    extract_repayment = extractors.extract_repayment
+    # 相対インポートにフォールバック（パッケージ内の実装を使用）
+    from . import extractors  # type: ignore
+    to_month_range = extractors.to_month_range  # type: ignore
+    to_yen_range = extractors.to_yen_range  # type: ignore
+    extract_age = extractors.extract_age  # type: ignore
+    extract_repayment = extractors.extract_repayment  # type: ignore
 
 def _normalize_text(s: str) -> str:
     """全角→半角、ダッシュ・波ダッシュの統一など簡易正規化"""

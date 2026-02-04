@@ -13,10 +13,11 @@ try:
     from loanpedia_scraper.scrapers.aomori_michinoku_bank.extractors import extract_age, to_month_range
     from loanpedia_scraper.scrapers.touou_shinkin.extractors import extract_touou_loan_amounts
 except ImportError:
-    import extractors
-    extract_age = extractors.extract_age
-    to_month_range = extractors.to_month_range
-    extract_touou_loan_amounts = extractors.extract_touou_loan_amounts
+    # 相対インポートにフォールバック（パッケージ内の実装を使用）
+    from . import extractors  # type: ignore
+    extract_age = extractors.extract_age  # type: ignore
+    to_month_range = extractors.to_month_range  # type: ignore
+    extract_touou_loan_amounts = extractors.extract_touou_loan_amounts  # type: ignore
 
 
 def normalize_pdf_text(text: str) -> str:

@@ -1,0 +1,40 @@
+# Exclude local dev artifacts from Docker build context
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Node/Frontend
+node_modules/
+frontend/node_modules/
+infra/**/node_modules/
+**/node_modules/
+infra/**/cdk.out/
+**/.aws-sam/
+frontend/dist/
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+tmp/
+
+# Docker local volumes or caches
+infra/docker/mysql_data/
+infra/docker/.cache/
