@@ -3,17 +3,17 @@
 ## アーキテクチャ概要
 
 ```
-1. Scrapy → raw_loan_data (生データ収集)
-2. AI処理バッチ → processed_loan_data (BedRock API要約)  
+1. Python スクレイパー → raw_loan_data (生データ収集)
+2. AI処理バッチ → processed_loan_data (BedRock API要約)
 3. 統合処理 → loan_products (商品マスター構築)
 ```
 
 ## データフロー
 
-### Step 1: 生データ収集 (Scrapy)
+### Step 1: 生データ収集 (Python + requests/BeautifulSoup)
 ```python
 # パイプライン: 生データのみ保存
-MySQLPipeline → raw_loan_data テーブル
+スクレイパー → raw_loan_data テーブル
 
 保存内容:
 - HTML全文
@@ -67,18 +67,18 @@ python3 run_pipeline.py --step full
 ### 個別ステップ実行
 ```bash
 # Step 1: データ収集のみ
-python3 run_pipeline.py --step scrapy
+python3 run_pipeline.py --step scrape
 
-# Step 2: AI処理のみ  
+# Step 2: AI処理のみ
 python3 run_pipeline.py --step ai --ai-batch-size 10
 
 # Step 3: 統合処理のみ
 python3 run_pipeline.py --step integration --integration-batch-size 20
 ```
 
-### 特定スパイダー実行
+### 特定金融機関のスクレイピング実行
 ```bash
-python3 run_pipeline.py --step scrapy --spider aomorimichinoku_bank
+python3 run_pipeline.py --step scrape --target aomorimichinoku_bank
 ```
 
 ## データベーステーブル構成
