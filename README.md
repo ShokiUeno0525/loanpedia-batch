@@ -19,33 +19,44 @@ loanpedia-batch/
 │       ├── samconfig.toml      # SAM デプロイ設定
 │       └── pyproject.toml      # Python プロジェクト設定
 │
-├── infrastructure/       # インフラストラクチャ
-│   ├── cdk/             # AWS CDK（RDS等）
-│   └── docker/          # Docker設定
+├── frontend/            # フロントエンド（React + Vite + TypeScript）
+│   ├── src/             # ソースコード
+│   ├── public/          # 静的ファイル
+│   └── ...
+│
+├── infra/               # インフラストラクチャ（AWS CDK）
+│   ├── lib/             # CDK スタック定義
+│   ├── bin/             # CDK エントリーポイント
+│   ├── docker/          # Docker 設定
+│   └── ...
+│
+├── loanpedia_scraper/   # スクレイパーコアモジュール
 │
 ├── docs/                # ドキュメント
 │   ├── requirements.md
 │   ├── architecture.md
 │   └── ...
 │
-├── CLAUDE.md           # Claude Code 指示書
-└── README.md           # このファイル
+├── specs/               # 機能仕様書
+│
+├── CLAUDE.md            # Claude Code 指示書
+└── README.md            # このファイル
 ```
 
 ## CloudFront Basic認証
 
-開発環境でCloudFrontにBasic認証が設定されています。
+開発環境で CloudFront に Basic 認証が設定されています。
 
 ### 認証情報
 
-- **ユーザー名**: `b4KxsVaR`
-- **パスワード**: `etg5rqKSXU4W`
+認証情報はチームメンバーに直接共有されています。
+**※ セキュリティのため、認証情報は本リポジトリには記載しません。**
 
-ブラウザでサイトにアクセスすると、自動的にユーザー名/パスワード入力ダイアログが表示されます。
+必要な場合は、管理者またはチームリーダーに確認してください。
 
 ### 認証情報の変更
 
-認証情報を変更する場合は、[infra/lib/constructs/basic-auth-function.ts](infra/lib/constructs/basic-auth-function.ts) のCloudFront Functionコード内の認証情報を編集してください。変更後、CDKを再デプロイしてください。
+認証情報を変更する場合は、[infra/lib/constructs/basic-auth-function.ts](infra/lib/constructs/basic-auth-function.ts) の CloudFront Function コード内の認証情報を編集してください。変更後、CDK を再デプロイしてください。
 
 ## 詳細ドキュメント
 
