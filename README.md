@@ -9,7 +9,7 @@
 ```
 loanpedia-batch/
 ├── backend/              # バックエンド関連
-│   ├── api/             # Laravel API（今後実装予定）
+│   ├── api/             # Python API（今後実装予定）
 │   └── batch/           # バッチ処理システム
 │       ├── loanpedia_scraper/  # Lambda関数（スクレイピング）
 │       ├── scripts/            # デプロイ・実行スクリプト
