@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signup } from "../api/authApi";
+import { signup } from "../api";
 
 export const SignupPage = () => {
   const [email, setEmail] = useState("");
