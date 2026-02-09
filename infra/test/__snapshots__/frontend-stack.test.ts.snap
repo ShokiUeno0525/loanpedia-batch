@@ -214,13 +214,13 @@ exports[`FrontendStack スタック全体の検証 スナップショットテ�
           "HttpVersion": "http2",
           "IPV6Enabled": true,
           "Logging": {
-            "Bucket": "test-log-bucket.s3.us-east-1.amazonaws.com",
+            "Bucket": "test-log-bucket.s3.ap-northeast-1.amazonaws.com",
             "IncludeCookies": false,
             "Prefix": "cloudfront/",
           },
           "Origins": [
             {
-              "DomainName": "test-frontend-bucket.s3.us-east-1.amazonaws.com",
+              "DomainName": "test-frontend-bucket.s3.ap-northeast-1.amazonaws.com",
               "Id": "TestFrontendStackFrontendDistributionOrigin140DFC356",
               "OriginAccessControlId": {
                 "Fn::GetAtt": [
