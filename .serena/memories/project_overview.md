@@ -5,7 +5,7 @@
 
 ## 技術スタック
 - **メイン言語**: Python 3.10以上
-- **Webスクレイピング**: BeautifulSoup4, Selenium, Scrapy
+- **Webスクレイピング**: BeautifulSoup4, requests
 - **AI処理**: AWS BedRock API
 - **データベース**: MySQL (SQLAlchemy)
 - **AWS**: SAM CLI, Lambda
@@ -19,7 +19,7 @@
 1. **データ収集** (Python): 金融機関のWebサイトからローン情報を抽出
 2. **データ処理** (AI): BedRock APIを使用してローンデータを要約・構造化
 3. **データ保存** (MySQL): 元データ、処理済み要約、タイムスタンプ、ソース情報を保存
-4. **ユーザーインターフェース** (PHP Laravel + React): エンドユーザーがローンデータにアクセス
+4. **ユーザーインターフェース** (Python API + React): エンドユーザーがローンデータにアクセス
 
 ## 主要なコンポーネント
 

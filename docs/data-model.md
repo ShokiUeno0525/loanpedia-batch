@@ -75,5 +75,5 @@ erDiagram
 
 1. **データ収集**: バッチ処理で金融機関サイトをスクレイピング → `raw_loan_data`
 2. **データ整理**: 収集データを参照して手動で商品情報を整理 → `loan_products`
-3. **データ提供**: `loan_products`テーブルからLaravel APIでデータ提供
+3. **データ提供**: `loan_products`テーブルからPython APIでデータ提供
 4. **履歴管理**: 各処理の実行状況を`data_update_history`で追跡
