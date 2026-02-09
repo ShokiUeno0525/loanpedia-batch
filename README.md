@@ -29,8 +29,7 @@ loanpedia-batch/
 │   ├── bin/             # CDK エントリーポイント
 │   ├── docker/          # Docker 設定
 │   └── ...
-│
-├── loanpedia_scraper/   # スクレイパーコアモジュール
+
 │
 ├── docs/                # ドキュメント
 │   ├── requirements.md
